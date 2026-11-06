@@ -1,0 +1,8 @@
+# Keep LF in the repo and working tree so files mounted into Linux
+# containers (Dockerfiles, Python, shell, JS) never get CRLF.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+*.pdf binary
+*.xlsx binary
