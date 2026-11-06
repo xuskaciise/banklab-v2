@@ -29,9 +29,10 @@ Supervisor/Manager, Vault Custodian, Accountant). V1 (PHP) lives in
    updates a balance directly.
 2. Money is `Decimal` (`NUMERIC(18,2)`), never float. Currency (USD/SOS) is
    stored with every amount. Totals are always computed on the server.
-3. **Session scoping:** every business row has `session_id`; every query is
-   filtered by the current session (and by owner when visibility is
-   "own work only"). Tests must prove cross-session isolation.
+3. **Bank scoping:** every banking row has `bank_id` (a bank belongs to one
+   session); every query is filtered by the current bank (and by owner when
+   visibility is "own work only"). Tests must prove cross-bank and
+   cross-session isolation. See `docs/design/erd.md`.
 4. Financial records are never deleted or edited — corrections are reversals.
    Archived sessions are read-only.
 5. Multi-step writes run in one `transaction.atomic()` with
