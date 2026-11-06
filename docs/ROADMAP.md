@@ -13,7 +13,7 @@ Domain details for every item live in [CONCEPT.md](CONCEPT.md).
 | # | Item | Needs | Status |
 |---|------|-------|--------|
 | 0.1 | ERD: all entities, keys, `bank_id` scoping (`docs/design/erd.md`) | – | [x] feat/0.1-erd |
-| 0.2 | Chart of Accounts template, USD + SOS (`docs/design/coa.md`) | 0.1 | [ ] |
+| 0.2 | Chart of Accounts template, USD + SOS (`docs/design/coa.md`) | 0.1 | [x] feat/0.2-coa |
 | 0.3 | Transaction catalog: every transaction type with its Dr/Cr lines (`docs/design/transactions.md`) | 0.2 | [ ] |
 | 0.4 | Roles × permissions matrix, limits, approvals (`docs/design/permissions.md`) | 0.1 | [ ] |
 | 0.5 | Screen list per role + navigation (`docs/design/screens.md`) | 0.4 | [ ] |
