@@ -16,7 +16,7 @@ Domain details for every item live in [CONCEPT.md](CONCEPT.md).
 | 0.2 | Chart of Accounts template, USD + SOS (`docs/design/coa.md`) | 0.1 | [x] feat/0.2-coa |
 | 0.3 | Transaction catalog: every transaction type with its Dr/Cr lines (`docs/design/transactions.md`) | 0.2 | [x] feat/0.3-transactions |
 | 0.4 | Roles × permissions matrix, limits, approvals (`docs/design/permissions.md`) | 0.1 | [x] feat/0.4-permissions |
-| 0.5 | Screen list per role + navigation (`docs/design/screens.md`) | 0.4 | [ ] |
+| 0.5 | Screen list per role + navigation (`docs/design/screens.md`) | 0.4 | [x] feat/0.5-screens |
 | 0.6 | Scaffold monorepo: `backend/` (Django + Ninja + pytest), `frontend/` (Next.js + TS + Tailwind + shadcn), Docker Compose, OpenAPI → TS types, CI checks | 0.1 | [ ] |
 
 ## Phase 1 — MVP (build order)
