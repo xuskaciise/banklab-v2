@@ -1,0 +1,48 @@
+# BankLab V2 — Build Roadmap
+
+Single source of truth for **what to build next**. Work top to bottom: an item
+starts only when everything in its `Needs` column is `[x]`. One item = one
+feature branch = one PR. When an item is merged, tick it and add the PR link.
+
+Status: `[ ]` todo · `[~]` in progress (branch name) · `[x]` done (PR)
+
+Domain details for every item live in [CONCEPT.md](CONCEPT.md).
+
+## Phase 0 — Design & scaffold
+
+| # | Item | Needs | Status |
+|---|------|-------|--------|
+| 0.1 | ERD: all entities, keys, `session_id` scoping (`docs/design/erd.md`) | – | [ ] |
+| 0.2 | Chart of Accounts template, USD + SOS (`docs/design/coa.md`) | 0.1 | [ ] |
+| 0.3 | Transaction catalog: every transaction type with its Dr/Cr lines (`docs/design/transactions.md`) | 0.2 | [ ] |
+| 0.4 | Roles × permissions matrix, limits, approvals (`docs/design/permissions.md`) | 0.1 | [ ] |
+| 0.5 | Screen list per role + navigation (`docs/design/screens.md`) | 0.4 | [ ] |
+| 0.6 | Scaffold monorepo: `backend/` (Django + Ninja + pytest), `frontend/` (Next.js + TS + Tailwind + shadcn), Docker Compose, OpenAPI → TS types, CI checks | 0.1 | [ ] |
+
+## Phase 1 — MVP (build order)
+
+| # | Item | Needs | Status |
+|---|------|-------|--------|
+| 1.1 | Auth: student ID + last-4-phone first login, forced change, instructor reset | 0.6 | [ ] |
+| 1.2 | Roles & permissions (default per role + instructor overrides), audit log | 1.1, 0.4 | [ ] |
+| 1.3 | Classes & Sessions: create/open/archive, templates, students (manual + CSV), role assignment, visibility mode, business date | 1.2 | [ ] |
+| 1.4 | Ledger engine: CoA per session from template, journal entries, posting service, balances (Decimal, row locks, Dr = Cr enforced) | 1.3, 0.3 | [ ] |
+| 1.5 | Branch & Vault (dual control) | 1.4 | [ ] |
+| 1.6 | Customers (CIF): individual, company, joint, NGO; ID documents; signatories | 1.3 | [ ] |
+| 1.7 | Products (Savings, Current) & Accounts (Active/Closed, sequential numbers, USD/SOS) | 1.4, 1.6 | [ ] |
+| 1.8 | Teller session: open with supervisor approval, denomination count on close, over/short | 1.5 | [ ] |
+| 1.9 | Transactions: cash deposit, cash withdrawal, transfer (same currency), depositor name/ID/phone, teller limits + supervisor approval, reversal, PDF receipt | 1.7, 1.8 | [ ] |
+| 1.10 | Cheques: chequebook issue (series), paid once, stop payment | 1.9 | [ ] |
+| 1.11 | End-of-Day by Manager: all tellers closed → close day → next business date | 1.9 | [ ] |
+| 1.12 | Reports: statement, teller cash, branch daily, transaction journal, TB, BS, IS, GL ledger — PDF + Excel | 1.11 | [ ] |
+| 1.13 | Dashboards (instructor, manager, teller) + Dr/Cr learning panel toggle | 1.12 | [ ] |
+| 1.14 | Exam sessions: timer, tasks, per-student seed data, auto-check, scores, results export | 1.13 | [ ] |
+| 1.15 | Hardening: load test (100–200 students), security review, deploy to VPS | 1.14 | [ ] |
+
+## Later phases (do not start before Phase 1 is done)
+
+- **Phase 2:** guided practice scenarios, instructor-injected events
+- **Phase 3:** Loans; Murabaha, Musharakah, Qard Hasan
+- **Phase 4:** FX (buy/sell, cross-currency), fees, interest/profit engine, Fixed Deposit, Mudarabah Savings/Term
+- **Phase 5:** customer internet/mobile banking portal, mobile money simulation
+- **Backlog:** KYC approval, risk rating/AML, Dormant/Frozen, Wadiah, bounced/cancelled cheques
