@@ -20,7 +20,9 @@ Supervisor/Manager, Vault Custodian, Accountant). V1 (PHP) lives in
   django-q2 (jobs), pytest.
 - `frontend/`: Next.js (App Router) + TypeScript + Tailwind + shadcn/ui +
   TanStack Query. API types are generated from the backend OpenAPI schema —
-  never hand-write API types.
+  never hand-write API types. Colours, status badges and amount formatting
+  follow `docs/design/theme.md` (SIU bank tokens) — never hard-code hex
+  values in components.
 - Docker Compose for local and VPS.
 
 ## Domain invariants (never break)
