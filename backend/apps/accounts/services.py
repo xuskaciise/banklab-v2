@@ -47,12 +47,20 @@ def normalize_phone(phone: str) -> str:
     return digits.lstrip("0")
 
 
+def validate_student_phone(phone: str) -> None:
+    """The phone gives the initial password and contact: require a plausible national number."""
+    if not 7 <= len(normalize_phone(phone or "")) <= 12:
+        raise ValidationFailed("Enter a valid phone number")
+
+
 @transaction.atomic
 def create_user(username, full_name, phone, platform_role, institution=None) -> User:
     if platform_role not in PlatformRole.values:
         raise ValidationFailed("Invalid platform role")
     if User.objects.filter(username=username).exists():
         raise ValidationFailed("Username already exists")
+    if platform_role == PlatformRole.STUDENT:
+        validate_student_phone(phone)
     return User.objects.create_user(
         username=username,
         password=initial_password(phone),

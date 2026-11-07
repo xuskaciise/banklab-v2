@@ -293,7 +293,7 @@ def update_student(
     if phone is not None:
         phone = phone.strip()
         try:
-            accounts.initial_password(phone)  # at least 4 digits, same rule as creation
+            accounts.validate_student_phone(phone)  # same rule as creation (login credential)
         except accounts.AccountsError as exc:
             raise ValidationFailed(exc.message) from None
         user.phone = phone
