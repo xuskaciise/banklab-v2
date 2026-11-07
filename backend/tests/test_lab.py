@@ -270,6 +270,9 @@ class TestTemplatesAndSessions:
         assert banks == {bank.pk}
         assert AuditLog.objects.filter(action="lab.session_opened", session_id=s.pk).exists()
         assert AuditLog.objects.filter(action="lab.bank_created", bank_id=bank.pk).exists()
+        r = api(world["ia"]).get(f"/api/sessions/{s.pk}/business-days")
+        assert r.status_code == 200
+        assert r.json()[0]["bank_name"] == bank.name and r.json()[0]["status"] == "open"
 
     def test_open_per_group(self, world):
         s = lab.create_session(world["ia"], world["ca"].pk, "G", structure="per_group")

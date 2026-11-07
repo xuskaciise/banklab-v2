@@ -405,10 +405,7 @@ def banks_add(request, session_id: UUID):
     operation_id="lab_business_days",
 )
 def business_days(request, session_id: UUID):
-    return [
-        {"bank_id": d.bank_id, "bank_name": d.bank.name, "date": d.date, "status": d.status}
-        for d in services.business_days(request.user, session_id)
-    ]
+    return list(services.business_days(request.user, session_id).select_related("bank"))
 
 
 # ----------------------------------------------------------------------- members & roles
