@@ -1,4 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useLogout, useMe } from "@/lib/auth";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = ["Dashboard", "Customers", "Accounts", "Teller", "Reports"];
 
@@ -9,6 +15,9 @@ const CONTEXT_ITEMS = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const { data: user } = useMe();
+  const logout = useLogout();
   return (
     <div className="flex min-h-screen">
       <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
@@ -35,6 +44,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <span className="font-medium text-text-strong">{value}</span>
             </span>
           ))}
+          <div className="ml-auto flex items-center gap-3">
+            {user && (
+              <>
+                <span className="font-medium text-text-strong">
+                  {user.full_name}
+                </span>
+                <Badge variant="secondary" className="capitalize">
+                  {user.platform_role}
+                </Badge>
+              </>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={logout.isPending}
+              onClick={() =>
+                logout.mutate(undefined, {
+                  onSettled: () => router.replace("/login"),
+                })
+              }
+            >
+              Log out
+            </Button>
+          </div>
         </header>
         <main className="flex-1 p-6">{children}</main>
       </div>
