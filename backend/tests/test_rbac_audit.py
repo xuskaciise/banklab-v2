@@ -289,10 +289,13 @@ class TestAuditApi:
     def test_anonymous_401(self):
         assert Client().get("/api/audit").status_code == 401
 
-    @pytest.mark.parametrize("role", [PlatformRole.INSTRUCTOR, PlatformRole.STUDENT])
-    def test_non_admin_403(self, role):
-        client, _ = self.client_for("u1", role)
+    def test_plain_student_403(self):
+        client, _ = self.client_for("u1", PlatformRole.STUDENT)
         assert client.get("/api/audit").status_code == 403
+
+    def test_instructor_without_sessions_sees_nothing(self):
+        client, _ = self.client_for("u1", PlatformRole.INSTRUCTOR)
+        assert client.get("/api/audit").json()["count"] == 0
 
     def test_flagged_user_403(self):
         make("flagged", PlatformRole.ADMIN)

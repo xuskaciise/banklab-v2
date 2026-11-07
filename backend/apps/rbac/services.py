@@ -43,19 +43,56 @@ def clear_cache() -> None:
         _cache = None
 
 
-def permission_scope(role: str, code: str) -> str | None:
-    """Return "all", "own" or None (not granted) for a bank role and permission code."""
+class ValidationFailed(RbacError):
+    status = 400
+
+
+# Catalog codes an instructor override may never grant to a role, derived from the
+# separation-of-duties rules (permissions.md section 6). The person-level SoD rules
+# (maker != checker, dual control) are hard checks below and are never affected by
+# overrides; no catalog code is forbidden for a whole role today.
+SOD_FORBIDDEN_GRANTS: dict[str, frozenset[str]] = {}
+
+
+def _overrides(session) -> dict[tuple[str, str], bool]:
+    if session is None:
+        return {}
+    from apps.lab.models import PermissionOverride
+
+    return {
+        (role, code): allowed
+        for role, code, allowed in PermissionOverride.objects.filter(session=session).values_list(
+            "role", "permission_id", "allowed"
+        )
+    }
+
+
+def default_scope(role: str, code: str) -> str | None:
     return _role_map().get(role, {}).get(code)
 
 
-def role_has_permission(role: str, code: str, *, session=None) -> bool:
-    """Whether `role` holds `code`.
+def permission_scope(role: str, code: str, *, session=None) -> str | None:
+    """Return "all", "own" or None (not granted) for a bank role and permission code.
 
-    `session` is reserved for 1.3: per-session `permission_override` rows will be applied
-    here (add/remove on top of the defaults, never touching the separation-of-duties
-    rules). Today it is ignored.
+    Per-session overrides are applied on top of the defaults when `session` is given.
     """
-    return permission_scope(role, code) is not None
+    scope = default_scope(role, code)
+    override = _overrides(session).get((role, code))
+    if override is None:
+        return scope
+    if not override:
+        return None
+    return scope or "all"
+
+
+def role_has_permission(role: str, code: str, *, session=None) -> bool:
+    """Whether `role` holds `code` (defaults plus the session's overrides)."""
+    return permission_scope(role, code, session=session) is not None
+
+
+def assert_override_allowed(role: str, code: str, allowed: bool) -> None:
+    if allowed and code in SOD_FORBIDDEN_GRANTS.get(role, frozenset()):
+        raise ValidationFailed("Cannot grant this permission to this role (separation of duties)")
 
 
 def _person_id(value) -> str:

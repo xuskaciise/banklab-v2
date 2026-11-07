@@ -48,9 +48,12 @@ class AuditLog(models.Model):
     before = models.JSONField(null=True, blank=True)
     after = models.JSONField(null=True, blank=True)
     ip = models.CharField(max_length=64, blank=True, default="")
-    # TODO(1.3): turn these into ForeignKeys once Session and Bank exist.
-    session_id = models.UUIDField(null=True, blank=True)
-    bank_id = models.UUIDField(null=True, blank=True)
+    session = models.ForeignKey(
+        "lab.Session", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    bank = models.ForeignKey(
+        "lab.Bank", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
     at = models.DateTimeField(auto_now_add=True)
 
     objects = AuditLogQuerySet.as_manager()
@@ -60,7 +63,7 @@ class AuditLog(models.Model):
         indexes = [
             models.Index(fields=["at"], name="audit_at_idx"),
             models.Index(fields=["actor", "at"], name="audit_actor_at_idx"),
-            models.Index(fields=["session_id", "at"], name="audit_session_at_idx"),
+            models.Index(fields=["session", "at"], name="audit_session_at_idx"),
         ]
 
     def save(self, *args, **kwargs):
