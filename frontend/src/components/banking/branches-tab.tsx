@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
   DialogHeader,
@@ -74,28 +75,35 @@ function BranchDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <form onSubmit={submit} noValidate className="space-y-4">
+        <form onSubmit={submit} noValidate>
           <DialogHeader>
-            <DialogTitle>{branch ? "Edit branch" : "Create branch"}</DialogTitle>
+            <DialogTitle>
+              {branch ? "Edit branch" : "Create branch"}
+            </DialogTitle>
           </DialogHeader>
-          <Labeled
-            label="Code"
-            error={errors.code}
-            hint={branch ? "The code cannot be changed." : undefined}
-          >
-            <Input
-              value={code}
-              disabled={!!branch}
-              onChange={(e) => setCode(e.target.value)}
-            />
-          </Labeled>
-          <Labeled label="Name" error={errors.name}>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
-          </Labeled>
-          <Labeled label="Address">
-            <Input value={address} onChange={(e) => setAddress(e.target.value)} />
-          </Labeled>
-          <ErrorMsg error={m.error} />
+          <DialogBody className="space-y-4">
+            <Labeled
+              label="Code"
+              error={errors.code}
+              hint={branch ? "The code cannot be changed." : undefined}
+            >
+              <Input
+                value={code}
+                disabled={!!branch}
+                onChange={(e) => setCode(e.target.value)}
+              />
+            </Labeled>
+            <Labeled label="Name" error={errors.name}>
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
+            </Labeled>
+            <Labeled label="Address">
+              <Input
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
+            </Labeled>
+            <ErrorMsg error={m.error} />
+          </DialogBody>
           <DialogFooter>
             <Button
               type="button"
@@ -171,7 +179,11 @@ function Tills({
         )}
       </QueryState>
       {!readOnly && (
-        <form onSubmit={submit} noValidate className="flex flex-wrap items-start gap-2">
+        <form
+          onSubmit={submit}
+          noValidate
+          className="flex flex-wrap items-start gap-2"
+        >
           <div className="w-40">
             <Input
               aria-label="Till code"
@@ -220,7 +232,10 @@ function BankBranches({
         <QueryState query={branches}>
           {branches.data?.length ? (
             branches.data.map((b) => (
-              <div key={b.id} className="space-y-4 rounded-lg border border-border p-4">
+              <div
+                key={b.id}
+                className="space-y-4 rounded-lg border border-border p-4"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium text-text-strong">
@@ -298,7 +313,12 @@ export function BranchesTab({
       <QueryState query={banks}>
         {banks.data?.length ? (
           banks.data.map((b) => (
-            <BankBranches key={b.id} session={session} bank={b} readOnly={readOnly} />
+            <BankBranches
+              key={b.id}
+              session={session}
+              bank={b}
+              readOnly={readOnly}
+            />
           ))
         ) : (
           <EmptyState

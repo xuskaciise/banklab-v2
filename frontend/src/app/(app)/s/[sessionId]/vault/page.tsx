@@ -42,18 +42,20 @@ function Recon({
   label,
   left,
   right,
+  ok,
   currency,
 }: {
   label: string;
   left: number | string;
   right: number | string;
+  ok: boolean;
   currency: string;
 }) {
-  const ok = Number(left) === Number(right);
   return (
     <span className="flex flex-wrap items-center justify-between gap-2 text-xs">
       <span className="text-text-muted">
-        {label} {formatMoney(left, currency)} vs GL {formatMoney(right, currency)}
+        {label} {formatMoney(left, currency)} vs GL{" "}
+        {formatMoney(right, currency)}
       </span>
       <StatusBadge
         status={ok ? "ok" : "mismatch"}
@@ -86,7 +88,6 @@ function Positions({ vault }: { vault: VaultOut }) {
           <div className="grid gap-4 sm:grid-cols-2">
             {CURRENCIES.map((c) => {
               const pos = b.positions.find((p) => p.currency === c);
-              const rec = vault.reconciliation.find((r) => r.currency === c);
               return (
                 <StatCard
                   key={c}
@@ -97,30 +98,47 @@ function Positions({ vault }: { vault: VaultOut }) {
                       {formatMoney(pos?.balance ?? "0", c)}
                     </span>
                   }
-                  hint={
-                    rec ? (
-                      <span className="mt-2 block space-y-1.5">
-                        <Recon
-                          label="Vault"
-                          left={rec.vault_total}
-                          right={rec.gl_vault}
-                          currency={c}
-                        />
-                        <Recon
-                          label="Tills"
-                          left={rec.teller_total}
-                          right={rec.gl_teller}
-                          currency={c}
-                        />
-                      </span>
-                    ) : undefined
-                  }
                 />
               );
             })}
           </div>
         </section>
       ))}
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-text-strong">
+          GL reconciliation{" "}
+          <span className="text-xs font-normal text-text-muted">
+            (whole bank)
+          </span>
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {CURRENCIES.map((c) => {
+            const rec = vault.reconciliation.find((r) => r.currency === c);
+            if (!rec) return null;
+            return (
+              <div
+                key={c}
+                className="space-y-1.5 rounded-lg border border-border bg-surface p-4"
+              >
+                <Recon
+                  label="All vaults"
+                  left={rec.vault_total}
+                  right={rec.gl_vault}
+                  ok={rec.vault_total === rec.gl_vault}
+                  currency={c}
+                />
+                <Recon
+                  label="All tills"
+                  left={rec.teller_total}
+                  right={rec.gl_teller}
+                  ok={rec.teller_total === rec.gl_teller}
+                  currency={c}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }
@@ -138,7 +156,10 @@ export default function VaultPage() {
   const [reasonErr, setReasonErr] = useState<string | null>(null);
   const readOnly = !!me.data?.read_only;
 
-  function run(t: CashTransferOut, action: "approve-custodian" | "approve-manager") {
+  function run(
+    t: CashTransferOut,
+    action: "approve-custodian" | "approve-manager",
+  ) {
     act.mutate(
       { id: t.id, action },
       {
