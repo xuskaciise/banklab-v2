@@ -1,6 +1,7 @@
 from datetime import date, datetime, time, timedelta
 from uuid import UUID
 
+from django.db.models import Q
 from django.utils import timezone
 from ninja import Query, Router, Schema
 from ninja.errors import HttpError
@@ -52,7 +53,7 @@ def _scoped(request, qs):
     if user.platform_role == PlatformRole.INSTRUCTOR:
         return qs.filter(session__lab_class__instructor=user)
     if user.platform_role == PlatformRole.STUDENT:
-        bank_ids = []
+        scope_q, found = Q(pk__in=[]), False
         assignments = RoleAssignment.objects.select_related(
             "session_member__session"
         ).filter(
@@ -65,9 +66,13 @@ def _scoped(request, qs):
         for a in assignments:
             member = a.session_member
             if rbac.role_has_permission("manager", "audit.view", session=member.session):
-                bank_ids.append(member.bank_id)
-        if bank_ids:
-            return qs.filter(bank_id__in=bank_ids)
+                if member.session.kind == "exam":  # exams force own: only the manager's rows
+                    scope_q |= Q(bank_id=member.bank_id, actor=user)
+                else:
+                    scope_q |= Q(bank_id=member.bank_id)
+                found = True
+        if found:
+            return qs.filter(scope_q)
     raise HttpError(403, "Not allowed")
 
 

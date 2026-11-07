@@ -54,7 +54,7 @@ class ValidationFailed(RbacError):
 SOD_FORBIDDEN_GRANTS: dict[str, frozenset[str]] = {}
 
 
-def _overrides(session) -> dict[tuple[str, str], bool]:
+def load_overrides(session) -> dict[tuple[str, str], bool]:
     if session is None:
         return {}
     from apps.lab.models import PermissionOverride
@@ -71,13 +71,18 @@ def default_scope(role: str, code: str) -> str | None:
     return _role_map().get(role, {}).get(code)
 
 
-def permission_scope(role: str, code: str, *, session=None) -> str | None:
+def permission_scope(
+    role: str, code: str, *, session=None, overrides: dict | None = None
+) -> str | None:
     """Return "all", "own" or None (not granted) for a bank role and permission code.
 
-    Per-session overrides are applied on top of the defaults when `session` is given.
+    Per-session overrides are applied on top of the defaults when `session` is given;
+    pass a preloaded `overrides` map (from `load_overrides`) to avoid one query per call.
     """
     scope = default_scope(role, code)
-    override = _overrides(session).get((role, code))
+    if overrides is None:
+        overrides = load_overrides(session)
+    override = overrides.get((role, code))
     if override is None:
         return scope
     if not override:
@@ -107,6 +112,9 @@ def _person_id(value) -> str:
     return normalised
 
 
+# TODO(1.4+): person-level SoD checks (maker != checker, dual control, own open teller
+# session) must stay hard checks that ignore PermissionOverride rows; never gate them on
+# role_has_permission.
 def assert_maker_checker(maker_id, checker_id) -> None:
     """Nobody approves their own request or transaction (permissions.md section 6.1)."""
     if _person_id(maker_id) == _person_id(checker_id):

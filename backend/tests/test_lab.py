@@ -458,7 +458,7 @@ class TestPermissionOverrides:
         assert api(world["ia"]).put(url, data=body, content_type="application/json").status_code == 200
         assert j(api(world["ia"]), "post", url + "/clear", body).status_code == 204
 
-    def test_sod_not_overridable(self, world, monkeypatch):
+    def test_person_level_sod_checks_ignore_overrides(self, world):
         s = active_session(world)
         lab.set_permission_override(world["ia"], s.pk, "teller", "approval.decide", True)
         lab.set_permission_override(world["ia"], s.pk, "teller", "cash.vault.approve_manager", True)
@@ -466,10 +466,6 @@ class TestPermissionOverrides:
             rbac.assert_maker_checker("u1", "u1")
         with pytest.raises(rbac.PermissionDenied):
             rbac.assert_dual_control("u1", "u2", "u1")
-        monkeypatch.setitem(rbac.SOD_FORBIDDEN_GRANTS, "teller", frozenset({"gl.view"}))
-        with pytest.raises(rbac.RbacError):
-            lab.set_permission_override(world["ia"], s.pk, "teller", "gl.view", True)
-        lab.set_permission_override(world["ia"], s.pk, "teller", "gl.view", False)
 
     def test_override_audited(self, world):
         s = active_session(world)
@@ -651,3 +647,85 @@ class TestAuditScoping:
         row = audit.record("x", session_id=s.pk)
         assert row.session == s
         assert Session.objects.filter(pk=row.session_id).exists()
+
+
+@pytest.mark.django_db
+class TestReviewFixes:
+    def test_forbidden_grant_hook_refuses(self, world, monkeypatch):
+        s = active_session(world)
+        monkeypatch.setitem(rbac.SOD_FORBIDDEN_GRANTS, "teller", frozenset({"gl.view"}))
+        with pytest.raises(rbac.RbacError):
+            lab.set_permission_override(world["ia"], s.pk, "teller", "gl.view", True)
+        lab.set_permission_override(world["ia"], s.pk, "teller", "gl.view", False)
+
+    def test_shared_student_edit_refused_for_other_instructor(self, world):
+        shared = world["studs"][0]
+        lab.add_student(world["ib"], world["cb"].pk, shared.username)  # enroll in B's class too
+        for instr, cls in ((world["ia"], world["ca"]), (world["ib"], world["cb"])):
+            with pytest.raises(lab.PermissionDenied):
+                lab.update_student(instr, cls.pk, shared.pk, full_name="Hacked")
+        shared.refresh_from_db()
+        assert shared.full_name != "Hacked"
+        lab.update_student(world["admin"], world["ca"].pk, shared.pk, full_name="By Admin")
+        # a student of only one class stays editable
+        lab.update_student(world["ia"], world["ca"].pk, world["studs"][1].pk, full_name="Ok")
+
+    def test_exam_manager_sees_only_own_rows(self, world):
+        s = lab.create_session(world["ia"], world["ca"].pk, "Exam", kind="exam")
+        lab.add_members(world["ia"], s.pk, all_enrolled=True)
+        lab.open_session(world["ia"], s.pk)
+        mgr = SessionMember.objects.get(session=s, user=world["studs"][0])
+        lab.assign_role(world["ia"], s.pk, mgr.pk, "manager")
+        bank = Bank.objects.get(session=s)
+        inst = world["ia"].institution_id
+        audit.record("x.mine", actor=world["studs"][0], session_id=s.pk, bank_id=bank.pk)
+        audit.record("x.theirs", actor=world["studs"][1], session_id=s.pk, bank_id=bank.pk,
+                     institution_id=inst)
+        actions = {r["action"] for r in api(world["studs"][0]).get("/api/audit").json()["items"]}
+        assert "x.mine" in actions and "x.theirs" not in actions
+
+    def test_lock_writable_session_after_archive(self, world):
+        s, _ = student_session(world, "teller")
+        request = RequestFactory().post("/x")
+        request.user = world["studs"][0]
+        context.resolve_bank_context(request, s.pk)
+        with transaction.atomic():
+            assert context.lock_writable_session(request).pk == s.pk
+        lab.archive_session(world["ia"], s.pk)  # archived after the request was resolved
+        with transaction.atomic(), pytest.raises(HttpError) as e:
+            context.lock_writable_session(request)
+        assert e.value.status_code == 409
+
+    def test_open_audits_each_placement(self, world):
+        s = lab.create_session(world["ia"], world["ca"].pk, "L")
+        lab.add_members(world["ia"], s.pk, all_enrolled=True)
+        lab.open_session(world["ia"], s.pk)
+        n = AuditLog.objects.filter(action="lab.member_moved", session_id=s.pk).count()
+        assert n == 3
+
+    def test_foreign_institution_username_is_generic(self, world):
+        from apps.accounts.models import Institution
+
+        foreign = acc.create_user("fx", "Foreign", PHONE, PlatformRole.STUDENT,
+                                  institution=Institution.objects.create(name="Other"))
+        with pytest.raises(lab.ValidationFailed) as e:
+            lab.add_student(world["ib"], world["cb"].pk, foreign.username)
+        assert e.value.message == lab.USERNAME_UNAVAILABLE
+        body = f"username,full_name,phone\n{foreign.username},F,0611110000\nia,Staff,\n"
+        rows = lab.preview_students_csv(world["ib"], world["cb"].pk, body).rows
+        assert rows[0].error == lab.USERNAME_UNAVAILABLE
+        assert "non-student" in rows[1].error
+
+    def test_integrity_error_becomes_conflict(self, world, monkeypatch):
+        def boom(*a, **k):
+            raise IntegrityError("dup")
+
+        monkeypatch.setattr(acc, "create_user", boom)
+        with pytest.raises(lab.Conflict):
+            lab.add_student(world["ib"], world["cb"].pk, "newbie", "New", "0611110000")
+        assert lab.Conflict.status == 409
+
+    def test_matrix_loads_overrides_once(self, world, django_assert_max_num_queries):
+        s = active_session(world)
+        with django_assert_max_num_queries(8):
+            assert len(lab.effective_matrix(world["ia"], s.pk)) == 150

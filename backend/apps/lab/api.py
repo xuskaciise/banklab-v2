@@ -573,8 +573,9 @@ def session_me(request, session_id: UUID):
         business_date = day.date if day else None
     permissions = []
     if role:
+        overrides = rbac.load_overrides(session)
         for code in Permission.objects.values_list("code", flat=True):
-            scope = rbac.permission_scope(role, code, session=session)
+            scope = rbac.permission_scope(role, code, session=session, overrides=overrides)
             if scope:
                 permissions.append({"code": code, "scope": scope})
     return {

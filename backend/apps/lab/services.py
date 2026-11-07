@@ -7,6 +7,7 @@ rejects archived sessions and writes an audit row.
 import csv
 import io
 import re
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 
 from django.db import IntegrityError, transaction
@@ -39,6 +40,7 @@ MAX_GROUPS = 50
 MAX_CSV_ROWS = 500
 MAX_CSV_BYTES = 1_000_000
 CSV_COLUMNS = ("username", "full_name", "phone")
+USERNAME_UNAVAILABLE = "Username is not available"
 
 
 class LabError(Exception):
@@ -65,6 +67,16 @@ class NotFound(LabError):
 
 class Conflict(LabError):
     status = 409
+
+
+@contextmanager
+def _conflict_guard():
+    """Run a create in a savepoint; a concurrent unique-constraint hit becomes a 409."""
+    try:
+        with transaction.atomic():
+            yield
+    except IntegrityError:
+        raise Conflict("Conflicting concurrent change, please retry") from None
 
 
 # --------------------------------------------------------------------------- access
@@ -182,9 +194,10 @@ def create_class(actor: User, name: str, code: str, instructor_id=None) -> Class
             raise ValidationFailed("Instructor not found")
     if Class.objects.filter(institution_id=actor.institution_id, code=code).exists():
         raise ValidationFailed("A class with this code already exists")
-    lab_class = Class.objects.create(
-        institution_id=actor.institution_id, instructor=instructor, name=name, code=code
-    )
+    with _conflict_guard():
+        lab_class = Class.objects.create(
+            institution_id=actor.institution_id, instructor=instructor, name=name, code=code
+        )
     _audit(actor, "lab.class_created", ("class", lab_class.pk), after=_class_dict(lab_class))
     return lab_class
 
@@ -219,34 +232,35 @@ def _add_student(actor, lab_class, username, full_name, phone) -> tuple[User, bo
         raise ValidationFailed("username is required")
     user = User.objects.filter(username=username).first()
     created = False
-    if user is None:
-        if not (full_name or "").strip():
-            raise ValidationFailed("full_name is required for a new student")
-        try:
-            user = accounts.create_user(
-                username,
-                full_name.strip(),
-                (phone or "").strip(),
-                PlatformRole.STUDENT,
-                institution=lab_class.institution,
+    if user is not None and user.institution_id != lab_class.institution_id:
+        raise ValidationFailed(USERNAME_UNAVAILABLE)  # never reveal other institutions
+    with _conflict_guard():
+        if user is None:
+            if not (full_name or "").strip():
+                raise ValidationFailed("full_name is required for a new student")
+            try:
+                user = accounts.create_user(
+                    username,
+                    full_name.strip(),
+                    (phone or "").strip(),
+                    PlatformRole.STUDENT,
+                    institution=lab_class.institution,
+                )
+            except accounts.AccountsError as exc:
+                raise ValidationFailed(exc.message) from None
+            created = True
+            _audit(
+                actor,
+                "lab.student_created",
+                ("user", user.pk),
+                after={"username": user.username, "full_name": user.full_name},
             )
-        except accounts.AccountsError as exc:
-            raise ValidationFailed(exc.message) from None
-        created = True
-        _audit(
-            actor,
-            "lab.student_created",
-            ("user", user.pk),
-            after={"username": user.username, "full_name": user.full_name},
-        )
-    else:
-        if user.platform_role != PlatformRole.STUDENT:
-            raise ValidationFailed("This username belongs to a non-student account")
-        if user.institution_id != lab_class.institution_id:
-            raise ValidationFailed("Student not found")
-    if Enrollment.objects.filter(lab_class=lab_class, user=user).exists():
-        raise ValidationFailed("Student is already enrolled in this class")
-    _enroll(actor, lab_class, user)
+        else:
+            if user.platform_role != PlatformRole.STUDENT:
+                raise ValidationFailed("This username belongs to a non-student account")
+        if Enrollment.objects.filter(lab_class=lab_class, user=user).exists():
+            raise ValidationFailed("Student is already enrolled in this class")
+        _enroll(actor, lab_class, user)
     return user, created
 
 
@@ -260,13 +274,17 @@ def add_student(actor: User, class_id, username, full_name="", phone="") -> tupl
 def update_student(
     actor: User, class_id, user_id, *, full_name=None, phone=None, is_active=None
 ) -> User:
-    """Instructor/admin edits a student enrolled in one of their classes."""
+    """Edit a student account. Instructors: only when every class of the student is theirs."""
     lab_class = get_class(actor, class_id)
     if not Enrollment.objects.filter(lab_class=lab_class, user_id=user_id).exists():
         raise NotFound("Student not found")
     user = User.objects.select_for_update().get(pk=user_id)
     if user.platform_role != PlatformRole.STUDENT:
         raise NotFound("Student not found")
+    if actor.platform_role != PlatformRole.ADMIN and (
+        Enrollment.objects.filter(user=user).exclude(lab_class__instructor=actor).exists()
+    ):
+        raise PermissionDenied("This student is also enrolled in another instructor's class")
     before = {"full_name": user.full_name, "phone": user.phone, "is_active": user.is_active}
     if full_name is not None:
         if not full_name.strip():
@@ -353,10 +371,9 @@ def _validate_csv(lab_class: Class, text: str) -> CsvResult:
                     row.action, row.error = "error", "phone must contain at least 4 digits"
                 else:
                     row.action = "create"
-            elif (
-                user.platform_role != PlatformRole.STUDENT
-                or user.institution_id != lab_class.institution_id
-            ):
+            elif user.institution_id != lab_class.institution_id:
+                row.action, row.error = "error", USERNAME_UNAVAILABLE
+            elif user.platform_role != PlatformRole.STUDENT:
                 row.action, row.error = "error", "username belongs to a non-student account"
             elif Enrollment.objects.filter(lab_class=lab_class, user=user).exists():
                 row.action, row.error = "error", "already enrolled in this class"
@@ -543,8 +560,9 @@ def create_session(
 
 
 def _create_bank(actor, session: Session, name: str, group_no, business_date) -> Bank:
-    bank = Bank.objects.create(session=session, name=name, group_no=group_no)
-    BusinessDay.objects.create(bank=bank, date=business_date)
+    with _conflict_guard():
+        bank = Bank.objects.create(session=session, name=name, group_no=group_no)
+        BusinessDay.objects.create(bank=bank, date=business_date)
     _audit(
         actor,
         "lab.bank_created",
@@ -573,7 +591,20 @@ def open_session(actor: User, session_id, group_count: int | None = None) -> Ses
             _create_bank(actor, session, f"Group {n}", n, today) for n in range(1, group_count + 1)
         ]
     if len(banks) == 1:
-        SessionMember.objects.filter(session=session, bank__isnull=True).update(bank=banks[0])
+        for member in SessionMember.objects.select_for_update().filter(
+            session=session, bank__isnull=True
+        ):
+            member.bank = banks[0]
+            member.save(update_fields=["bank", "updated_at"])
+            _audit(
+                actor,
+                "lab.member_moved",
+                ("session_member", member.pk),
+                before={"bank_id": None},
+                after={"bank_id": str(banks[0].pk)},
+                session=session,
+                bank=banks[0],
+            )
     before = _session_dict(session)
     session.status, session.opened_at = SessionStatus.ACTIVE, now
     session.save(update_fields=["status", "opened_at", "updated_at"])
@@ -698,7 +729,8 @@ def add_members(
             if all_enrolled:
                 continue
             raise ValidationFailed("Student account is inactive")
-        member = SessionMember.objects.create(session=session, user=enrolled[uid], bank=bank)
+        with _conflict_guard():
+            member = SessionMember.objects.create(session=session, user=enrolled[uid], bank=bank)
         added.append(member)
         _audit(
             actor,
@@ -787,9 +819,10 @@ def assign_role(actor: User, session_id, member_id, role: str) -> RoleAssignment
     if current is not None:
         current.active_to = now
         current.save(update_fields=["active_to", "updated_at"])
-    assignment = RoleAssignment.objects.create(
-        session_member=member, role=role, assigned_by=actor, active_from=now
-    )
+    with _conflict_guard():
+        assignment = RoleAssignment.objects.create(
+            session_member=member, role=role, assigned_by=actor, active_from=now
+        )
     _audit(
         actor,
         "lab.role_assigned",
@@ -825,7 +858,9 @@ def effective_matrix(actor: User, session_id) -> list[dict]:
                     "category": category,
                     "default_scope": rbac.default_scope(role, code),
                     "override": override,
-                    "effective_scope": rbac.permission_scope(role, code, session=session),
+                    "effective_scope": rbac.permission_scope(
+                        role, code, session=session, overrides=overrides
+                    ),
                 }
             )
     return cells
@@ -846,13 +881,10 @@ def set_permission_override(
     ).first()
     before = {"allowed": existing.allowed} if existing else None
     if existing is None:
-        try:
-            with transaction.atomic():
-                override = PermissionOverride.objects.create(
-                    session=session, role=role, permission_id=permission_code, allowed=allowed
-                )
-        except IntegrityError:
-            raise Conflict("Concurrent change, try again") from None
+        with _conflict_guard():
+            override = PermissionOverride.objects.create(
+                session=session, role=role, permission_id=permission_code, allowed=allowed
+            )
     else:
         override = existing
         override.allowed = allowed

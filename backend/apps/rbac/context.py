@@ -107,3 +107,20 @@ def require_bank_permission(code: str):
         return wrapper
 
     return decorator
+
+
+def lock_writable_session(request):
+    """Re-read and lock the request's session; call inside the write transaction.
+
+    `resolve_bank_context` runs before the service opens its `transaction.atomic()`, so an
+    instructor may archive the session in between. Every banking write service (1.4+) must
+    call this first thing inside its atomic block, then use the returned session. 409 when
+    the session is no longer active.
+    """
+    from apps.lab.models import Session, SessionStatus
+
+    session = Session.objects.select_for_update().get(pk=request.lab_session.pk)
+    if session.status != SessionStatus.ACTIVE:
+        raise HttpError(409, "Session is not active (read-only)")
+    request.lab_session = session
+    return session
