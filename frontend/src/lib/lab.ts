@@ -291,3 +291,17 @@ export const useSessionMe = (sessionId: string) =>
     queryKey: ["session-me", sessionId],
     queryFn: () => apiFetch<SessionMe>(`/api/s/${sessionId}/me`),
   });
+
+/** Latest audit rows for the staff overview (API scopes them to the caller). */
+export const useRecentAudit = () =>
+  useQuery({
+    queryKey: ["audit-recent"],
+    queryFn: () => apiFetch<PagedAudit>("/api/audit?page=1"),
+  });
+
+/** "lab.session_opened" -> "Session opened". */
+export function humanizeAction(action: string) {
+  const last = action.split(".").pop() ?? action;
+  const s = last.replace(/_/g, " ");
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}

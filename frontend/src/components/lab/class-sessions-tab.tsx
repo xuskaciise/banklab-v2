@@ -1,147 +1,184 @@
 "use client";
 
 import Link from "next/link";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import {
+  formatDateTime,
   useClassSessions,
   useSessionTransition,
   useTemplates,
 } from "@/lib/lab";
 import type { SessionOut, TemplateOut } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
-import {
-  ConfirmButton,
-  Empty,
-  ErrorMsg,
-  formatTemplateLabel,
-  QueryState,
-  StatusBadge,
-  Table,
-  Td,
-  Th,
-} from "./common";
-import { formatDateTime } from "@/lib/lab";
+import { DataTable } from "@/components/shared/data-table";
+import { StatusBadge } from "@/components/shared/status-badge";
+import { ConfirmButton, formatTemplateLabel } from "./common";
 
-function SessionRow({ s }: { s: SessionOut }) {
+function SessionActions({ s }: { s: SessionOut }) {
   const t = useSessionTransition(s.id);
+  const run = (action: "archive" | "reopen", done: string) =>
+    t.mutate(
+      { action },
+      {
+        onSuccess: () => toast.success(done),
+        onError: (e) => toast.error(e.message),
+      },
+    );
   return (
-    <tr className="hover:bg-hover">
-      <Td className="font-medium text-text-strong">{s.name}</Td>
-      <Td className="capitalize">{s.kind}</Td>
-      <Td>{s.structure === "per_group" ? "Per group" : "Single bank"}</Td>
-      <Td>
-        <StatusBadge status={s.status} />
-      </Td>
-      <Td className="text-text-muted">{formatDateTime(s.opened_at)}</Td>
-      <Td>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link href={`/instructor/sessions/${s.id}`}>
-            <Button size="sm" variant="outline">
-              {s.status === "draft" ? "Set up / open" : "Control"}
-            </Button>
-          </Link>
-          {s.status === "active" && (
-            <ConfirmButton
-              label="Archive"
-              message="Archive this session? It becomes read-only."
-              pending={t.isPending}
-              onConfirm={() => t.mutate({ action: "archive" })}
-            />
-          )}
-          {s.status === "archived" && (
-            <ConfirmButton
-              label="Re-open"
-              message="Re-open this archived session?"
-              pending={t.isPending}
-              onConfirm={() => t.mutate({ action: "reopen" })}
-            />
-          )}
-        </div>
-        <ErrorMsg error={t.error} />
-      </Td>
-    </tr>
-  );
-}
-
-export function ClassSessionsTab({ classId }: { classId: string }) {
-  const sessions = useClassSessions(classId);
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-text-strong">Sessions</h2>
-        <Link href={`/instructor/sessions/new?classId=${classId}`}>
-          <Button>Open new session</Button>
-        </Link>
-      </div>
-      <QueryState query={sessions}>
-        {sessions.data?.length ? (
-          <Table>
-            <thead>
-              <tr>
-                <Th>Name</Th>
-                <Th>Kind</Th>
-                <Th>Structure</Th>
-                <Th>Status</Th>
-                <Th>Opened</Th>
-                <Th>Actions</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {sessions.data.map((s) => (
-                <SessionRow key={s.id} s={s} />
-              ))}
-            </tbody>
-          </Table>
-        ) : (
-          <Empty>No sessions yet. Open a new session for this class.</Empty>
-        )}
-      </QueryState>
+    <div className="flex items-center justify-end gap-2">
+      <Link href={`/instructor/sessions/${s.id}`}>
+        <Button size="sm" variant="outline">
+          {s.status === "draft" ? "Set up / open" : "Control"}
+        </Button>
+      </Link>
+      {s.status === "active" && (
+        <ConfirmButton
+          label="Archive"
+          message="Archive this session? It becomes read-only."
+          pending={t.isPending}
+          onConfirm={() => run("archive", `${s.name} archived`)}
+        />
+      )}
+      {s.status === "archived" && (
+        <ConfirmButton
+          label="Re-open"
+          message="Re-open this archived session?"
+          pending={t.isPending}
+          onConfirm={() => run("reopen", `${s.name} re-opened`)}
+        />
+      )}
     </div>
   );
 }
 
-function TemplateRow({ t }: { t: TemplateOut }) {
+const sessionColumns: ColumnDef<SessionOut>[] = [
+  {
+    accessorKey: "name",
+    header: "Session",
+    cell: ({ row }) => (
+      <Link
+        href={`/instructor/sessions/${row.original.id}`}
+        className="font-medium text-text-strong hover:text-bank-accent hover:underline"
+      >
+        {row.original.name}
+      </Link>
+    ),
+  },
+  {
+    accessorKey: "kind",
+    header: "Kind",
+    cell: ({ getValue }) => <span className="capitalize">{getValue<string>()}</span>,
+  },
+  {
+    accessorKey: "structure",
+    header: "Structure",
+    cell: ({ getValue }) => formatTemplateLabel(getValue<string>()),
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ getValue }) => <StatusBadge status={getValue<string>()} />,
+  },
+  {
+    accessorKey: "opened_at",
+    header: "Opened",
+    cell: ({ getValue }) => (
+      <span className="text-text-muted">{formatDateTime(getValue<string | null>())}</span>
+    ),
+  },
+  {
+    id: "actions",
+    header: () => <span className="sr-only">Actions</span>,
+    enableSorting: false,
+    enableHiding: false,
+    meta: { className: "text-right" },
+    cell: ({ row }) => <SessionActions s={row.original} />,
+  },
+];
+
+export function ClassSessionsTab({ classId }: { classId: string }) {
+  const sessions = useClassSessions(classId);
+  const newBtn = (
+    <Link href={`/instructor/sessions/new?classId=${classId}`}>
+      <Button size="sm">
+        <Plus /> New session
+      </Button>
+    </Link>
+  );
   return (
-    <tr className="hover:bg-hover">
-      <Td className="font-medium text-text-strong">{t.name}</Td>
-      <Td className="capitalize">{t.kind}</Td>
-      <Td>{formatTemplateLabel(t.structure)}</Td>
-      <Td>{t.allowed_roles.join(", ")}</Td>
-      <Td>{t.default_visibility === "own" ? "Own work only" : "Whole bank"}</Td>
-      <Td>{t.learning_panel ? "On" : "Off"}</Td>
-      <Td className="text-text-muted">{t.class_id ? "This class" : "Institution"}</Td>
-    </tr>
+    <DataTable
+      columns={sessionColumns}
+      data={sessions.data}
+      isLoading={sessions.isPending}
+      error={sessions.error}
+      getRowId={(s) => s.id}
+      searchPlaceholder="Search sessions…"
+      toolbar={newBtn}
+      emptyTitle="No sessions yet"
+      emptyDescription="Open a new session for this class."
+      emptyAction={newBtn}
+    />
   );
 }
+
+const templateColumns: ColumnDef<TemplateOut>[] = [
+  {
+    accessorKey: "name",
+    header: "Template",
+    cell: ({ getValue }) => (
+      <span className="font-medium text-text-strong">{getValue<string>()}</span>
+    ),
+  },
+  {
+    accessorKey: "kind",
+    header: "Kind",
+    cell: ({ getValue }) => <span className="capitalize">{getValue<string>()}</span>,
+  },
+  {
+    accessorKey: "structure",
+    header: "Structure",
+    cell: ({ getValue }) => formatTemplateLabel(getValue<string>()),
+  },
+  {
+    id: "roles",
+    header: "Roles",
+    enableSorting: false,
+    accessorFn: (t) => t.allowed_roles.join(", "),
+  },
+  {
+    accessorKey: "default_visibility",
+    header: "Visibility",
+    cell: ({ getValue }) =>
+      getValue<string>() === "own" ? "Own work only" : "Whole bank",
+  },
+  {
+    accessorKey: "learning_panel",
+    header: "Dr/Cr panel",
+    cell: ({ getValue }) => (getValue<boolean>() ? "On" : "Off"),
+  },
+  {
+    id: "scope",
+    header: "Scope",
+    accessorFn: (t) => (t.class_id ? "This class" : "Institution"),
+    cell: ({ getValue }) => (
+      <span className="text-text-muted">{getValue<string>()}</span>
+    ),
+  },
+];
 
 export function TemplatesTab({ classId }: { classId: string }) {
   const templates = useTemplates(classId);
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-text-strong">Templates</h2>
-      <QueryState query={templates}>
-        {templates.data?.length ? (
-          <Table>
-            <thead>
-              <tr>
-                <Th>Name</Th>
-                <Th>Kind</Th>
-                <Th>Structure</Th>
-                <Th>Roles</Th>
-                <Th>Visibility</Th>
-                <Th>Dr/Cr panel</Th>
-                <Th>Scope</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {templates.data.map((t) => (
-                <TemplateRow key={t.id} t={t} />
-              ))}
-            </tbody>
-          </Table>
-        ) : (
-          <Empty>No templates available.</Empty>
-        )}
-      </QueryState>
-    </div>
+    <DataTable
+      columns={templateColumns}
+      data={templates.data}
+      isLoading={templates.isPending}
+      error={templates.error}
+      getRowId={(t) => t.id}
+      searchPlaceholder="Search templates…"
+      emptyTitle="No templates available"
+    />
   );
 }

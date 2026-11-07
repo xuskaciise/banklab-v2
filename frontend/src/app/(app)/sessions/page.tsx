@@ -1,59 +1,74 @@
 "use client";
 
 import Link from "next/link";
+import type { ColumnDef } from "@tanstack/react-table";
+import { ArrowRight } from "lucide-react";
+import type { MySession } from "@/lib/api/types";
 import { roleLabel, useMySessions } from "@/lib/lab";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  PageHeader,
-  QueryState,
-  Table,
-  Td,
-  Th,
-} from "@/components/lab/common";
+import { DataTable } from "@/components/shared/data-table";
+import { PageHeader } from "@/components/shared/page-header";
+
+const columns: ColumnDef<MySession>[] = [
+  {
+    accessorKey: "name",
+    header: "Session",
+    cell: ({ row }) => (
+      <Link
+        href={`/s/${row.original.session_id}`}
+        className="font-medium text-text-strong hover:text-bank-accent hover:underline"
+      >
+        {row.original.name}
+      </Link>
+    ),
+  },
+  { accessorKey: "class_name", header: "Class" },
+  {
+    accessorKey: "kind",
+    header: "Kind",
+    cell: ({ getValue }) => <span className="capitalize">{getValue<string>()}</span>,
+  },
+  {
+    id: "bank",
+    header: "Bank",
+    accessorFn: (s) => s.bank_name ?? "Not placed yet",
+  },
+  {
+    id: "role",
+    header: "Role",
+    accessorFn: (s) => (s.role ? roleLabel(s.role) : "No role yet"),
+  },
+  {
+    id: "actions",
+    header: () => <span className="sr-only">Actions</span>,
+    enableSorting: false,
+    enableHiding: false,
+    meta: { className: "text-right" },
+    cell: ({ row }) => (
+      <Link href={`/s/${row.original.session_id}`}>
+        <Button size="sm">
+          Open <ArrowRight />
+        </Button>
+      </Link>
+    ),
+  },
+];
 
 export default function MySessionsPage() {
   const sessions = useMySessions();
   return (
     <div>
       <PageHeader title="My sessions" subtitle="Active sessions you are part of." />
-      <QueryState query={sessions}>
-        {sessions.data?.length ? (
-          <Table>
-            <thead>
-              <tr>
-                <Th>Session</Th>
-                <Th>Class</Th>
-                <Th>Kind</Th>
-                <Th>Bank</Th>
-                <Th>Role</Th>
-                <Th />
-              </tr>
-            </thead>
-            <tbody>
-              {sessions.data.map((s) => (
-                <tr key={s.session_id} className="hover:bg-hover">
-                  <Td className="font-medium text-text-strong">{s.name}</Td>
-                  <Td>{s.class_name}</Td>
-                  <Td className="capitalize">{s.kind}</Td>
-                  <Td>{s.bank_name ?? "Not placed yet"}</Td>
-                  <Td>{s.role ? roleLabel(s.role) : "No role yet"}</Td>
-                  <Td className="text-right">
-                    <Link href={`/s/${s.session_id}`}>
-                      <Button size="sm">Open</Button>
-                    </Link>
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        ) : (
-          <Empty>
-            You are not in any active session yet. Your instructor will add you
-            when a session opens.
-          </Empty>
-        )}
-      </QueryState>
+      <DataTable
+        columns={columns}
+        data={sessions.data}
+        isLoading={sessions.isPending}
+        error={sessions.error}
+        getRowId={(s) => s.session_id}
+        searchPlaceholder="Search sessions…"
+        emptyTitle="No active sessions yet"
+        emptyDescription="Your instructor will add you when a session opens."
+      />
     </div>
   );
 }

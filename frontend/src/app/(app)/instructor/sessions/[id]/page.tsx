@@ -1,16 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useSession } from "@/lib/lab";
-import {
-  PageHeader,
-  QueryState,
-  ReadOnlyBanner,
-  StatusBadge,
-  Tabs,
-} from "@/components/lab/common";
+import { PageHeader } from "@/components/shared/page-header";
+import { StatusBadge } from "@/components/shared/status-badge";
+import { QueryState, ReadOnlyBanner, Tabs } from "@/components/lab/common";
+import { OverviewTab } from "@/components/lab/session-overview-tab";
 import {
   BanksTab,
   MembersTab,
@@ -22,6 +18,7 @@ import {
 } from "@/components/lab/session-admin-tabs";
 
 const TABS = [
+  { id: "overview", label: "Overview" },
   { id: "members", label: "Members" },
   { id: "banks", label: "Banks" },
   { id: "permissions", label: "Permissions" },
@@ -32,7 +29,7 @@ const TABS = [
 export default function SessionControlPage() {
   const { id } = useParams<{ id: string }>();
   const session = useSession(id);
-  const [tab, setTab] = useState("members");
+  const [tab, setTab] = useState("overview");
   const s = session.data;
   const readOnly = s?.status === "archived";
   return (
@@ -40,24 +37,17 @@ export default function SessionControlPage() {
       <QueryState query={session}>
         {s && (
           <>
-            <p className="mb-2 text-sm">
-              <Link
-                href={`/instructor/classes/${s.class_id}`}
-                className="text-bank-accent hover:underline"
-              >
-                {s.class_name}
-              </Link>
-            </p>
             <PageHeader
               title={
-                <span className="flex items-center gap-3">
+                <span className="flex flex-wrap items-center gap-3">
                   {s.name} <StatusBadge status={s.status} />
                 </span>
               }
-              subtitle={`${s.kind === "exam" ? "Exam" : "Practice"} session`}
+              subtitle={`${s.class_name} · ${s.kind === "exam" ? "Exam" : "Practice"} session`}
             />
             {readOnly && <ReadOnlyBanner />}
             <Tabs tabs={TABS} value={tab} onChange={setTab} />
+            {tab === "overview" && <OverviewTab session={s} />}
             {tab === "members" && <MembersTab session={s} readOnly={readOnly} />}
             {tab === "banks" && <BanksTab session={s} readOnly={readOnly} />}
             {tab === "permissions" && (

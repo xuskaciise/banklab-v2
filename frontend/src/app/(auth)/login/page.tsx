@@ -32,9 +32,10 @@ export default function StudentLoginPage() {
   }
 
   return (
-    <Card>
+    <Card className="shadow-md [--card-spacing:--spacing(6)]">
       <CardHeader>
-        <CardTitle className="text-text-strong">Sign in</CardTitle>
+        <CardTitle className="text-xl font-semibold tracking-tight text-text-strong">Student sign in</CardTitle>
+        <p className="text-sm text-text-muted">Use your Student ID and password.</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} noValidate className="space-y-4">

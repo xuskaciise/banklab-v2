@@ -37,9 +37,10 @@ export default function StaffLoginPage() {
   }
 
   return (
-    <Card>
+    <Card className="shadow-md [--card-spacing:--spacing(6)]">
       <CardHeader>
-        <CardTitle className="text-text-strong">Staff sign in</CardTitle>
+        <CardTitle className="text-xl font-semibold tracking-tight text-text-strong">Staff sign in</CardTitle>
+        <p className="text-sm text-text-muted">Instructors and administrators.</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} noValidate className="space-y-4">

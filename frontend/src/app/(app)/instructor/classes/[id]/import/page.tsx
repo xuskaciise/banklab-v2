@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useClass, useCsvConfirm, useCsvPreview } from "@/lib/lab";
+import { useCsvConfirm, useCsvPreview } from "@/lib/lab";
 import type { CsvResult } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,7 +58,6 @@ function ResultTable({ result }: { result: CsvResult }) {
 
 export default function ImportPage() {
   const { id } = useParams<{ id: string }>();
-  const cls = useClass(id);
   const preview = useCsvPreview(id);
   const confirm = useCsvConfirm(id);
   const [text, setText] = useState("");
@@ -86,20 +86,12 @@ export default function ImportPage() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm">
-        <Link
-          href={`/instructor/classes/${id}`}
-          className="text-bank-accent hover:underline"
-        >
-          {cls.data?.name ?? "Back to class"}
-        </Link>
-      </p>
       <PageHeader
         title="Import students"
         subtitle="Columns: username, full_name, phone (header row required, max 500 rows)."
       />
       {!done && (
-        <div className="space-y-3 rounded-lg border border-border bg-card p-4">
+        <div className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-xs">
           <input
             type="file"
             accept=".csv,text/csv,text/plain"
@@ -158,7 +150,12 @@ export default function ImportPage() {
           ) : (
             <Button
               disabled={confirm.isPending || result.ok_count === 0}
-              onClick={() => confirm.mutate(text)}
+              onClick={() =>
+                confirm.mutate(text, {
+                  onSuccess: (r) =>
+                    toast.success(`Import finished: ${r.ok_count} imported`),
+                })
+              }
             >
               {confirm.isPending
                 ? "Importing…"

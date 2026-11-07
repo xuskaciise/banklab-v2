@@ -1,87 +1,51 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { KeyRound, LogOut, Menu } from "lucide-react";
 import { isStudent, useLogout, useMe } from "@/lib/auth";
-import { roleLabel, useSession, useSessionMe } from "@/lib/lab";
-import { Badge } from "@/components/ui/badge";
+import { roleLabel, useSessionMe } from "@/lib/lab";
 import { Button } from "@/components/ui/button";
+import { Dialog, SheetContent } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import {
+  SidebarContent,
+  initials,
+  roleName,
+} from "@/components/layout/sidebar";
 import { cn } from "@/lib/utils";
 
-type NavItem = { label: string; href: string; match: RegExp };
-
-const INSTRUCTOR_NAV: NavItem[] = [
-  { label: "Dashboard", href: "/instructor", match: /^\/instructor$/ },
-  {
-    label: "Classes",
-    href: "/instructor/classes",
-    match: /^\/instructor\/(classes|sessions)/,
-  },
-];
-const STUDENT_NAV: NavItem[] = [
-  { label: "My sessions", href: "/sessions", match: /^\/(sessions|s\/)/ },
-];
-
-function Sep() {
-  return <span className="text-text-muted">›</span>;
-}
+const STORAGE_KEY = "banklab.sidebar.collapsed";
 
 function StudentContext({ sessionId }: { sessionId: string }) {
   const { data } = useSessionMe(sessionId);
-  if (!data) return <span className="text-text-muted">Loading session…</span>;
+  if (!data) return null;
   return (
-    <>
-      <span className="flex items-center gap-2 text-text-muted">
-        {data.class_name} <Sep />
-        <span className="font-medium text-text-strong">{data.session_name}</span>
-        {data.bank_name && (
-          <>
-            <Sep /> <span className="text-text-strong">{data.bank_name}</span>
-          </>
-        )}
-      </span>
-      <span className="text-text-muted">
-        Business date:{" "}
-        <span className="font-medium text-text-strong">
+    <div className="hidden items-center gap-3 text-xs text-text-muted lg:flex">
+      {data.bank_name && (
+        <span>
+          Bank <span className="font-medium text-text-strong">{data.bank_name}</span>
+        </span>
+      )}
+      <span>
+        Business date{" "}
+        <span className="font-medium text-text-strong tabular-nums">
           {data.business_date ?? "—"}
         </span>
       </span>
-      <Badge className="bg-bank-sky-light text-bank-primary">
+      <span className="rounded-full bg-bank-sky-light px-2 py-0.5 font-medium text-bank-primary">
         {roleLabel(data.role)}
-      </Badge>
-    </>
+      </span>
+    </div>
   );
-}
-
-function InstructorSessionContext({ sessionId }: { sessionId: string }) {
-  const { data } = useSession(sessionId);
-  if (!data) return null;
-  return (
-    <span className="flex items-center gap-2 text-text-muted">
-      {data.class_name} <Sep />
-      <span className="font-medium text-text-strong">{data.name}</span>
-    </span>
-  );
-}
-
-function ContextBar({ student }: { student: boolean }) {
-  const pathname = usePathname();
-  const studentSession = pathname.match(/^\/s\/([^/]+)/)?.[1];
-  const staffSession = pathname.match(/^\/instructor\/sessions\/([^/]+)/)?.[1];
-  if (student && studentSession)
-    return <StudentContext sessionId={studentSession} />;
-  if (!student)
-    return (
-      <>
-        {staffSession && staffSession !== "new" && (
-          <InstructorSessionContext sessionId={staffSession} />
-        )}
-        <Badge className="bg-bank-sky-light text-bank-primary">
-          Viewing as instructor
-        </Badge>
-      </>
-    );
-  return null;
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -89,71 +53,118 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: user } = useMe();
   const logout = useLogout();
-  const student = isStudent(user);
-  const nav = student ? STUDENT_NAV : INSTRUCTOR_NAV;
+  const [collapsed, setCollapsed] = useState(false);
+  const [drawer, setDrawer] = useState(false);
+
+  useEffect(() => {
+    try {
+      // Restoring a persisted preference after hydration.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCollapsed(localStorage.getItem(STORAGE_KEY) === "1");
+    } catch {
+      /* storage unavailable: keep default */
+    }
+  }, []);
+
+  function toggle() {
+    setCollapsed((c) => {
+      const next = !c;
+      try {
+        localStorage.setItem(STORAGE_KEY, next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }
+
+  const studentSession = isStudent(user)
+    ? pathname.match(/^\/s\/([^/]+)/)?.[1]
+    : undefined;
+
   return (
     <div className="flex min-h-screen">
-      <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
-        <div className="px-6 py-5 text-xl font-semibold tracking-tight text-white">
-          BankLab
-        </div>
-        <nav aria-label="Main" className="flex flex-col gap-1 px-3">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={item.match.test(pathname) ? "page" : undefined}
-              className={cn(
-                "rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                item.match.test(pathname) &&
-                  "bg-sidebar-accent text-sidebar-accent-foreground",
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+      <aside
+        className={cn(
+          "sticky top-0 hidden h-screen shrink-0 bg-sidebar text-sidebar-foreground transition-[width] duration-200 md:block",
+          collapsed ? "w-[68px]" : "w-64",
+        )}
+      >
+        <SidebarContent user={user} collapsed={collapsed} onToggle={toggle} />
       </aside>
+
+      <Dialog open={drawer} onOpenChange={setDrawer}>
+        <SheetContent aria-label="Navigation">
+          <SidebarContent user={user} onNavigate={() => setDrawer(false)} />
+        </SheetContent>
+      </Dialog>
+
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex min-h-14 flex-wrap items-center gap-x-6 gap-y-2 border-b border-border bg-card px-6 py-2 text-sm">
-          {user && <ContextBar student={student} />}
-          <div className="ml-auto flex items-center gap-3">
-            {user && (
-              <>
-                <span className="font-medium text-text-strong">
-                  {user.full_name}
-                </span>
-                <Badge variant="secondary" className="capitalize">
-                  {user.platform_role}
-                </Badge>
-              </>
-            )}
-            {user && (
-              <Link
-                href="/change-password"
-                className="text-text-muted underline hover:text-text-strong"
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-card/90 px-4 backdrop-blur sm:px-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            aria-label="Open navigation"
+            onClick={() => setDrawer(true)}
+          >
+            <Menu />
+          </Button>
+          <Breadcrumbs className="flex-1" />
+          {studentSession && <StudentContext sessionId={studentSession} />}
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label="Account menu"
+                className="flex items-center gap-2 rounded-lg py-1 pr-2 pl-1 transition-colors hover:bg-hover"
               >
-                Change password
-              </Link>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={logout.isPending}
-              onClick={() =>
-                logout.mutate(undefined, {
-                  onSettled: () =>
-                    router.replace(
-                      user && !isStudent(user) ? "/staff/login" : "/login",
-                    ),
-                })
-              }
-            >
-              Log out
-            </Button>
-          </div>
+                <span className="flex size-8 items-center justify-center rounded-full bg-bank-navy text-xs font-semibold text-white">
+                  {initials(user.full_name)}
+                </span>
+                <span className="hidden text-left leading-tight sm:block">
+                  <span className="block max-w-40 truncate text-sm font-medium text-text-strong">
+                    {user.full_name}
+                  </span>
+                  <span className="block text-xs text-text-muted">
+                    {roleName(user.platform_role)}
+                  </span>
+                </span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-64">
+                <div className="px-2.5 py-2">
+                  <p className="truncate text-sm font-semibold text-text-strong">
+                    {user.full_name}
+                  </p>
+                  <p className="truncate text-xs text-text-muted">{user.username}</p>
+                  <span className="mt-1.5 inline-flex rounded-full bg-bank-sky-light px-2 py-0.5 text-xs font-medium text-bank-primary">
+                    {roleName(user.platform_role)}
+                  </span>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem render={<Link href="/change-password" />}>
+                  <KeyRound /> Change password
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  destructive
+                  disabled={logout.isPending}
+                  onClick={() =>
+                    logout.mutate(undefined, {
+                      onSettled: () =>
+                        router.replace(
+                          user && !isStudent(user) ? "/staff/login" : "/login",
+                        ),
+                    })
+                  }
+                >
+                  <LogOut /> Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </header>
-        <main className="flex-1 p-6">{children}</main>
+        <main className="mx-auto w-full max-w-7xl min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+          {children}
+        </main>
       </div>
     </div>
   );

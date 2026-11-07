@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useChangePassword } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -30,14 +31,19 @@ export default function ChangePasswordPage() {
     if (e.current || e.next || e.confirm) return;
     change.mutate(
       { current_password: current, new_password: next },
-      { onSuccess: () => router.replace("/") },
+      {
+        onSuccess: () => {
+          toast.success("Password changed");
+          router.replace("/");
+        },
+      },
     );
   }
 
   return (
-    <Card>
+    <Card className="shadow-md [--card-spacing:--spacing(6)]">
       <CardHeader>
-        <CardTitle className="text-text-strong">Change password</CardTitle>
+        <CardTitle className="text-xl font-semibold tracking-tight text-text-strong">Change password</CardTitle>
         <p className="text-sm text-text-muted">
           First login: choose a new password.
         </p>

@@ -1,29 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input, Select as SelectBase } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { EmptyState } from "@/components/shared/empty-state";
+import { LoadingSkeleton } from "@/components/shared/loading-skeleton";
 import { cn } from "@/lib/utils";
 
-export function PageHeader({
-  title,
-  subtitle,
-  actions,
-}: {
-  title: React.ReactNode;
-  subtitle?: React.ReactNode;
-  actions?: React.ReactNode;
-}) {
-  return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h1 className="text-2xl font-semibold text-text-strong">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-text-muted">{subtitle}</p>}
-      </div>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
-    </div>
-  );
-}
+export { PageHeader } from "@/components/shared/page-header";
+export { StatusBadge } from "@/components/shared/status-badge";
 
 export function errorText(e: unknown): string {
   return e instanceof Error ? e.message : "Something went wrong";
@@ -41,20 +27,12 @@ export function ErrorMsg({ error }: { error: unknown }) {
   );
 }
 
-export function Loading({ label = "Loading…" }: { label?: string }) {
-  return (
-    <div role="status" className="py-8 text-sm text-text-muted">
-      {label}
-    </div>
-  );
+export function Loading({ label = "Loading" }: { label?: string }) {
+  return <LoadingSkeleton label={label} />;
 }
 
 export function Empty({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border border-dashed border-border bg-card px-4 py-8 text-center text-sm text-text-muted">
-      {children}
-    </div>
-  );
+  return <EmptyState title="Nothing here yet" description={children} />;
 }
 
 /** Renders loading / error / children for a TanStack query. */
@@ -70,29 +48,6 @@ export function QueryState({
   return <>{children}</>;
 }
 
-const STATUS_STYLE: Record<string, string> = {
-  active: "bg-fin-success-bg text-fin-success-dark",
-  open: "bg-fin-success-bg text-fin-success-dark",
-  draft: "bg-fin-pending-bg text-fin-pending",
-  archived: "bg-hover text-text-muted",
-  closed: "bg-hover text-text-muted",
-  inactive: "bg-hover text-text-muted",
-};
-
-export function StatusBadge({
-  status,
-  label,
-}: {
-  status: string;
-  label?: string;
-}) {
-  return (
-    <Badge className={cn("capitalize", STATUS_STYLE[status] ?? "bg-hover text-text-muted")}>
-      {label ?? status}
-    </Badge>
-  );
-}
-
 export function Tabs({
   tabs,
   value,
@@ -103,7 +58,10 @@ export function Tabs({
   onChange: (id: string) => void;
 }) {
   return (
-    <div role="tablist" className="mb-4 flex gap-1 border-b border-border">
+    <div
+      role="tablist"
+      className="mb-5 flex gap-1 overflow-x-auto border-b border-border"
+    >
       {tabs.map((t) => (
         <button
           key={t.id}
@@ -112,7 +70,7 @@ export function Tabs({
           aria-selected={value === t.id}
           onClick={() => onChange(t.id)}
           className={cn(
-            "-mb-px border-b-2 px-4 py-2 text-sm font-medium",
+            "-mb-px shrink-0 border-b-2 px-3.5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors",
             value === t.id
               ? "border-bank-primary text-bank-primary"
               : "border-transparent text-text-muted hover:text-text-strong",
@@ -125,10 +83,11 @@ export function Tabs({
   );
 }
 
+/** Simple bordered table for small static lists; scrolls inside its box. */
 export function Table({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-border bg-card">
-      <table className="w-full text-left text-sm text-text-body">
+    <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-xs">
+      <table className="w-full min-w-max text-left text-sm text-text-body">
         {children}
       </table>
     </div>
@@ -143,7 +102,7 @@ export const Th = ({
 }) => (
   <th
     className={cn(
-      "border-b border-border px-3 py-2 text-xs font-medium uppercase tracking-wide text-text-muted",
+      "border-b border-border bg-surface px-4 py-2.5 text-xs font-medium tracking-wide whitespace-nowrap text-text-muted uppercase",
       className,
     )}
   >
@@ -157,26 +116,23 @@ export const Td = ({
   children?: React.ReactNode;
   className?: string;
 }) => (
-  <td className={cn("border-b border-border px-3 py-2 align-middle", className)}>
+  <td className={cn("border-b border-border px-4 py-3 align-middle", className)}>
     {children}
   </td>
 );
-
-const controlCls =
-  "h-9 rounded-md border border-border bg-card px-3 text-sm text-text-body outline-none focus-visible:ring-2 focus-visible:ring-bank-accent disabled:opacity-50";
 
 export function TextInput({
   className,
   ...props
 }: React.ComponentProps<"input">) {
-  return <input className={cn(controlCls, "w-full", className)} {...props} />;
+  return <Input className={className} {...props} />;
 }
 
 export function Select({
   className,
   ...props
 }: React.ComponentProps<"select">) {
-  return <select className={cn(controlCls, className)} {...props} />;
+  return <SelectBase className={cn("w-auto", className)} {...props} />;
 }
 
 export function Labeled({
@@ -194,16 +150,19 @@ export function Labeled({
     <label className="block space-y-1.5">
       <span className="text-sm font-medium text-text-strong">{label}</span>
       {children}
-      {hint && !error && <span className="block text-xs text-text-muted">{hint}</span>}
+      {hint && !error && (
+        <span className="block text-xs text-text-muted">{hint}</span>
+      )}
       {error && <span className="block text-sm text-fin-danger">{error}</span>}
     </label>
   );
 }
 
-/** Two-step inline confirmation (no browser dialogs). */
+/** Button that asks for confirmation in a dialog before running the action. */
 export function ConfirmButton({
   label,
   confirmLabel = "Confirm",
+  title,
   message,
   onConfirm,
   pending,
@@ -212,40 +171,33 @@ export function ConfirmButton({
 }: {
   label: string;
   confirmLabel?: string;
+  title?: string;
   message: string;
   onConfirm: () => void;
   pending?: boolean;
   variant?: "outline" | "destructive" | "default";
   size?: "sm" | "default";
 }) {
-  const [asking, setAsking] = useState(false);
-  if (!asking)
-    return (
-      <Button variant={variant} size={size} onClick={() => setAsking(true)}>
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button variant={variant} size={size} onClick={() => setOpen(true)}>
         {label}
       </Button>
-    );
-  return (
-    <div
-      role="alertdialog"
-      aria-label={message}
-      className="flex flex-wrap items-center gap-2 rounded-md bg-fin-pending-bg px-3 py-1.5 text-sm text-text-strong"
-    >
-      <span>{message}</span>
-      <Button
-        size="sm"
-        disabled={pending}
-        onClick={() => {
+      <ConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={title ?? label}
+        description={message}
+        confirmLabel={confirmLabel === "Confirm" ? label : confirmLabel}
+        destructive={variant === "destructive"}
+        pending={pending}
+        onConfirm={() => {
           onConfirm();
-          setAsking(false);
+          setOpen(false);
         }}
-      >
-        {pending ? "Working…" : confirmLabel}
-      </Button>
-      <Button size="sm" variant="outline" onClick={() => setAsking(false)}>
-        Cancel
-      </Button>
-    </div>
+      />
+    </>
   );
 }
 
@@ -253,7 +205,7 @@ export function ReadOnlyBanner() {
   return (
     <div
       role="status"
-      className="mb-4 rounded-md bg-hover px-4 py-2 text-sm font-medium text-text-muted ring-1 ring-border"
+      className="mb-4 rounded-lg border border-fin-pending/30 bg-fin-pending-bg px-4 py-2.5 text-sm font-medium text-fin-pending"
     >
       Read-only: this session is archived. No changes can be made.
     </div>

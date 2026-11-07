@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import type { PermissionCell, SessionOut } from "@/lib/api/types";
 import {
   BANK_ROLES,
@@ -300,6 +301,10 @@ export function SettingsTab({ session }: { session: SessionOut }) {
   const [groups, setGroups] = useState("2");
   const [groupErr, setGroupErr] = useState<string | null>(null);
   const perGroup = session.structure === "per_group";
+  const ok = (m: string) => ({
+    onSuccess: () => toast.success(m),
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   function open() {
     if (perGroup) {
@@ -309,15 +314,15 @@ export function SettingsTab({ session }: { session: SessionOut }) {
         return;
       }
       setGroupErr(null);
-      t.mutate({ action: "open", group_count: n });
+      t.mutate({ action: "open", group_count: n }, ok("Session opened"));
     } else {
-      t.mutate({ action: "open" });
+      t.mutate({ action: "open" }, ok("Session opened"));
     }
   }
 
   return (
     <div className="space-y-6">
-      <section className="space-y-3 rounded-lg border border-border bg-card p-4">
+      <section className="space-y-3 rounded-xl border border-border bg-card p-5 shadow-xs">
         <div className="flex items-center gap-3">
           <h3 className="font-medium text-text-strong">Status</h3>
           <StatusBadge status={session.status} />
@@ -365,7 +370,7 @@ export function SettingsTab({ session }: { session: SessionOut }) {
             variant="destructive"
             size="default"
             pending={t.isPending}
-            onConfirm={() => t.mutate({ action: "archive" })}
+            onConfirm={() => t.mutate({ action: "archive" }, ok("Session archived"))}
           />
         )}
         {session.status === "archived" && (
@@ -374,7 +379,7 @@ export function SettingsTab({ session }: { session: SessionOut }) {
             message="Re-open this archived session?"
             size="default"
             pending={t.isPending}
-            onConfirm={() => t.mutate({ action: "reopen" })}
+            onConfirm={() => t.mutate({ action: "reopen" }, ok("Session re-opened"))}
           />
         )}
         <ErrorMsg error={t.error} />

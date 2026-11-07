@@ -1,12 +1,12 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   BANK_ROLES,
   ROLE_LABEL,
-  useClass,
   useCreateSession,
   useTemplates,
 } from "@/lib/lab";
@@ -23,7 +23,6 @@ import {
 
 function Wizard({ classId }: { classId: string }) {
   const router = useRouter();
-  const cls = useClass(classId);
   const templates = useTemplates(classId);
   const create = useCreateSession();
 
@@ -76,20 +75,17 @@ function Wizard({ classId }: { classId: string }) {
         default_visibility: eVisibility,
         learning_panel: ePanel,
       },
-      { onSuccess: (s) => router.push(`/instructor/sessions/${s.id}`) },
+      {
+        onSuccess: (s) => {
+          toast.success(`Session "${s.name}" created as draft`);
+          router.push(`/instructor/sessions/${s.id}`);
+        },
+      },
     );
   }
 
   return (
     <div className="max-w-2xl">
-      <p className="mb-2 text-sm">
-        <Link
-          href={`/instructor/classes/${classId}`}
-          className="text-bank-accent hover:underline"
-        >
-          {cls.data?.name ?? "Back to class"}
-        </Link>
-      </p>
       <PageHeader
         title="Open new session"
         subtitle="The session is created as a draft. Open it from its control page once members are ready."
@@ -97,7 +93,7 @@ function Wizard({ classId }: { classId: string }) {
       <form
         onSubmit={submit}
         noValidate
-        className="space-y-5 rounded-lg border border-border bg-card p-5"
+        className="space-y-5 rounded-xl border border-border bg-card p-6 shadow-xs"
       >
         <Labeled label="Session name" error={errors.name}>
           <TextInput value={name} onChange={(e) => setName(e.target.value)} />

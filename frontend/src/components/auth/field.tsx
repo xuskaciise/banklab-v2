@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 export function Field({
   id,
@@ -16,14 +16,11 @@ export function Field({
       <label htmlFor={id} className="text-sm font-medium text-text-strong">
         {label}
       </label>
-      <input
+      <Input
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
-        className={cn(
-          "h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-text-body outline-none focus-visible:ring-2 focus-visible:ring-bank-accent aria-invalid:border-fin-danger",
-          className,
-        )}
+        className={className ?? "h-10"}
         {...props}
       />
       {error && (
