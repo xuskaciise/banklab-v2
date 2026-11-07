@@ -1,23 +1,96 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { isStudent, useLogout, useMe } from "@/lib/auth";
+import { roleLabel, useSession, useSessionMe } from "@/lib/lab";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = ["Dashboard", "Customers", "Accounts", "Teller", "Reports"];
+type NavItem = { label: string; href: string; match: RegExp };
 
-const CONTEXT_ITEMS = [
-  { label: "Session", value: "—" },
-  { label: "Business date", value: "—" },
-  { label: "Role", value: "—" },
+const INSTRUCTOR_NAV: NavItem[] = [
+  { label: "Dashboard", href: "/instructor", match: /^\/instructor$/ },
+  {
+    label: "Classes",
+    href: "/instructor/classes",
+    match: /^\/instructor\/(classes|sessions)/,
+  },
 ];
+const STUDENT_NAV: NavItem[] = [
+  { label: "My sessions", href: "/sessions", match: /^\/(sessions|s\/)/ },
+];
+
+function Sep() {
+  return <span className="text-text-muted">›</span>;
+}
+
+function StudentContext({ sessionId }: { sessionId: string }) {
+  const { data } = useSessionMe(sessionId);
+  if (!data) return <span className="text-text-muted">Loading session…</span>;
+  return (
+    <>
+      <span className="flex items-center gap-2 text-text-muted">
+        {data.class_name} <Sep />
+        <span className="font-medium text-text-strong">{data.session_name}</span>
+        {data.bank_name && (
+          <>
+            <Sep /> <span className="text-text-strong">{data.bank_name}</span>
+          </>
+        )}
+      </span>
+      <span className="text-text-muted">
+        Business date:{" "}
+        <span className="font-medium text-text-strong">
+          {data.business_date ?? "—"}
+        </span>
+      </span>
+      <Badge className="bg-bank-sky-light text-bank-primary">
+        {roleLabel(data.role)}
+      </Badge>
+    </>
+  );
+}
+
+function InstructorSessionContext({ sessionId }: { sessionId: string }) {
+  const { data } = useSession(sessionId);
+  if (!data) return null;
+  return (
+    <span className="flex items-center gap-2 text-text-muted">
+      {data.class_name} <Sep />
+      <span className="font-medium text-text-strong">{data.name}</span>
+    </span>
+  );
+}
+
+function ContextBar({ student }: { student: boolean }) {
+  const pathname = usePathname();
+  const studentSession = pathname.match(/^\/s\/([^/]+)/)?.[1];
+  const staffSession = pathname.match(/^\/instructor\/sessions\/([^/]+)/)?.[1];
+  if (student && studentSession)
+    return <StudentContext sessionId={studentSession} />;
+  if (!student)
+    return (
+      <>
+        {staffSession && staffSession !== "new" && (
+          <InstructorSessionContext sessionId={staffSession} />
+        )}
+        <Badge className="bg-bank-sky-light text-bank-primary">
+          Viewing as instructor
+        </Badge>
+      </>
+    );
+  return null;
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { data: user } = useMe();
   const logout = useLogout();
+  const student = isStudent(user);
+  const nav = student ? STUDENT_NAV : INSTRUCTOR_NAV;
   return (
     <div className="flex min-h-screen">
       <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground">
@@ -25,25 +98,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           BankLab
         </div>
         <nav aria-label="Main" className="flex flex-col gap-1 px-3">
-          {NAV_ITEMS.map((label) => (
+          {nav.map((item) => (
             <Link
-              key={label}
-              href="#"
-              className="rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              key={item.href}
+              href={item.href}
+              aria-current={item.match.test(pathname) ? "page" : undefined}
+              className={cn(
+                "rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                item.match.test(pathname) &&
+                  "bg-sidebar-accent text-sidebar-accent-foreground",
+              )}
             >
-              {label}
+              {item.label}
             </Link>
           ))}
         </nav>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 items-center gap-6 border-b border-border bg-card px-6 text-sm">
-          {CONTEXT_ITEMS.map(({ label, value }) => (
-            <span key={label} className="text-text-muted">
-              {label}:{" "}
-              <span className="font-medium text-text-strong">{value}</span>
-            </span>
-          ))}
+        <header className="flex min-h-14 flex-wrap items-center gap-x-6 gap-y-2 border-b border-border bg-card px-6 py-2 text-sm">
+          {user && <ContextBar student={student} />}
           <div className="ml-auto flex items-center gap-3">
             {user && (
               <>
@@ -70,7 +143,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               onClick={() =>
                 logout.mutate(undefined, {
                   onSettled: () =>
-                    router.replace(user && !isStudent(user) ? "/staff/login" : "/login"),
+                    router.replace(
+                      user && !isStudent(user) ? "/staff/login" : "/login",
+                    ),
                 })
               }
             >

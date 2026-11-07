@@ -11,3 +11,26 @@ export type StudentLoginRequest = Schemas["StudentLoginIn"];
 export type LoginResponse = Schemas["LoginOut"];
 export type ChangePasswordRequest = Schemas["ChangePasswordIn"];
 export type HealthResponse = Schemas["HealthOut"];
+
+// Lab 1.3 (classes, sessions, banks, members, permissions)
+export type ClassOut = Schemas["ClassOut"];
+export type ClassIn = Schemas["ClassIn"];
+export type StudentOut = Schemas["StudentOut"];
+export type AddStudentIn = Schemas["AddStudentIn"];
+export type UpdateStudentIn = Schemas["UpdateStudentIn"];
+export type CsvResult = Schemas["CsvResultOut"];
+export type CsvRow = Schemas["CsvRowOut"];
+export type TemplateOut = Schemas["TemplateOut"];
+export type TemplateIn = Schemas["TemplateIn"];
+export type SessionOut = Schemas["SessionOut"];
+export type SessionIn = Schemas["SessionIn"];
+export type BankOut = Schemas["BankOut"];
+export type BusinessDayOut = Schemas["BusinessDayOut"];
+export type MemberOut = Schemas["MemberOut"];
+export type AddMembersIn = Schemas["AddMembersIn"];
+export type PermissionCell = Schemas["PermissionCellOut"];
+export type OverrideIn = Schemas["OverrideIn"];
+export type MySession = Schemas["MySessionOut"];
+export type SessionMe = Schemas["SessionMeOut"];
+export type AuditOut = Schemas["AuditOut"];
+export type PagedAudit = Schemas["PagedAuditOut"];

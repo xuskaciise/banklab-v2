@@ -157,6 +157,419 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/classes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Classes List */
+        get: operations["lab_classes_list"];
+        put?: never;
+        /** Classes Create */
+        post: operations["lab_classes_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/classes/{class_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Classes Get */
+        get: operations["lab_classes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/classes/{class_id}/students": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Students List */
+        get: operations["lab_students_list"];
+        put?: never;
+        /** Students Add */
+        post: operations["lab_students_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/classes/{class_id}/students/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Students Update */
+        patch: operations["lab_students_update"];
+        trace?: never;
+    };
+    "/api/classes/{class_id}/students/import/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Students Import Preview */
+        post: operations["lab_students_import_preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/classes/{class_id}/students/import/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Students Import Confirm */
+        post: operations["lab_students_import_confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Templates List */
+        get: operations["lab_templates_list"];
+        put?: never;
+        /** Templates Create */
+        post: operations["lab_templates_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/classes/{class_id}/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sessions List */
+        get: operations["lab_sessions_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sessions Create */
+        post: operations["lab_sessions_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sessions Get */
+        get: operations["lab_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sessions Open */
+        post: operations["lab_sessions_open"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sessions Archive */
+        post: operations["lab_sessions_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sessions Reopen */
+        post: operations["lab_sessions_reopen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/banks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Banks List */
+        get: operations["lab_banks_list"];
+        put?: never;
+        /** Banks Add */
+        post: operations["lab_banks_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/business-days": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Business Days */
+        get: operations["lab_business_days"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Members List */
+        get: operations["lab_members_list"];
+        put?: never;
+        /** Members Add */
+        post: operations["lab_members_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/members/{member_id}/bank": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Members Move */
+        post: operations["lab_members_move"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/members/{member_id}/visibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Members Visibility */
+        post: operations["lab_members_visibility"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/members/{member_id}/role": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Members Assign Role */
+        post: operations["lab_members_assign_role"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Permissions Matrix */
+        get: operations["lab_permissions_matrix"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/permissions/overrides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Permissions Set */
+        put: operations["lab_permissions_set"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/permissions/overrides/clear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Permissions Clear */
+        post: operations["lab_permissions_clear"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/my/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Sessions */
+        get: operations["lab_my_sessions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Session Me */
+        get: operations["lab_session_me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -220,6 +633,8 @@ export interface components {
             action?: string | null;
             /** Actor */
             actor?: string | null;
+            /** Session Id */
+            session_id?: string | null;
             /** Date From */
             date_from?: string | null;
             /** Date To */
@@ -278,6 +693,441 @@ export interface components {
             items: components["schemas"]["AuditOut"][];
             /** Count */
             count: number;
+        };
+        /** ClassOut */
+        ClassOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Code */
+            code: string;
+            /**
+             * Instructor Id
+             * Format: uuid
+             */
+            instructor_id: string;
+            /** Instructor Name */
+            instructor_name: string;
+        };
+        /** ClassIn */
+        ClassIn: {
+            /** Name */
+            name: string;
+            /** Code */
+            code: string;
+            /** Instructor Id */
+            instructor_id?: string | null;
+        };
+        /** StudentOut */
+        StudentOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Username */
+            username: string;
+            /** Full Name */
+            full_name: string;
+            /** Phone */
+            phone: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Must Change Password */
+            must_change_password: boolean;
+        };
+        /** AddStudentOut */
+        AddStudentOut: {
+            student: components["schemas"]["StudentOut"];
+            /** Created */
+            created: boolean;
+        };
+        /** AddStudentIn */
+        AddStudentIn: {
+            /** Username */
+            username: string;
+            /**
+             * Full Name
+             * @default
+             */
+            full_name: string;
+            /**
+             * Phone
+             * @default
+             */
+            phone: string;
+        };
+        /** UpdateStudentIn */
+        UpdateStudentIn: {
+            /** Full Name */
+            full_name?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Is Active */
+            is_active?: boolean | null;
+        };
+        /** CsvResultOut */
+        CsvResultOut: {
+            /** Rows */
+            rows: components["schemas"]["CsvRowOut"][];
+            /** Ok Count */
+            ok_count: number;
+            /** Error Count */
+            error_count: number;
+            /** Imported */
+            imported: boolean;
+        };
+        /** CsvRowOut */
+        CsvRowOut: {
+            /** Line */
+            line: number;
+            /** Username */
+            username: string;
+            /** Full Name */
+            full_name: string;
+            /** Phone */
+            phone: string;
+            /** Action */
+            action: string;
+            /** Error */
+            error: string;
+        };
+        /** CsvIn */
+        CsvIn: {
+            /** Csv Text */
+            csv_text: string;
+        };
+        /** TemplateOut */
+        TemplateOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Class Id */
+            class_id?: string | null;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Structure */
+            structure: string;
+            /** Allowed Roles */
+            allowed_roles: string[];
+            /** Default Visibility */
+            default_visibility: string;
+            /** Learning Panel */
+            learning_panel: boolean;
+            /** Seed Profile */
+            seed_profile: string;
+        };
+        /** TemplateIn */
+        TemplateIn: {
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Structure */
+            structure: string;
+            /** Allowed Roles */
+            allowed_roles: string[];
+            /** Default Visibility */
+            default_visibility: string;
+            /**
+             * Learning Panel
+             * @default true
+             */
+            learning_panel: boolean;
+            /**
+             * Seed Profile
+             * @default
+             */
+            seed_profile: string;
+            /** Class Id */
+            class_id?: string | null;
+        };
+        /** SessionOut */
+        SessionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Class Id
+             * Format: uuid
+             */
+            class_id: string;
+            /** Class Name */
+            class_name: string;
+            /** Template Id */
+            template_id?: string | null;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Structure */
+            structure: string;
+            /** Status */
+            status: string;
+            /** Allowed Roles */
+            allowed_roles: string[];
+            /** Default Visibility */
+            default_visibility: string;
+            /** Learning Panel */
+            learning_panel: boolean;
+            /** Seed Profile */
+            seed_profile: string;
+            /** Opened At */
+            opened_at?: string | null;
+            /** Archived At */
+            archived_at?: string | null;
+        };
+        /** SessionIn */
+        SessionIn: {
+            /**
+             * Class Id
+             * Format: uuid
+             */
+            class_id: string;
+            /** Name */
+            name: string;
+            /** Template Id */
+            template_id?: string | null;
+            /** Kind */
+            kind?: string | null;
+            /** Structure */
+            structure?: string | null;
+            /** Allowed Roles */
+            allowed_roles?: string[] | null;
+            /** Default Visibility */
+            default_visibility?: string | null;
+            /** Learning Panel */
+            learning_panel?: boolean | null;
+            /** Seed Profile */
+            seed_profile?: string | null;
+        };
+        /** OpenSessionIn */
+        OpenSessionIn: {
+            /** Group Count */
+            group_count?: number | null;
+        };
+        /** BankOut */
+        BankOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /** Name */
+            name: string;
+            /** Group No */
+            group_no?: number | null;
+        };
+        /** BusinessDayOut */
+        BusinessDayOut: {
+            /**
+             * Bank Id
+             * Format: uuid
+             */
+            bank_id: string;
+            /** Bank Name */
+            bank_name: string;
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Status */
+            status: string;
+        };
+        /** MemberOut */
+        MemberOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Username */
+            username: string;
+            /** Full Name */
+            full_name: string;
+            /** Bank Id */
+            bank_id?: string | null;
+            /** Bank Name */
+            bank_name?: string | null;
+            /** Visibility Override */
+            visibility_override?: string | null;
+            /** Role */
+            role?: string | null;
+        };
+        /** AddMembersIn */
+        AddMembersIn: {
+            /**
+             * User Ids
+             * @default []
+             */
+            user_ids: string[];
+            /**
+             * All Enrolled
+             * @default false
+             */
+            all_enrolled: boolean;
+            /** Bank Id */
+            bank_id?: string | null;
+        };
+        /** MoveMemberIn */
+        MoveMemberIn: {
+            /**
+             * Bank Id
+             * Format: uuid
+             */
+            bank_id: string;
+        };
+        /** VisibilityIn */
+        VisibilityIn: {
+            /** Visibility */
+            visibility?: string | null;
+        };
+        /** AssignmentOut */
+        AssignmentOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Session Member Id
+             * Format: uuid
+             */
+            session_member_id: string;
+            /** Role */
+            role: string;
+            /**
+             * Active From
+             * Format: date-time
+             */
+            active_from: string;
+            /** Active To */
+            active_to?: string | null;
+        };
+        /** RoleIn */
+        RoleIn: {
+            /** Role */
+            role: string;
+        };
+        /** PermissionCellOut */
+        PermissionCellOut: {
+            /** Role */
+            role: string;
+            /** Permission Code */
+            permission_code: string;
+            /** Description */
+            description: string;
+            /** Category */
+            category: string;
+            /** Default Scope */
+            default_scope?: string | null;
+            /** Override */
+            override?: boolean | null;
+            /** Effective Scope */
+            effective_scope?: string | null;
+        };
+        /** OverrideOut */
+        OverrideOut: {
+            /** Role */
+            role: string;
+            /** Permission Code */
+            permission_code: string;
+            /** Allowed */
+            allowed: boolean;
+        };
+        /** OverrideIn */
+        OverrideIn: {
+            /** Role */
+            role: string;
+            /** Permission Code */
+            permission_code: string;
+            /** Allowed */
+            allowed: boolean;
+        };
+        /** OverrideKeyIn */
+        OverrideKeyIn: {
+            /** Role */
+            role: string;
+            /** Permission Code */
+            permission_code: string;
+        };
+        /** MySessionOut */
+        MySessionOut: {
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Class Name */
+            class_name: string;
+            /** Bank Name */
+            bank_name?: string | null;
+            /** Role */
+            role?: string | null;
+        };
+        /** PermissionGrantOut */
+        PermissionGrantOut: {
+            /** Code */
+            code: string;
+            /** Scope */
+            scope: string;
+        };
+        /** SessionMeOut */
+        SessionMeOut: {
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /** Session Name */
+            session_name: string;
+            /** Kind */
+            kind: string;
+            /** Status */
+            status: string;
+            /** Class Name */
+            class_name: string;
+            /** Bank Id */
+            bank_id?: string | null;
+            /** Bank Name */
+            bank_name?: string | null;
+            /** Business Date */
+            business_date?: string | null;
+            /** Role */
+            role?: string | null;
+            /** Visibility */
+            visibility: string;
+            /** Learning Panel */
+            learning_panel: boolean;
+            /** Read Only */
+            read_only: boolean;
+            /** Permissions */
+            permissions: components["schemas"]["PermissionGrantOut"][];
         };
     };
     responses: never;
@@ -463,6 +1313,7 @@ export interface operations {
             query?: {
                 action?: string | null;
                 actor?: string | null;
+                session_id?: string | null;
                 date_from?: string | null;
                 date_to?: string | null;
                 page?: number;
@@ -481,6 +1332,692 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PagedAuditOut"];
+                };
+            };
+        };
+    };
+    lab_classes_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassOut"][];
+                };
+            };
+        };
+    };
+    lab_classes_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClassIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassOut"];
+                };
+            };
+        };
+    };
+    lab_classes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                class_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassOut"];
+                };
+            };
+        };
+    };
+    lab_students_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                class_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentOut"][];
+                };
+            };
+        };
+    };
+    lab_students_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                class_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddStudentIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AddStudentOut"];
+                };
+            };
+        };
+    };
+    lab_students_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                class_id: string;
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStudentIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentOut"];
+                };
+            };
+        };
+    };
+    lab_students_import_preview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                class_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CsvIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CsvResultOut"];
+                };
+            };
+        };
+    };
+    lab_students_import_confirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                class_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CsvIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CsvResultOut"];
+                };
+            };
+        };
+    };
+    lab_templates_list: {
+        parameters: {
+            query?: {
+                class_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateOut"][];
+                };
+            };
+        };
+    };
+    lab_templates_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplateIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateOut"];
+                };
+            };
+        };
+    };
+    lab_sessions_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                class_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionOut"][];
+                };
+            };
+        };
+    };
+    lab_sessions_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SessionIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionOut"];
+                };
+            };
+        };
+    };
+    lab_sessions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionOut"];
+                };
+            };
+        };
+    };
+    lab_sessions_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpenSessionIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionOut"];
+                };
+            };
+        };
+    };
+    lab_sessions_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionOut"];
+                };
+            };
+        };
+    };
+    lab_sessions_reopen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionOut"];
+                };
+            };
+        };
+    };
+    lab_banks_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankOut"][];
+                };
+            };
+        };
+    };
+    lab_banks_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BankOut"];
+                };
+            };
+        };
+    };
+    lab_business_days: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BusinessDayOut"][];
+                };
+            };
+        };
+    };
+    lab_members_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberOut"][];
+                };
+            };
+        };
+    };
+    lab_members_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddMembersIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberOut"][];
+                };
+            };
+        };
+    };
+    lab_members_move: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveMemberIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberOut"];
+                };
+            };
+        };
+    };
+    lab_members_visibility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisibilityIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberOut"];
+                };
+            };
+        };
+    };
+    lab_members_assign_role: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentOut"];
+                };
+            };
+        };
+    };
+    lab_permissions_matrix: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermissionCellOut"][];
+                };
+            };
+        };
+    };
+    lab_permissions_set: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OverrideIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OverrideOut"];
+                };
+            };
+        };
+    };
+    lab_permissions_clear: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OverrideKeyIn"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    lab_my_sessions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MySessionOut"][];
+                };
+            };
+        };
+    };
+    lab_session_me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionMeOut"];
                 };
             };
         };
