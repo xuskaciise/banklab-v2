@@ -18,6 +18,7 @@ from apps.accounts import services as accounts
 from apps.accounts.models import PlatformRole, User
 from apps.audit import services as audit
 from apps.banking.models import BusinessDay
+from apps.ledger import services as ledger
 from apps.rbac import services as rbac
 from apps.rbac.models import BankRole, Permission
 
@@ -563,6 +564,7 @@ def _create_bank(actor, session: Session, name: str, group_no, business_date) ->
     with _conflict_guard():
         bank = Bank.objects.create(session=session, name=name, group_no=group_no)
         BusinessDay.objects.create(bank=bank, date=business_date)
+        ledger.provision_bank_coa(bank)
     _audit(
         actor,
         "lab.bank_created",

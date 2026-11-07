@@ -570,6 +570,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sessions/{session_id}/banks/{bank_id}/gl/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Staff Gl Accounts */
+        get: operations["ledger_staff_gl_accounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/banks/{bank_id}/journal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Staff Journal List */
+        get: operations["ledger_staff_journal_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/banks/{bank_id}/journal/{entry_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Staff Journal Get */
+        get: operations["ledger_staff_journal_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/gl/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gl Accounts */
+        get: operations["ledger_gl_accounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/journal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Journal List */
+        get: operations["ledger_journal_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/journal/{entry_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Journal Get */
+        get: operations["ledger_journal_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1128,6 +1230,134 @@ export interface components {
             read_only: boolean;
             /** Permissions */
             permissions: components["schemas"]["PermissionGrantOut"][];
+        };
+        /** BalanceOut */
+        BalanceOut: {
+            /** Currency */
+            currency: string;
+            /** Balance */
+            balance: number | string;
+        };
+        /** GLAccountOut */
+        GLAccountOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
+            /** Parent Id */
+            parent_id: string | null;
+            /** Postable */
+            postable: boolean;
+            /** System Tag */
+            system_tag: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Balances */
+            balances: components["schemas"]["BalanceOut"][];
+        };
+        /** JournalFilters */
+        JournalFilters: {
+            /** Currency */
+            currency?: string | null;
+            /** Date From */
+            date_from?: string | null;
+            /** Date To */
+            date_to?: string | null;
+        };
+        /** JournalEntryOut */
+        JournalEntryOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Entry No */
+            entry_no: number;
+            /**
+             * Business Date
+             * Format: date
+             */
+            business_date: string;
+            /** Currency */
+            currency: string;
+            /** Source Type */
+            source_type: string;
+            /** Source Id */
+            source_id: string | null;
+            /** Description */
+            description: string;
+            /** Reversal Of Id */
+            reversal_of_id: string | null;
+            /** Posted By Id */
+            posted_by_id: string | null;
+            /**
+             * Posted At
+             * Format: date-time
+             */
+            posted_at: string;
+        };
+        /** PagedJournalEntryOut */
+        PagedJournalEntryOut: {
+            /** Items */
+            items: components["schemas"]["JournalEntryOut"][];
+            /** Count */
+            count: number;
+        };
+        /** JournalEntryDetailOut */
+        JournalEntryDetailOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Entry No */
+            entry_no: number;
+            /**
+             * Business Date
+             * Format: date
+             */
+            business_date: string;
+            /** Currency */
+            currency: string;
+            /** Source Type */
+            source_type: string;
+            /** Source Id */
+            source_id: string | null;
+            /** Description */
+            description: string;
+            /** Reversal Of Id */
+            reversal_of_id: string | null;
+            /** Posted By Id */
+            posted_by_id: string | null;
+            /**
+             * Posted At
+             * Format: date-time
+             */
+            posted_at: string;
+            /** Lines */
+            lines: components["schemas"]["JournalLineOut"][];
+        };
+        /** JournalLineOut */
+        JournalLineOut: {
+            /** Id */
+            id: number;
+            /** Gl Code */
+            gl_code: string;
+            /** Gl Name */
+            gl_name: string;
+            /** Currency */
+            currency: string;
+            /** Debit */
+            debit: number | string;
+            /** Credit */
+            credit: number | string;
         };
     };
     responses: never;
@@ -2018,6 +2248,155 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SessionMeOut"];
+                };
+            };
+        };
+    };
+    ledger_staff_gl_accounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                bank_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GLAccountOut"][];
+                };
+            };
+        };
+    };
+    ledger_staff_journal_list: {
+        parameters: {
+            query?: {
+                currency?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                page?: number;
+                page_size?: number | null;
+            };
+            header?: never;
+            path: {
+                session_id: string;
+                bank_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedJournalEntryOut"];
+                };
+            };
+        };
+    };
+    ledger_staff_journal_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                bank_id: string;
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntryDetailOut"];
+                };
+            };
+        };
+    };
+    ledger_gl_accounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GLAccountOut"][];
+                };
+            };
+        };
+    };
+    ledger_journal_list: {
+        parameters: {
+            query?: {
+                currency?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                page?: number;
+                page_size?: number | null;
+            };
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedJournalEntryOut"];
+                };
+            };
+        };
+    };
+    ledger_journal_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalEntryDetailOut"];
                 };
             };
         };

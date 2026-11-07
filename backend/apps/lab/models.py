@@ -78,6 +78,13 @@ class SessionTemplate(TimeStampedModel):
     default_visibility = models.CharField(max_length=3, choices=Visibility.choices)
     learning_panel = models.BooleanField(default=True)
     seed_profile = models.CharField(max_length=80, blank=True, default="")
+    coa_template = models.ForeignKey(
+        "ledger.CoaTemplate",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="session_templates",
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+"
     )
