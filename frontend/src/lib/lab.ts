@@ -267,15 +267,16 @@ export const useClearOverride = (sessionId: string) =>
   );
 
 // ---- audit ----
-export const useAudit = (sessionId: string, page: number, action: string) =>
+export const useAudit = (sessionId: string, page: number, action: string, actor = "") =>
   useQuery({
-    queryKey: ["audit", sessionId, page, action],
+    queryKey: ["audit", sessionId, page, action, actor],
     queryFn: () => {
       const q = new URLSearchParams({
         session_id: sessionId,
         page: String(page),
       });
       if (action) q.set("action", action);
+      if (actor) q.set("actor", actor);
       return apiFetch<PagedAudit>(`/api/audit?${q}`);
     },
   });
@@ -304,4 +305,53 @@ export function humanizeAction(action: string) {
   const last = action.split(".").pop() ?? action;
   const s = last.replace(/_/g, " ");
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/** Known audit action types: label + category (raw code stays as secondary text). */
+export const ACTION_META: Record<string, { label: string; category: string }> = {
+  "lab.session_created": { label: "Session created", category: "Session" },
+  "lab.session_opened": { label: "Session opened", category: "Session" },
+  "lab.session_archived": { label: "Session archived", category: "Session" },
+  "lab.session_reopened": { label: "Session re-opened", category: "Session" },
+  "lab.bank_created": { label: "Bank created", category: "Banks" },
+  "lab.member_added": { label: "Member added", category: "Members" },
+  "lab.member_moved": { label: "Member moved", category: "Members" },
+  "lab.role_assigned": { label: "Role assigned", category: "Roles" },
+  "lab.visibility_override_set": { label: "Visibility changed", category: "Members" },
+  "lab.permission_override_set": { label: "Permission overridden", category: "Permissions" },
+  "lab.permission_override_cleared": { label: "Permission reset", category: "Permissions" },
+};
+export const SESSION_ACTION_OPTIONS = Object.entries(ACTION_META).map(
+  ([code, m]) => ({ code, ...m }),
+);
+export const actionLabel = (code: string) =>
+  ACTION_META[code]?.label ?? humanizeAction(code);
+export const actionCategory = (code: string) =>
+  ACTION_META[code]?.category ?? (code.split(".")[0] || "Other");
+
+export function relativeTime(iso: string, now = Date.now()) {
+  const s = Math.round((now - new Date(iso).getTime()) / 1000);
+  if (s < 45) return "just now";
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} h ago`;
+  const d = Math.round(h / 24);
+  if (d < 7) return `${d} d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+export function dayLabel(iso: string) {
+  const d = new Date(iso);
+  const today = new Date();
+  const yest = new Date();
+  yest.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return "Today";
+  if (d.toDateString() === yest.toDateString()) return "Yesterday";
+  return d.toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }

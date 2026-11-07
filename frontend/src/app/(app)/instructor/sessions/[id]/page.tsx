@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import { useSession } from "@/lib/lab";
+import { useBanks, useMembers, useSession } from "@/lib/lab";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { QueryState, ReadOnlyBanner, Tabs } from "@/components/lab/common";
@@ -17,10 +17,10 @@ import {
   SettingsTab,
 } from "@/components/lab/session-admin-tabs";
 
-const TABS = [
+const TABS = (counts: { members?: number; banks?: number }) => [
   { id: "overview", label: "Overview" },
-  { id: "members", label: "Members" },
-  { id: "banks", label: "Banks" },
+  { id: "members", label: "Members", count: counts.members },
+  { id: "banks", label: "Banks", count: counts.banks },
   { id: "permissions", label: "Permissions" },
   { id: "activity", label: "Activity" },
   { id: "settings", label: "Settings" },
@@ -29,6 +29,8 @@ const TABS = [
 export default function SessionControlPage() {
   const { id } = useParams<{ id: string }>();
   const session = useSession(id);
+  const members = useMembers(id);
+  const banks = useBanks(id);
   const [tab, setTab] = useState("overview");
   const s = session.data;
   const readOnly = s?.status === "archived";
@@ -46,7 +48,7 @@ export default function SessionControlPage() {
               subtitle={`${s.class_name} · ${s.kind === "exam" ? "Exam" : "Practice"} session`}
             />
             {readOnly && <ReadOnlyBanner />}
-            <Tabs tabs={TABS} value={tab} onChange={setTab} />
+            <Tabs tabs={TABS({ members: members.data?.length, banks: banks.data?.length })} value={tab} onChange={setTab} />
             {tab === "overview" && <OverviewTab session={s} />}
             {tab === "members" && <MembersTab session={s} readOnly={readOnly} />}
             {tab === "banks" && <BanksTab session={s} readOnly={readOnly} />}

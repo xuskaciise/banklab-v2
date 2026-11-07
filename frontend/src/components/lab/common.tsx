@@ -53,32 +53,49 @@ export function Tabs({
   value,
   onChange,
 }: {
-  tabs: { id: string; label: string }[];
+  tabs: { id: string; label: string; count?: number }[];
   value: string;
   onChange: (id: string) => void;
 }) {
   return (
-    <div
-      role="tablist"
-      className="mb-5 flex gap-1 overflow-x-auto border-b border-border"
-    >
-      {tabs.map((t) => (
-        <button
-          key={t.id}
-          type="button"
-          role="tab"
-          aria-selected={value === t.id}
-          onClick={() => onChange(t.id)}
-          className={cn(
-            "-mb-px shrink-0 border-b-2 px-3.5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors",
-            value === t.id
-              ? "border-bank-primary text-bank-primary"
-              : "border-transparent text-text-muted hover:text-text-strong",
-          )}
-        >
-          {t.label}
-        </button>
-      ))}
+    <div className="mb-6 border-b border-border">
+      <div
+        role="tablist"
+        className="-mb-px flex gap-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {tabs.map((t) => {
+          const active = value === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => onChange(t.id)}
+              className={cn(
+                "flex shrink-0 items-center gap-2 border-b-2 px-3.5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors",
+                active
+                  ? "border-bank-primary text-bank-primary"
+                  : "border-transparent text-text-muted hover:border-border hover:text-text-strong",
+              )}
+            >
+              {t.label}
+              {t.count !== undefined && (
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 text-xs tabular-nums",
+                    active
+                      ? "bg-bank-sky-light text-bank-primary"
+                      : "bg-hover text-text-muted",
+                  )}
+                >
+                  {t.count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

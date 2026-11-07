@@ -9,6 +9,7 @@ import {
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
+  type RowSelectionState,
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
@@ -61,6 +62,10 @@ type Props<T> = {
   emptyDescription?: React.ReactNode;
   emptyAction?: React.ReactNode;
   columnToggle?: boolean;
+  /** Extra filter controls shown next to the search box. */
+  filters?: React.ReactNode;
+  rowSelection?: RowSelectionState;
+  onRowSelectionChange?: (s: RowSelectionState) => void;
 };
 
 const PAGE_SIZES = [10, 25, 50];
@@ -79,6 +84,9 @@ export function DataTable<T>({
   emptyDescription,
   emptyAction,
   columnToggle = true,
+  filters,
+  rowSelection,
+  onRowSelectionChange,
 }: Props<T>) {
   const [sorting, setSorting] = useState<SortingState>(initialSort);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -88,7 +96,19 @@ export function DataTable<T>({
     data: data ?? [],
     columns,
     getRowId,
-    state: { sorting, globalFilter, columnVisibility: visibility },
+    state: {
+      sorting,
+      globalFilter,
+      columnVisibility: visibility,
+      ...(rowSelection ? { rowSelection } : {}),
+    },
+    enableRowSelection: !!rowSelection,
+    onRowSelectionChange: onRowSelectionChange
+      ? (u) =>
+          onRowSelectionChange(
+            typeof u === "function" ? u(rowSelection ?? {}) : u,
+          )
+      : undefined,
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setVisibility,
@@ -151,6 +171,7 @@ export function DataTable<T>({
             </button>
           )}
         </div>
+        {filters}
         <div className="ml-auto flex items-center gap-2">
           {columnToggle && hideable.length > 1 && (
             <DropdownMenu>
@@ -263,7 +284,11 @@ export function DataTable<T>({
               </tr>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="transition-colors hover:bg-hover">
+                <tr
+                  key={row.id}
+                  data-selected={row.getIsSelected() ? "true" : undefined}
+                  className="transition-colors hover:bg-hover data-[selected=true]:bg-bank-sky-light/60"
+                >
                   {row.getVisibleCells().map((cell) => (
                     <td
                       key={cell.id}
