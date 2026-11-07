@@ -4,9 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, apiFetch } from "@/lib/api/client";
 import type {
   ChangePasswordRequest,
-  LoginRequest,
   LoginResponse,
   Me,
+  StaffLoginRequest,
+  StudentLoginRequest,
 } from "@/lib/api/types";
 
 export const ME_KEY = ["me"] as const;
@@ -26,15 +27,36 @@ export function useMe() {
   });
 }
 
-export function useLogin() {
+function useLoginMutation<T>(path: string) {
   const qc = useQueryClient();
   return useMutation({
     // Login rotates the CSRF token; apiFetch re-reads the cookie on every
     // unsafe call, so the next POST automatically uses the new token.
-    mutationFn: (body: LoginRequest) =>
-      apiFetch<LoginResponse>("/api/auth/login", { method: "POST", json: body }),
+    mutationFn: (body: T) =>
+      apiFetch<LoginResponse>(path, { method: "POST", json: body }),
     onSuccess: (data) => qc.setQueryData(ME_KEY, data.user),
   });
+}
+
+export function useStaffLogin() {
+  return useLoginMutation<StaffLoginRequest>("/api/auth/staff-login");
+}
+
+export function useStudentLogin() {
+  return useLoginMutation<StudentLoginRequest>("/api/auth/student-login");
+}
+
+/** Maps login errors to user-facing text (401 generic, 429 throttle). */
+export function loginErrorMessage(e: unknown): string {
+  if (e instanceof ApiError) {
+    if (e.status === 401) return "Invalid credentials";
+    if (e.status === 429) return "Too many attempts, try again in a few minutes";
+  }
+  return e instanceof Error ? e.message : "Login failed";
+}
+
+export function isStudent(user: Me | null | undefined): boolean {
+  return user?.platform_role === "student";
 }
 
 export function useLogout() {

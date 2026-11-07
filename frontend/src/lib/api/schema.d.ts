@@ -38,7 +38,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/auth/login": {
+    "/api/auth/staff-login": {
         parameters: {
             query?: never;
             header?: never;
@@ -47,8 +47,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Login View */
-        post: operations["auth_login"];
+        /** Staff Login View */
+        post: operations["auth_staff_login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/student-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Student Login View */
+        post: operations["auth_student_login"];
         delete?: never;
         options?: never;
         head?: never;
@@ -176,12 +193,19 @@ export interface components {
             /** Must Change Password */
             must_change_password: boolean;
         };
-        /** LoginIn */
-        LoginIn: {
+        /** StaffLoginIn */
+        StaffLoginIn: {
             /** Username */
             username: string;
             /** Password */
             password: string;
+        };
+        /** StudentLoginIn */
+        StudentLoginIn: {
+            /** Student Id */
+            student_id: string;
+            /** Phone */
+            phone: string;
         };
         /** ChangePasswordIn */
         ChangePasswordIn: {
@@ -304,7 +328,7 @@ export interface operations {
             };
         };
     };
-    auth_login: {
+    auth_staff_login: {
         parameters: {
             query?: never;
             header?: never;
@@ -313,7 +337,31 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["LoginIn"];
+                "application/json": components["schemas"]["StaffLoginIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginOut"];
+                };
+            };
+        };
+    };
+    auth_student_login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudentLoginIn"];
             };
         };
         responses: {

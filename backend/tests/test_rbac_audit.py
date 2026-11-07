@@ -14,7 +14,7 @@ from apps.audit.models import AuditLog, ImmutableError
 from apps.rbac import context, services
 from apps.rbac.models import Permission, RolePermission
 
-from .test_auth import login, make, post
+from .test_auth import PHONE, login, make, post, student_login
 
 T, C, M, V, A = "teller", "cso", "manager", "vault_custodian", "accountant"
 ROLES = [T, C, M, V, A]
@@ -278,8 +278,11 @@ class TestAuthAudit:
 class TestAuditApi:
     def client_for(self, username, role):
         user = make(username, role)
-        acc.change_password(user, "1234", "pass-1234")
-        client, _, resp = login(username, "pass-1234")
+        if role == PlatformRole.STUDENT:
+            client, _, resp = student_login(username, PHONE)
+        else:
+            acc.change_password(user, "1234", "pass-1234")
+            client, _, resp = login(username, "pass-1234")
         assert resp.status_code == 200
         return client, user
 

@@ -42,7 +42,11 @@ async function getCsrfToken(): Promise<string | null> {
   return readCookie("csrftoken") ?? csrfToken;
 }
 
-const TOKEN_ROTATING_PATHS = new Set(["/api/auth/login", "/api/auth/logout"]);
+const TOKEN_ROTATING_PATHS = new Set([
+  "/api/auth/staff-login",
+  "/api/auth/student-login",
+  "/api/auth/logout",
+]);
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 

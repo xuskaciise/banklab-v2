@@ -1,45 +1,33 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ApiError } from "@/lib/api/client";
-import { useLogin } from "@/lib/auth";
+import { loginErrorMessage, useStudentLogin } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FormError } from "@/components/auth/field";
 
-function errorMessage(e: unknown) {
-  if (e instanceof ApiError && e.status === 429) {
-    return "Too many attempts, try again in a few minutes";
-  }
-  return e instanceof Error ? e.message : "Login failed";
-}
-
-export default function LoginPage() {
+export default function StudentLoginPage() {
   const router = useRouter();
-  const login = useLogin();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ username?: string; password?: string }>(
+  const login = useStudentLogin();
+  const [studentId, setStudentId] = useState("");
+  const [phone, setPhone] = useState("");
+  const [errors, setErrors] = useState<{ studentId?: string; phone?: string }>(
     {},
   );
 
   function onSubmit(ev: React.FormEvent) {
     ev.preventDefault();
     const next = {
-      username: username.trim() ? undefined : "Enter your ID",
-      password: password ? undefined : "Enter your password",
+      studentId: studentId.trim() ? undefined : "Enter your Student ID",
+      phone: phone.trim() ? undefined : "Enter your phone number",
     };
     setErrors(next);
-    if (next.username || next.password) return;
+    if (next.studentId || next.phone) return;
     login.mutate(
-      { username: username.trim(), password },
-      {
-        onSuccess: (data) =>
-          router.replace(
-            data.user.must_change_password ? "/change-password" : "/",
-          ),
-      },
+      { student_id: studentId.trim(), phone: phone.trim() },
+      { onSuccess: () => router.replace("/") },
     );
   }
 
@@ -51,28 +39,35 @@ export default function LoginPage() {
       <CardContent>
         <form onSubmit={onSubmit} noValidate className="space-y-4">
           <Field
-            id="username"
-            label="Student / Staff ID"
+            id="student-id"
+            label="Student ID"
             autoComplete="username"
             autoFocus
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            error={errors.username}
+            value={studentId}
+            onChange={(e) => setStudentId(e.target.value)}
+            error={errors.studentId}
           />
           <Field
-            id="password"
-            label="Password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={errors.password}
+            id="phone"
+            label="Phone number"
+            type="tel"
+            autoComplete="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            error={errors.phone}
           />
-          <FormError message={login.isError ? errorMessage(login.error) : null} />
+          <FormError
+            message={login.isError ? loginErrorMessage(login.error) : null}
+          />
           <Button type="submit" className="w-full" disabled={login.isPending}>
             {login.isPending ? "Signing in…" : "Sign in"}
           </Button>
         </form>
+        <p className="mt-4 text-center text-xs text-text-muted">
+          <Link href="/staff/login" className="underline hover:text-text-strong">
+            Staff login
+          </Link>
+        </p>
       </CardContent>
     </Card>
   );

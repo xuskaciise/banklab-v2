@@ -29,7 +29,7 @@ Institution ─< Class ─< Session ─< Bank ─< (all banking data)
 | Table | Key columns | Notes |
 |-------|-------------|-------|
 | `institution` | name | One row for now; keeps multi-institution open |
-| `user` | institution_id, username (unique, = student ID / staff ID), full_name, phone, password_hash, must_change_password, platform_role (`admin`/`instructor`/`student`), is_active | First password = last 4 digits of phone |
+| `user` | institution_id, username (unique, = student ID / staff ID), full_name, phone, password_hash (unusable for students), must_change_password (staff only), platform_role (`admin`/`instructor`/`student`), is_active | Staff: first password = last 4 digits of phone. Students: no password; log in with username (student ID) + phone |
 | `class` | institution_id, instructor_id, name, code | e.g. "Banking – Semester 5"; one instructor per class |
 | `enrollment` | class_id, user_id | Students in a class (manual or CSV import) |
 | `session_template` | class_id (nullable = institution-wide), name, kind, structure, allowed_roles[], default_visibility, learning_panel, seed_profile, coa_template_id, product_set | "Teller lecture" preset → one click |

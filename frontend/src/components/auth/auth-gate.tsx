@@ -2,17 +2,33 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useMe } from "@/lib/auth";
+import { isStudent, useMe } from "@/lib/auth";
+import type { Me } from "@/lib/api/types";
+
+const AUTH_PAGES = ["/login", "/staff/login"];
+
+function loginPathFor(pathname: string) {
+  const staffOnly = /^\/(instructor|admin)(\/|$)/.test(pathname);
+  return staffOnly ? "/staff/login" : "/login";
+}
 
 function redirectFor(
   pathname: string,
-  user: { must_change_password: boolean } | null | undefined,
+  user: Me | null | undefined,
 ): string | null {
-  if (!user) return pathname === "/login" ? null : "/login";
+  if (!user) {
+    return AUTH_PAGES.includes(pathname) ? null : loginPathFor(pathname);
+  }
+  // Students have no password, so they are never sent to /change-password.
+  if (isStudent(user)) {
+    return AUTH_PAGES.includes(pathname) || pathname === "/change-password"
+      ? "/"
+      : null;
+  }
   if (user.must_change_password) {
     return pathname === "/change-password" ? null : "/change-password";
   }
-  return pathname === "/login" ? "/" : null;
+  return AUTH_PAGES.includes(pathname) ? "/" : null;
 }
 
 function GateSkeleton() {

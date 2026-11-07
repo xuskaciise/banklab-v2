@@ -6,7 +6,8 @@ type Schemas = components["schemas"];
 
 export type Me = Schemas["MeOut"];
 export type PlatformRole = Me["platform_role"];
-export type LoginRequest = Schemas["LoginIn"];
+export type StaffLoginRequest = Schemas["StaffLoginIn"];
+export type StudentLoginRequest = Schemas["StudentLoginIn"];
 export type LoginResponse = Schemas["LoginOut"];
 export type ChangePasswordRequest = Schemas["ChangePasswordIn"];
 export type HealthResponse = Schemas["HealthOut"];

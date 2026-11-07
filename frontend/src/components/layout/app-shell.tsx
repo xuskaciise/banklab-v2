@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useLogout, useMe } from "@/lib/auth";
+import { isStudent, useLogout, useMe } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -55,13 +55,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </Badge>
               </>
             )}
+            {user && !isStudent(user) && (
+              <Link
+                href="/change-password"
+                className="text-text-muted underline hover:text-text-strong"
+              >
+                Change password
+              </Link>
+            )}
             <Button
               variant="outline"
               size="sm"
               disabled={logout.isPending}
               onClick={() =>
                 logout.mutate(undefined, {
-                  onSettled: () => router.replace("/login"),
+                  onSettled: () =>
+                    router.replace(user && !isStudent(user) ? "/staff/login" : "/login"),
                 })
               }
             >
