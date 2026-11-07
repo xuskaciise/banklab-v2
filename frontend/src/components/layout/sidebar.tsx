@@ -8,10 +8,12 @@ import {
   ChevronsRight,
   GraduationCap,
   LayoutDashboard,
+  Landmark,
   Layers,
 } from "lucide-react";
 import type { Me } from "@/lib/api/types";
 import { isStudent } from "@/lib/auth";
+import { useSessionMe } from "@/lib/lab";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -41,13 +43,25 @@ const STUDENT_NAV: NavItem[] = [
   {
     label: "My sessions",
     href: "/sessions",
-    match: /^\/(sessions|s\/)/,
+    match: /^\/(sessions|s\/[^/]+\/?$)/,
     icon: Layers,
   },
 ];
 
-export function navFor(user: Me | null | undefined): NavItem[] {
-  return isStudent(user) ? STUDENT_NAV : STAFF_NAV;
+export function navFor(
+  user: Me | null | undefined,
+  session?: { id: string; permissions: string[] },
+): NavItem[] {
+  if (!isStudent(user)) return STAFF_NAV;
+  const items = [...STUDENT_NAV];
+  if (session?.permissions.includes("vault.view"))
+    items.push({
+      label: "Vault",
+      href: `/s/${session.id}/vault`,
+      match: /^\/s\/[^/]+\/vault/,
+      icon: Landmark,
+    });
+  return items;
 }
 
 export function initials(name?: string | null) {
@@ -73,7 +87,17 @@ export function SidebarContent({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const nav = navFor(user);
+  const sessionId = pathname.match(/^\/s\/([^/]+)/)?.[1];
+  const sessionMe = useSessionMe(sessionId ?? "");
+  const nav = navFor(
+    user,
+    sessionId && sessionMe.data
+      ? {
+          id: sessionId,
+          permissions: sessionMe.data.permissions.map((p) => p.code),
+        }
+      : undefined,
+  );
   return (
     <div className="flex h-full flex-col">
       <div

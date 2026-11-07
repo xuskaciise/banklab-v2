@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 
 from apps.core.models import TimeStampedModel
+from apps.ledger.models import Currency
 
 
 class BusinessDayStatus(models.TextChoices):
@@ -28,5 +29,157 @@ class BusinessDay(TimeStampedModel):
                 fields=["bank"],
                 condition=models.Q(status="open"),
                 name="uniq_open_business_day_per_bank",
+            ),
+        ]
+
+
+# --------------------------------------------------------------------------- cash & vault
+
+
+class HolderType(models.TextChoices):
+    VAULT = "vault", "Vault"
+    TELLER_SESSION = "teller_session", "Teller session"
+
+
+class NoDeleteQuerySet(models.QuerySet):
+    def delete(self):
+        raise NotImplementedError("Financial records are never deleted")
+
+    def _raw_delete(self, using):
+        raise NotImplementedError("Financial records are never deleted")
+
+
+class NoDeleteModel(TimeStampedModel):
+    objects = NoDeleteQuerySet.as_manager()
+
+    class Meta:
+        abstract = True
+
+    def delete(self, *args, **kwargs):
+        raise NotImplementedError("Financial records are never deleted")
+
+
+class Branch(NoDeleteModel):
+    bank = models.ForeignKey("lab.Bank", on_delete=models.PROTECT, related_name="branches")
+    code = models.CharField(max_length=10)
+    name = models.CharField(max_length=200)
+    address = models.CharField(max_length=300, blank=True, default="")
+
+    class Meta:
+        ordering = ["code"]
+        verbose_name_plural = "branches"
+        constraints = [models.UniqueConstraint(fields=["bank", "code"], name="uniq_branch_code")]
+
+    def __str__(self) -> str:
+        return f"{self.code} {self.name}"
+
+
+class Vault(NoDeleteModel):
+    """Physical vault, one per branch. Its cash lives in `CashPosition` rows."""
+
+    bank = models.ForeignKey("lab.Bank", on_delete=models.PROTECT, related_name="vaults")
+    branch = models.OneToOneField(Branch, on_delete=models.PROTECT, related_name="vault")
+
+    class Meta:
+        ordering = ["branch__code"]
+
+
+class Till(NoDeleteModel):
+    """Physical teller drawer; cash is held per teller session (1.8), not on the till."""
+
+    bank = models.ForeignKey("lab.Bank", on_delete=models.PROTECT, related_name="tills")
+    branch = models.ForeignKey(Branch, on_delete=models.PROTECT, related_name="tills")
+    code = models.CharField(max_length=10)
+
+    class Meta:
+        ordering = ["code"]
+        constraints = [models.UniqueConstraint(fields=["bank", "code"], name="uniq_till_code")]
+
+
+class DenominationKind(models.TextChoices):
+    NOTE = "note", "Note"
+    COIN = "coin", "Coin"
+
+
+class Denomination(models.Model):
+    """Global lookup of note/coin values per currency."""
+
+    id = models.BigAutoField(primary_key=True)
+    currency = models.CharField(max_length=3, choices=Currency.choices)
+    value = models.DecimalField(max_digits=12, decimal_places=2)
+    kind = models.CharField(max_length=4, choices=DenominationKind.choices)
+
+    class Meta:
+        ordering = ["currency", "-value"]
+        constraints = [
+            models.UniqueConstraint(fields=["currency", "value"], name="uniq_denomination")
+        ]
+
+
+class CashPosition(NoDeleteModel):
+    """Cash on hand per holder and currency. Written ONLY by the ledger posting service."""
+
+    bank = models.ForeignKey("lab.Bank", on_delete=models.PROTECT, related_name="cash_positions")
+    holder_type = models.CharField(max_length=20, choices=HolderType.choices)
+    holder_id = models.UUIDField()
+    currency = models.CharField(max_length=3, choices=Currency.choices)
+    balance = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["bank", "holder_type", "holder_id", "currency"], name="uniq_cash_position"
+            ),
+            models.CheckConstraint(condition=models.Q(balance__gte=0), name="cash_position_gte_0"),
+        ]
+
+
+class TransferStatus(models.TextChoices):
+    PENDING = "pending", "Pending custodian approval"
+    CUSTODIAN_APPROVED = "custodian_approved", "Awaiting manager approval"
+    POSTED = "posted", "Posted"
+    REJECTED = "rejected", "Rejected"
+    CANCELLED = "cancelled", "Cancelled by requester"
+
+
+class CashTransfer(NoDeleteModel):
+    """Vault <-> teller cash movement under dual control; posted via the ledger."""
+
+    bank = models.ForeignKey("lab.Bank", on_delete=models.PROTECT, related_name="cash_transfers")
+    from_type = models.CharField(max_length=20, choices=HolderType.choices)
+    from_id = models.UUIDField()
+    to_type = models.CharField(max_length=20, choices=HolderType.choices)
+    to_id = models.UUIDField()
+    currency = models.CharField(max_length=3, choices=Currency.choices)
+    amount = models.DecimalField(max_digits=18, decimal_places=2)
+    status = models.CharField(
+        max_length=20, choices=TransferStatus.choices, default=TransferStatus.PENDING
+    )
+    requested_by = models.ForeignKey(
+        "lab.SessionMember", on_delete=models.PROTECT, related_name="+"
+    )
+    approved_by_1 = models.ForeignKey(
+        "lab.SessionMember", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    approved_by_2 = models.ForeignKey(
+        "lab.SessionMember", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    rejected_by = models.ForeignKey(
+        "lab.SessionMember", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    reason = models.CharField(max_length=300, blank=True, default="")
+    journal_entry = models.ForeignKey(
+        "ledger.JournalEntry", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(amount__gt=0), name="cash_transfer_amount_gt_0"
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(from_type=models.F("to_type"), from_id=models.F("to_id")),
+                name="cash_transfer_distinct_holders",
             ),
         ]

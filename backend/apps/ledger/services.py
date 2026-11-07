@@ -6,11 +6,14 @@ approvals before calling; this module re-checks everything that protects the boo
 
 LOCK ORDER (every caller in 1.5+ that locks ledger-related rows must follow it):
     session (FOR NO KEY UPDATE) -> bank (FOR NO KEY UPDATE; serialises entry_no)
-    -> open business day -> GL balances (by id).
+    -> open business day -> cash positions (by id) -> GL balances (by id).
+Lines on the cash control accounts (1110 vault, 1120 teller) must name their cash holder;
+the matching `CashPosition` moves in the same transaction (Dr +, Cr -, never below zero).
 Archiving takes a plain FOR UPDATE on the session, so it waits for in-flight postings and
 blocks new ones; postings in different banks of one session do not block each other.
 """
 
+import uuid
 from collections import defaultdict
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
@@ -20,7 +23,8 @@ from django.db.models import Max, Sum
 
 from apps.accounts.models import Institution
 from apps.audit import services as audit
-from apps.banking.models import BusinessDay, BusinessDayStatus
+from apps.banking.cash import GL_TAG_HOLDER, holder_exists
+from apps.banking.models import BusinessDay, BusinessDayStatus, CashPosition
 from apps.lab.models import Bank, RoleAssignment, Session, SessionMember, SessionStatus
 
 from .coa import ALLOW_NEGATIVE_TAGS, DEFAULT_COA, DEFAULT_COA_NAME
@@ -271,6 +275,72 @@ def _apply(bank: Bank, specs: list[LineSpec], currency: str) -> None:
         row.save(update_fields=["balance", "updated_at"])
 
 
+def _check_cash_lines(bank: Bank, specs: list[LineSpec]) -> None:
+    """Cash control accounts need a valid holder; every other account must not have one."""
+    for i, s in enumerate(specs, start=1):
+        wanted = GL_TAG_HOLDER.get(s.gl_account.system_tag)
+        if wanted is None:
+            if s.cash_holder_type or s.cash_holder_id is not None:
+                raise LedgerError(
+                    "unexpected_cash_holder",
+                    f"Line {i}: only cash accounts (1110, 1120) may name a cash holder",
+                )
+            continue
+        if s.cash_holder_type != wanted or s.cash_holder_id is None:
+            raise LedgerError(
+                "cash_holder_required",
+                f"Line {i}: account {s.gl_account.code} needs a {wanted} cash holder",
+            )
+        if not holder_exists(bank, wanted, s.cash_holder_id):
+            raise LedgerError(
+                "unknown_cash_holder", f"Line {i}: cash holder not found in this bank"
+            )
+        s.cash_holder_id = uuid.UUID(str(s.cash_holder_id))
+
+
+def _apply_cash(bank: Bank, specs: list[LineSpec], currency: str) -> None:
+    """Lock the affected cash positions in id order, apply deltas, reject negatives."""
+    deltas: dict[tuple[str, uuid.UUID], Decimal] = defaultdict(lambda: ZERO)
+    for s in specs:
+        if s.cash_holder_id is not None:
+            deltas[(s.cash_holder_type, s.cash_holder_id)] += s.debit - s.credit
+    if not deltas:
+        return
+    ids = {holder_id for _, holder_id in deltas}
+    existing = set(
+        CashPosition.objects.filter(bank=bank, currency=currency, holder_id__in=ids).values_list(
+            "holder_type", "holder_id"
+        )
+    )
+    CashPosition.objects.bulk_create(
+        [
+            CashPosition(bank=bank, holder_type=t, holder_id=h, currency=currency)
+            for (t, h) in deltas
+            if (t, h) not in existing
+        ],
+        ignore_conflicts=True,
+    )
+    rows = list(
+        CashPosition.objects.select_for_update()
+        .filter(bank=bank, currency=currency, holder_id__in=ids)
+        .order_by("id")
+    )
+    for row in rows:
+        delta = deltas.get((row.holder_type, row.holder_id))
+        if delta is None:
+            continue
+        new = row.balance + delta
+        if new < 0:
+            raise _conflict(
+                "insufficient_cash",
+                f"Insufficient cash in the {row.holder_type.replace('_', ' ')} ({currency})",
+            )
+        row.balance = new
+    for row in rows:
+        if (row.holder_type, row.holder_id) in deltas:
+            row.save(update_fields=["balance", "updated_at"])
+
+
 def _write(
     bank: Bank,
     day: BusinessDay,
@@ -285,6 +355,7 @@ def _write(
     actor_user,
     audit_action,
 ) -> JournalEntry:
+    _apply_cash(bank, specs, currency)
     _apply(bank, specs, currency)
     last = JournalEntry.objects.filter(bank=bank).aggregate(m=Max("entry_no"))["m"] or 0
     user = actor_member.user if actor_member is not None else actor_user
@@ -362,8 +433,9 @@ def post_entry(
     """Post one balanced, single-currency journal entry to the bank's open business day.
 
     Internal API: permission/limit/approval checks belong to the calling transaction service.
-    Lock order: session -> bank -> business day -> GL balances by id (see module docstring);
-    callers that lock their own rows (accounts, cash positions) must do so after these.
+    Lock order: session -> bank -> business day -> cash positions (by id) -> GL balances
+    (by id), see the module docstring; callers that lock their own rows must do so after
+    these.
     """
     _check_text(source_type, 40, "source_type")
     _check_text(description, 300, "description")
@@ -388,6 +460,7 @@ def post_entry(
                     "account_not_postable", f"GL account {acc.code} is not open for posting"
                 )
             s.gl_account = acc
+        _check_cash_lines(locked, specs)
         return _write(
             locked,
             day,
@@ -540,3 +613,48 @@ def get_entry(bank: Bank, entry_id) -> JournalEntry:
     if entry is None:
         raise LedgerError("not_found", "Journal entry not found", status=404)
     return entry
+
+
+def cash_reconciliation(bank: Bank) -> list[dict]:
+    """Per currency: sum of vault / teller cash positions against GL 1110 / 1120."""
+    gl = {
+        (tag, cur): bal
+        for tag, cur, bal in GLBalance.objects.filter(
+            bank=bank, gl_account__system_tag__in=list(GL_TAG_HOLDER)
+        ).values_list("gl_account__system_tag", "currency", "balance")
+    }
+    totals: dict[tuple[str, str], Decimal] = defaultdict(lambda: ZERO)
+    for holder_type, cur, bal in CashPosition.objects.filter(bank=bank).values_list(
+        "holder_type", "currency", "balance"
+    ):
+        totals[(holder_type, cur)] += bal
+    rows = []
+    for cur in sorted(CURRENCIES):
+        vault, teller = totals[("vault", cur)], totals[("teller_session", cur)]
+        gl_vault, gl_teller = gl.get(("CASH_VAULT", cur), ZERO), gl.get(("CASH_TELLER", cur), ZERO)
+        rows.append(
+            {
+                "currency": cur,
+                "vault_total": vault,
+                "gl_vault": gl_vault,
+                "teller_total": teller,
+                "gl_teller": gl_teller,
+                "ok": vault == gl_vault and teller == gl_teller,
+            }
+        )
+    return rows
+
+
+def cash_matches_lines(bank: Bank) -> bool:
+    """Every cash position equals the net of the journal lines that name its holder."""
+    net: dict[tuple[str, object, str], Decimal] = defaultdict(lambda: ZERO)
+    for t, h, cur, d, c in JournalLine.objects.filter(
+        entry__bank=bank, cash_holder_id__isnull=False
+    ).values_list("cash_holder_type", "cash_holder_id", "currency", "debit", "credit"):
+        net[(t, h, cur)] += d - c
+    stored = {
+        (p.holder_type, p.holder_id, p.currency): p.balance
+        for p in CashPosition.objects.filter(bank=bank)
+    }
+    keys = set(net) | set(stored)
+    return all(stored.get(k, ZERO) == net.get(k, ZERO) for k in keys)

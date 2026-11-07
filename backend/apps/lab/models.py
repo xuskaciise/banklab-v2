@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.db import models
 
@@ -78,6 +80,12 @@ class SessionTemplate(TimeStampedModel):
     default_visibility = models.CharField(max_length=3, choices=Visibility.choices)
     learning_panel = models.BooleanField(default=True)
     seed_profile = models.CharField(max_length=80, blank=True, default="")
+    opening_capital_usd = models.DecimalField(
+        max_digits=18, decimal_places=2, default=Decimal("1000000.00")
+    )
+    opening_capital_sos = models.DecimalField(
+        max_digits=18, decimal_places=2, default=Decimal("5000000000.00")
+    )
     coa_template = models.ForeignKey(
         "ledger.CoaTemplate",
         null=True,
@@ -108,6 +116,12 @@ class Session(TimeStampedModel):
     default_visibility = models.CharField(max_length=3, choices=Visibility.choices)
     learning_panel = models.BooleanField(default=True)
     seed_profile = models.CharField(max_length=80, blank=True, default="")
+    opening_capital_usd = models.DecimalField(
+        max_digits=18, decimal_places=2, default=Decimal("1000000.00")
+    )
+    opening_capital_sos = models.DecimalField(
+        max_digits=18, decimal_places=2, default=Decimal("5000000000.00")
+    )
     opened_at = models.DateTimeField(null=True, blank=True)
     archived_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(

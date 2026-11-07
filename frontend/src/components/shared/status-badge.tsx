@@ -23,6 +23,7 @@ const STATUS_TONE: Record<string, Tone> = {
   reversed: "danger",
   failed: "danger",
   closed: "muted",
+  cancelled: "muted",
   archived: "muted",
   inactive: "muted",
 };

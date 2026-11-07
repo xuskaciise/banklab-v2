@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from decimal import Decimal
 from uuid import UUID
 
 from ninja import Router, Schema
@@ -91,6 +92,8 @@ class TemplateIn(Schema):
     learning_panel: bool = True
     seed_profile: str = ""
     class_id: UUID | None = None
+    opening_capital_usd: Decimal = Decimal("1000000.00")
+    opening_capital_sos: Decimal = Decimal("5000000000.00")
 
 
 class TemplateOut(Schema):
@@ -103,6 +106,8 @@ class TemplateOut(Schema):
     default_visibility: str
     learning_panel: bool
     seed_profile: str
+    opening_capital_usd: Decimal
+    opening_capital_sos: Decimal
 
     @staticmethod
     def resolve_class_id(obj):
@@ -119,6 +124,8 @@ class SessionIn(Schema):
     default_visibility: str | None = None
     learning_panel: bool | None = None
     seed_profile: str | None = None
+    opening_capital_usd: Decimal | None = None
+    opening_capital_sos: Decimal | None = None
 
 
 class SessionOut(Schema):
@@ -134,6 +141,8 @@ class SessionOut(Schema):
     default_visibility: str
     learning_panel: bool
     seed_profile: str
+    opening_capital_usd: Decimal
+    opening_capital_sos: Decimal
     opened_at: datetime | None = None
     archived_at: datetime | None = None
 

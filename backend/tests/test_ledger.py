@@ -1,5 +1,6 @@
 # ruff: noqa: F811, E741
 import threading
+import uuid
 from datetime import timedelta
 from decimal import Decimal
 
@@ -7,7 +8,8 @@ import pytest
 from django.db import DatabaseError, connection, transaction
 
 from apps.audit.models import AuditLog
-from apps.banking.models import BusinessDay
+from apps.banking import cash
+from apps.banking.models import BusinessDay, Vault
 from apps.lab import services as lab
 from apps.lab.models import Bank, SessionMember, SessionTemplate
 from apps.ledger import services as ledger
@@ -20,16 +22,49 @@ from apps.ledger.models import (
     JournalLine,
     LedgerImmutableError,
 )
-from apps.ledger.services import LedgerError, LineSpec
+from apps.ledger.services import LedgerError
 from tests.test_lab import (  # noqa: F401  (fixtures)
     _reset_rbac,
-    active_session,
     api,
-    student_session,
     world,
+)
+from tests.test_lab import (
+    active_session as _active_session,
+)
+from tests.test_lab import (
+    student_session as _student_session,
 )
 
 D = Decimal
+
+
+def active_session(w, name="Lecture 1", **kw):
+    """Ledger tests start from empty books: no opening capital (A1 is covered in test_cash)."""
+    kw.setdefault("opening_capital_usd", D("0"))
+    kw.setdefault("opening_capital_sos", D("0"))
+    return _active_session(w, name, **kw)
+
+
+def student_session(world, role=None, **kw):
+    kw.setdefault("opening_capital_usd", D("0"))
+    kw.setdefault("opening_capital_sos", D("0"))
+    return _student_session(world, role, **kw)
+
+
+def LineSpec(gl, **kw):  # noqa: N802  (drop-in for ledger.LineSpec that names the cash holder)
+    if gl.system_tag == "CASH_VAULT" and "cash_holder_id" not in kw:
+        kw["cash_holder_type"] = "vault"
+        kw["cash_holder_id"] = Vault.objects.get(bank=gl.bank).pk
+    elif gl.system_tag == "CASH_TELLER" and "cash_holder_id" not in kw:
+        kw["cash_holder_type"] = "teller_session"
+        kw["cash_holder_id"] = uuid.uuid5(gl.bank.pk, "teller")
+    return ledger.LineSpec(gl, **kw)
+
+
+@pytest.fixture(autouse=True)
+def _fake_teller_holders(monkeypatch):
+    """1.8 registers real teller sessions; here any id counts as an existing teller holder."""
+    monkeypatch.setitem(cash._HOLDER_EXISTS, "teller_session", lambda bank, pk: True)
 
 
 def run_threads(threads):
@@ -245,9 +280,17 @@ class TestPosting:
         fund_vault(bank, "50")
         with pytest.raises(LedgerError) as exc:
             post(bank, [dr(bank, "CASH_TELLER", "60"), cr(bank, "CASH_VAULT", "60")])
-        assert exc.value.code == "insufficient_balance"
+        assert exc.value.code == "insufficient_cash"
         assert bal(bank, "CASH_VAULT") == D("50.00")
         assert bal(bank, "CASH_TELLER") == 0
+        assert JournalEntry.objects.filter(bank=bank).count() == 1
+
+    def test_gl_negative_guard_on_non_cash_account(self, bank):
+        fund_vault(bank, "100")  # CAPITAL (credit-normal equity, no negatives) = 100
+        with pytest.raises(LedgerError) as exc:
+            post(bank, [dr(bank, "CAPITAL", "150"), cr(bank, "DEP_SAVINGS", "150")])
+        assert exc.value.code == "insufficient_balance"
+        assert bal(bank, "CAPITAL") == D("100.00") and bal(bank, "DEP_SAVINGS") == 0
         assert JournalEntry.objects.filter(bank=bank).count() == 1
 
     def test_allow_negative_account(self, bank):
@@ -351,7 +394,7 @@ class TestReversal:
         post(bank, [dr(bank, "CASH_TELLER", "100"), cr(bank, "CASH_VAULT", "100")])
         with pytest.raises(LedgerError) as exc:
             ledger.reverse_entry(bank, a)
-        assert exc.value.code == "insufficient_balance"
+        assert exc.value.code == "insufficient_cash"
         assert bal(bank, "CASH_VAULT") == 0 and bal(bank, "CAPITAL") == D("100.00")
         assert JournalEntry.objects.filter(bank=bank).count() == 2
 
@@ -483,7 +526,7 @@ def test_concurrent_withdrawals_never_go_negative(world):
     run_threads(threads)
     assert not errors
     assert results.count("ok") == 3
-    assert results.count("insufficient_balance") == 3
+    assert results.count("insufficient_cash") == 3
     assert bal(bank, "CASH_VAULT") == D("10.00")
     assert ledger.balances_match_lines(bank)
 

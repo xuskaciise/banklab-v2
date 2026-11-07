@@ -33,6 +33,7 @@ import {
   useSessionTransition,
   useSetOverride,
 } from "@/lib/lab";
+import { formatMoney } from "@/lib/banking";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { Avatar } from "@/components/shared/avatar";
@@ -587,6 +588,18 @@ export function SettingsTab({ session }: { session: SessionOut }) {
     ["Structure", perGroup ? "One bank per group" : formatTemplateLabel(session.structure)],
     ["Opened", formatDateTime(session.opened_at)],
     ["Archived", formatDateTime(session.archived_at)],
+    [
+      "Opening capital (USD)",
+      <span key="cu" className="tabular-nums">
+        {formatMoney(session.opening_capital_usd, "USD")}
+      </span>,
+    ],
+    [
+      "Opening capital (SOS)",
+      <span key="cs" className="tabular-nums">
+        {formatMoney(session.opening_capital_sos, "SOS")}
+      </span>,
+    ],
   ];
 
   return (

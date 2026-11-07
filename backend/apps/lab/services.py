@@ -9,6 +9,7 @@ import io
 import re
 from contextlib import contextmanager
 from dataclasses import dataclass, field
+from decimal import Decimal, InvalidOperation
 
 from django.db import IntegrityError, transaction
 from django.db.models import Q
@@ -18,6 +19,7 @@ from apps.accounts import services as accounts
 from apps.accounts.models import PlatformRole, User
 from apps.audit import services as audit
 from apps.banking.models import BusinessDay
+from apps.banking.provisioning import provision_bank_cash
 from apps.ledger import services as ledger
 from apps.rbac import services as rbac
 from apps.rbac.models import BankRole, Permission
@@ -158,6 +160,8 @@ def _session_dict(s: Session) -> dict:
         "default_visibility": s.default_visibility,
         "learning_panel": s.learning_panel,
         "seed_profile": s.seed_profile,
+        "opening_capital_usd": str(s.opening_capital_usd),
+        "opening_capital_sos": str(s.opening_capital_sos),
     }
 
 
@@ -435,6 +439,25 @@ def _normalize_settings(kind, structure, visibility, learning_panel) -> tuple[st
     return kind, structure, visibility, bool(learning_panel)
 
 
+DEFAULT_CAPITAL_USD = Decimal("1000000.00")
+DEFAULT_CAPITAL_SOS = Decimal("5000000000.00")
+
+
+def _check_capital(value, what: str) -> Decimal:
+    """Opening capital: a Decimal >= 0 with at most 2 decimals (fits NUMERIC(18,2))."""
+    if isinstance(value, bool) or not isinstance(value, (Decimal, int, str)):
+        raise ValidationFailed(f"{what} must be an amount")
+    try:
+        amount = Decimal(value)
+    except (InvalidOperation, ValueError):
+        raise ValidationFailed(f"{what} is not a valid amount") from None
+    if not amount.is_finite() or amount.as_tuple().exponent < -2:
+        raise ValidationFailed(f"{what} must have at most 2 decimal places")
+    if amount < 0 or amount >= Decimal("10") ** 16:
+        raise ValidationFailed(f"{what} must be between 0 and 9999999999999999.99")
+    return amount.quantize(Decimal("0.01"))
+
+
 def list_templates(actor: User, class_id=None):
     _require_staff(actor)
     qs = SessionTemplate.objects.filter(institution_id=actor.institution_id)
@@ -458,6 +481,8 @@ def create_template(
     learning_panel=True,
     seed_profile="",
     class_id=None,
+    opening_capital_usd=DEFAULT_CAPITAL_USD,
+    opening_capital_sos=DEFAULT_CAPITAL_SOS,
 ) -> SessionTemplate:
     _require_staff(actor)
     lab_class = None
@@ -481,6 +506,8 @@ def create_template(
         default_visibility=visibility,
         learning_panel=panel,
         seed_profile=(seed_profile or "").strip(),
+        opening_capital_usd=_check_capital(opening_capital_usd, "Opening capital USD"),
+        opening_capital_sos=_check_capital(opening_capital_sos, "Opening capital SOS"),
         created_by=actor,
     )
     _audit(
@@ -513,6 +540,8 @@ def create_session(
     default_visibility=None,
     learning_panel=None,
     seed_profile=None,
+    opening_capital_usd=None,
+    opening_capital_sos=None,
 ) -> Session:
     """Create a draft session. Explicit values win over the template, which wins over defaults."""
     lab_class = get_class(actor, class_id)
@@ -548,6 +577,14 @@ def create_session(
         default_visibility=visibility,
         learning_panel=panel,
         seed_profile=(pick(seed_profile, "seed_profile", "") or "").strip(),
+        opening_capital_usd=_check_capital(
+            pick(opening_capital_usd, "opening_capital_usd", DEFAULT_CAPITAL_USD),
+            "Opening capital USD",
+        ),
+        opening_capital_sos=_check_capital(
+            pick(opening_capital_sos, "opening_capital_sos", DEFAULT_CAPITAL_SOS),
+            "Opening capital SOS",
+        ),
         created_by=actor,
     )
     _audit(
@@ -565,6 +602,9 @@ def _create_bank(actor, session: Session, name: str, group_no, business_date) ->
         bank = Bank.objects.create(session=session, name=name, group_no=group_no)
         BusinessDay.objects.create(bank=bank, date=business_date)
         ledger.provision_bank_coa(bank)
+        # A1: main branch + vault + opening capital; posts as the system actor, so the
+        # session must already be active (open_session activates it first).
+        provision_bank_cash(bank, session)
     _audit(
         actor,
         "lab.bank_created",
@@ -584,6 +624,10 @@ def open_session(actor: User, session_id, group_count: int | None = None) -> Ses
         raise Conflict("Only a draft session can be opened")
     now = timezone.now()
     today = timezone.localdate(now)
+    before = _session_dict(session)
+    # Activate first: the opening-capital posting of each new bank requires an active session.
+    session.status, session.opened_at = SessionStatus.ACTIVE, now
+    session.save(update_fields=["status", "opened_at", "updated_at"])
     if session.structure == SessionStructure.SINGLE_BANK:
         banks = [_create_bank(actor, session, session.name, None, today)]
     else:
@@ -607,9 +651,6 @@ def open_session(actor: User, session_id, group_count: int | None = None) -> Ses
                 session=session,
                 bank=banks[0],
             )
-    before = _session_dict(session)
-    session.status, session.opened_at = SessionStatus.ACTIVE, now
-    session.save(update_fields=["status", "opened_at", "updated_at"])
     _audit(
         actor,
         "lab.session_opened",

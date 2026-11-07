@@ -5,6 +5,8 @@ from apps.accounts.api import router as auth_router
 from apps.accounts.auth import ActiveSessionAuth
 from apps.accounts.services import AccountsError
 from apps.audit.api import router as audit_router
+from apps.banking.api import router as banking_router
+from apps.banking.api import student_router as banking_student_router
 from apps.lab.api import router as lab_router
 from apps.lab.api import student_router
 from apps.lab.services import LabError
@@ -20,6 +22,8 @@ api.add_router("", lab_router)
 api.add_router("", student_router)
 api.add_router("", ledger_router)
 api.add_router("", ledger_student_router)
+api.add_router("", banking_router)
+api.add_router("", banking_student_router)
 
 
 @api.exception_handler(AccountsError)

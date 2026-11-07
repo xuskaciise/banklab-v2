@@ -29,7 +29,7 @@ Domain details for every item live in [CONCEPT.md](CONCEPT.md).
 | 1.3 | Classes & Sessions: create/open/archive, templates, permission overrides, students (manual + CSV), role assignment, visibility mode, business date | 1.2 | [x] feat/1.3-classes-sessions |
 | 1.3b | UI shell & design system: collapsible navy sidebar (mobile drawer), topbar (breadcrumbs, user menu, role badge), reusable components (PageHeader, StatCard, DataTable, StatusBadge, EmptyState, Skeleton, ConfirmDialog, toasts), staff overview dashboard from real data, redesign of 1.3 screens. Only built pages appear in the nav. | 1.3 | [x] feat/1.3b-ui-shell |
 | 1.4 | Ledger engine: CoA per session from template, journal entries, posting service, balances (Decimal, row locks, Dr = Cr enforced) | 1.3, 0.3 | [x] |
-| 1.5 | Branch & Vault (dual control) | 1.4 | [ ] |
+| 1.5 | Branch & Vault (dual control) | 1.4 | [x] feat/1.5-branch-vault |
 | 1.6 | Customers (CIF): individual, company, joint, NGO; ID documents; signatories | 1.3 | [ ] |
 | 1.7 | Products (Savings, Current) & Accounts (Active/Closed, sequential numbers, USD/SOS) | 1.4, 1.6 | [ ] |
 | 1.8 | Teller session: open with supervisor approval, denomination count on close, over/short | 1.5 | [ ] |

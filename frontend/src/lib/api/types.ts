@@ -34,3 +34,13 @@ export type MySession = Schemas["MySessionOut"];
 export type SessionMe = Schemas["SessionMeOut"];
 export type AuditOut = Schemas["AuditOut"];
 export type PagedAudit = Schemas["PagedAuditOut"];
+
+// Banking 1.5 (branches, tills, vault, cash transfers)
+export type BranchOut = Schemas["BranchOut"];
+export type BranchIn = Schemas["BranchIn"];
+export type BranchUpdateIn = Schemas["BranchUpdateIn"];
+export type TillOut = Schemas["TillOut"];
+export type TillIn = Schemas["TillIn"];
+export type VaultOut = Schemas["VaultOut"];
+export type CashReconciliation = Schemas["CashReconciliationOut"];
+export type CashTransferOut = Schemas["TransferOut"];

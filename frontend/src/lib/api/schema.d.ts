@@ -672,6 +672,162 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sessions/{session_id}/banks/{bank_id}/branches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Branches List */
+        get: operations["banking_staff_branches_list"];
+        put?: never;
+        /** Branches Create */
+        post: operations["banking_staff_branches_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/banks/{bank_id}/branches/{branch_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Branches Update */
+        patch: operations["banking_staff_branches_update"];
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/banks/{bank_id}/branches/{branch_id}/tills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tills List */
+        get: operations["banking_staff_tills_list"];
+        put?: never;
+        /** Tills Create */
+        post: operations["banking_staff_tills_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/denominations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Denominations */
+        get: operations["banking_denominations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/vault": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Vault */
+        get: operations["banking_vault"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/cash-transfers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Transfers List */
+        get: operations["banking_transfers_list"];
+        put?: never;
+        /** Transfers Request */
+        post: operations["banking_transfers_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/cash-transfers/{transfer_id}/approve-custodian": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Transfers Approve Custodian */
+        post: operations["banking_transfers_approve_custodian"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/cash-transfers/{transfer_id}/approve-manager": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Transfers Approve Manager */
+        post: operations["banking_transfers_approve_manager"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/cash-transfers/{transfer_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Transfers Reject */
+        post: operations["banking_transfers_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -926,6 +1082,10 @@ export interface components {
             learning_panel: boolean;
             /** Seed Profile */
             seed_profile: string;
+            /** Opening Capital Usd */
+            opening_capital_usd: number | string;
+            /** Opening Capital Sos */
+            opening_capital_sos: number | string;
         };
         /** TemplateIn */
         TemplateIn: {
@@ -951,6 +1111,16 @@ export interface components {
             seed_profile: string;
             /** Class Id */
             class_id?: string | null;
+            /**
+             * Opening Capital Usd
+             * @default 1000000.00
+             */
+            opening_capital_usd: number | string;
+            /**
+             * Opening Capital Sos
+             * @default 5000000000.00
+             */
+            opening_capital_sos: number | string;
         };
         /** SessionOut */
         SessionOut: {
@@ -984,6 +1154,10 @@ export interface components {
             learning_panel: boolean;
             /** Seed Profile */
             seed_profile: string;
+            /** Opening Capital Usd */
+            opening_capital_usd: number | string;
+            /** Opening Capital Sos */
+            opening_capital_sos: number | string;
             /** Opened At */
             opened_at?: string | null;
             /** Archived At */
@@ -1012,6 +1186,10 @@ export interface components {
             learning_panel?: boolean | null;
             /** Seed Profile */
             seed_profile?: string | null;
+            /** Opening Capital Usd */
+            opening_capital_usd?: number | string | null;
+            /** Opening Capital Sos */
+            opening_capital_sos?: number | string | null;
         };
         /** OpenSessionIn */
         OpenSessionIn: {
@@ -1358,6 +1536,218 @@ export interface components {
             debit: number | string;
             /** Credit */
             credit: number | string;
+        };
+        /** BranchOut */
+        BranchOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Bank Id
+             * Format: uuid
+             */
+            bank_id: string;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Address */
+            address: string;
+            /**
+             * Vault Id
+             * Format: uuid
+             */
+            vault_id: string;
+        };
+        /** BranchIn */
+        BranchIn: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /**
+             * Address
+             * @default
+             */
+            address: string;
+        };
+        /** BranchUpdateIn */
+        BranchUpdateIn: {
+            /** Name */
+            name?: string | null;
+            /** Address */
+            address?: string | null;
+        };
+        /** TillOut */
+        TillOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Bank Id
+             * Format: uuid
+             */
+            bank_id: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /** Code */
+            code: string;
+        };
+        /** TillIn */
+        TillIn: {
+            /** Code */
+            code: string;
+        };
+        /** DenominationOut */
+        DenominationOut: {
+            /** Id */
+            id: number;
+            /** Currency */
+            currency: string;
+            /** Value */
+            value: number | string;
+            /** Kind */
+            kind: string;
+        };
+        /** CashPositionOut */
+        CashPositionOut: {
+            /** Currency */
+            currency: string;
+            /** Balance */
+            balance: number | string;
+        };
+        /** CashReconciliationOut */
+        CashReconciliationOut: {
+            /** Currency */
+            currency: string;
+            /** Vault Total */
+            vault_total: number | string;
+            /** Gl Vault */
+            gl_vault: number | string;
+            /** Teller Total */
+            teller_total: number | string;
+            /** Gl Teller */
+            gl_teller: number | string;
+            /** Ok */
+            ok: boolean;
+        };
+        /** VaultBranchOut */
+        VaultBranchOut: {
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /** Branch Code */
+            branch_code: string;
+            /** Branch Name */
+            branch_name: string;
+            /**
+             * Vault Id
+             * Format: uuid
+             */
+            vault_id: string;
+            /** Positions */
+            positions: components["schemas"]["CashPositionOut"][];
+        };
+        /** VaultOut */
+        VaultOut: {
+            /** Branches */
+            branches: components["schemas"]["VaultBranchOut"][];
+            /** Reconciliation */
+            reconciliation: components["schemas"]["CashReconciliationOut"][];
+        };
+        /** TransferOut */
+        TransferOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** From Type */
+            from_type: string;
+            /**
+             * From Id
+             * Format: uuid
+             */
+            from_id: string;
+            /** To Type */
+            to_type: string;
+            /**
+             * To Id
+             * Format: uuid
+             */
+            to_id: string;
+            /** Currency */
+            currency: string;
+            /** Amount */
+            amount: number | string;
+            /** Status */
+            status: string;
+            /**
+             * Requested By Id
+             * Format: uuid
+             */
+            requested_by_id: string;
+            /** Requested By Name */
+            requested_by_name: string;
+            /** Approved By 1 Id */
+            approved_by_1_id?: string | null;
+            /** Approved By 1 Name */
+            approved_by_1_name?: string | null;
+            /** Approved By 2 Id */
+            approved_by_2_id?: string | null;
+            /** Approved By 2 Name */
+            approved_by_2_name?: string | null;
+            /** Rejected By Id */
+            rejected_by_id?: string | null;
+            /** Reason */
+            reason: string;
+            /** Journal Entry Id */
+            journal_entry_id?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** TransferIn */
+        TransferIn: {
+            /** From Type */
+            from_type: string;
+            /**
+             * From Id
+             * Format: uuid
+             */
+            from_id: string;
+            /** To Type */
+            to_type: string;
+            /**
+             * To Id
+             * Format: uuid
+             */
+            to_id: string;
+            /** Currency */
+            currency: string;
+            /** Amount */
+            amount: number | string;
+        };
+        /** RejectIn */
+        RejectIn: {
+            /** Reason */
+            reason: string;
         };
     };
     responses: never;
@@ -2397,6 +2787,299 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JournalEntryDetailOut"];
+                };
+            };
+        };
+    };
+    banking_staff_branches_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                bank_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchOut"][];
+                };
+            };
+        };
+    };
+    banking_staff_branches_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                bank_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BranchIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchOut"];
+                };
+            };
+        };
+    };
+    banking_staff_branches_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                bank_id: string;
+                branch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BranchUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BranchOut"];
+                };
+            };
+        };
+    };
+    banking_staff_tills_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                bank_id: string;
+                branch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TillOut"][];
+                };
+            };
+        };
+    };
+    banking_staff_tills_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                bank_id: string;
+                branch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TillIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TillOut"];
+                };
+            };
+        };
+    };
+    banking_denominations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DenominationOut"][];
+                };
+            };
+        };
+    };
+    banking_vault: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VaultOut"];
+                };
+            };
+        };
+    };
+    banking_transfers_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferOut"][];
+                };
+            };
+        };
+    };
+    banking_transfers_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferOut"];
+                };
+            };
+        };
+    };
+    banking_transfers_approve_custodian: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                transfer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferOut"];
+                };
+            };
+        };
+    };
+    banking_transfers_approve_manager: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                transfer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferOut"];
+                };
+            };
+        };
+    };
+    banking_transfers_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                transfer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferOut"];
                 };
             };
         };

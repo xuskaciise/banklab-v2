@@ -291,6 +291,7 @@ export const useSessionMe = (sessionId: string) =>
   useQuery({
     queryKey: ["session-me", sessionId],
     queryFn: () => apiFetch<SessionMe>(`/api/s/${sessionId}/me`),
+    enabled: !!sessionId,
   });
 
 /** Latest audit rows for the staff overview (API scopes them to the caller). */

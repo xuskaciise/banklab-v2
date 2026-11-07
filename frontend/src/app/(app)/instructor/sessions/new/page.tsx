@@ -33,7 +33,14 @@ function Wizard({ classId }: { classId: string }) {
   const [roles, setRoles] = useState<string[]>([...BANK_ROLES]);
   const [visibility, setVisibility] = useState("all");
   const [panel, setPanel] = useState(true);
-  const [errors, setErrors] = useState<{ name?: string; roles?: string }>({});
+  const [capUsd, setCapUsd] = useState("1000000.00");
+  const [capSos, setCapSos] = useState("5000000000.00");
+  const [errors, setErrors] = useState<{
+    name?: string;
+    roles?: string;
+    capUsd?: string;
+    capSos?: string;
+  }>({});
 
   const exam = kind === "exam";
   // Exams force a single bank, own-work visibility and no Dr/Cr panel.
@@ -50,6 +57,8 @@ function Wizard({ classId }: { classId: string }) {
     setRoles(t.allowed_roles);
     setVisibility(t.default_visibility);
     setPanel(t.learning_panel);
+    setCapUsd(String(t.opening_capital_usd));
+    setCapSos(String(t.opening_capital_sos));
   }
 
   function toggleRole(r: string) {
@@ -62,8 +71,13 @@ function Wizard({ classId }: { classId: string }) {
       name: name.trim() ? undefined : "Enter a session name",
       roles: roles.length ? undefined : "Select at least one role",
     };
-    setErrors(next);
-    if (next.name || next.roles) return;
+    const amount = (v: string) =>
+      /^\d{1,16}(\.\d{1,2})?$/.test(v.trim()) && Number(v) > 0
+        ? undefined
+        : "Enter a positive amount with at most 2 decimals";
+    const all = { ...next, capUsd: amount(capUsd), capSos: amount(capSos) };
+    setErrors(all);
+    if (all.name || all.roles || all.capUsd || all.capSos) return;
     create.mutate(
       {
         class_id: classId,
@@ -74,6 +88,8 @@ function Wizard({ classId }: { classId: string }) {
         allowed_roles: roles,
         default_visibility: eVisibility,
         learning_panel: ePanel,
+        opening_capital_usd: capUsd.trim(),
+        opening_capital_sos: capSos.trim(),
       },
       {
         onSuccess: (s) => {
@@ -145,6 +161,26 @@ function Wizard({ classId }: { classId: string }) {
               <option value="all">Whole bank</option>
               <option value="own">Own work only</option>
             </Select>
+          </Labeled>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Labeled
+            label="Opening capital (USD)"
+            error={errors.capUsd}
+            hint="Starting capital for each bank in this session."
+          >
+            <TextInput
+              inputMode="decimal"
+              value={capUsd}
+              onChange={(e) => setCapUsd(e.target.value)}
+            />
+          </Labeled>
+          <Labeled label="Opening capital (SOS)" error={errors.capSos}>
+            <TextInput
+              inputMode="decimal"
+              value={capSos}
+              onChange={(e) => setCapSos(e.target.value)}
+            />
           </Labeled>
         </div>
         {exam && (
