@@ -6,7 +6,7 @@ from apps.accounts import services
 from apps.accounts.models import Institution, PlatformRole, User
 from apps.audit.models import AuditLog
 
-PHONE = "+252 61 555 1234"  # staff initial password 1234; student phone 615551234
+PHONE = "+252 61 555 1234"  # initial password for everyone: 1234
 STAFF = PlatformRole.INSTRUCTOR
 
 
@@ -44,17 +44,17 @@ def login(username, password):
     return client, client.cookies["csrftoken"].value, resp
 
 
-def student_login(student_id, phone):
+def student_login(student_id, password="1234"):
     client, token = csrf_client()
     resp = post(
-        client, token, "/api/auth/student-login", {"student_id": student_id, "phone": phone}
+        client, token, "/api/auth/student-login", {"student_id": student_id, "password": password}
     )
     return client, client.cookies["csrftoken"].value, resp
 
 
-def student_post(client, token, student_id, phone):
+def student_post(client, token, student_id, password):
     return post(
-        client, token, "/api/auth/student-login", {"student_id": student_id, "phone": phone}
+        client, token, "/api/auth/student-login", {"student_id": student_id, "password": password}
     )
 
 
@@ -131,42 +131,24 @@ class TestStaffLogin:
 class TestStudentLogin:
     def test_happy_path(self):
         stu = make_student("stu1")
-        assert not stu.has_usable_password() and stu.must_change_password is False
-        client, _, resp = student_login("stu1", "061 555 1234")
+        assert stu.has_usable_password() and stu.must_change_password is True
+        assert stu.check_password("1234")
+        client, _, resp = student_login("stu1", "1234")
         assert resp.status_code == 200
         body = resp.json()["user"]
-        assert body["username"] == "stu1" and body["must_change_password"] is False
+        assert body["username"] == "stu1" and body["must_change_password"] is True
         assert body["platform_role"] == "student"
         assert client.get("/api/auth/me").status_code == 200
 
-    @pytest.mark.parametrize(
-        "typed",
-        [
-            "+252 61 555 1234",
-            "00252615551234",
-            "0615551234",
-            "615551234",
-            "61-555-1234",
-            " 615 551 234 ",
-        ],
-    )
-    def test_phone_variants_match(self, typed):
-        make_student("stu1", phone="0615551234")
-        assert student_login("stu1", typed)[2].status_code == 200
-
-    def test_stored_in_international_format_matches_local(self):
-        make_student("stu1", phone="+252615551234")
-        assert student_login("stu1", "0615551234")[2].status_code == 200
-
-    @pytest.mark.parametrize("typed", ["", "   ", "---", "0615551235", "0000"])
-    def test_wrong_or_empty_phone(self, typed):
+    @pytest.mark.parametrize("typed", ["", "   ", "0615551234", "061 555 1234", "0000", "12345"])
+    def test_wrong_password(self, typed):
         make_student("stu1")
         _, _, resp = student_login("stu1", typed)
         assert resp.status_code == 401
         assert resp.json()["detail"] == "Invalid credentials"
 
     def test_unknown_student_same_message(self):
-        _, _, resp = student_login("ghost", PHONE)
+        _, _, resp = student_login("ghost", "1234")
         assert resp.status_code == 401
         assert resp.json()["detail"] == "Invalid credentials"
 
@@ -174,26 +156,21 @@ class TestStudentLogin:
         stu = make_student("stu1")
         stu.is_active = False
         stu.save()
-        assert student_login("stu1", PHONE)[2].status_code == 401
+        assert student_login("stu1", "1234")[2].status_code == 401
 
     @pytest.mark.parametrize("role", [PlatformRole.INSTRUCTOR, PlatformRole.ADMIN])
     def test_staff_rejected_generic_401(self, role):
         make("boss", role)
-        _, _, resp = student_login("boss", PHONE)
+        _, _, resp = student_login("boss", "1234")
         assert resp.status_code == 401
         assert resp.json()["detail"] == "Invalid credentials"
-
-    def test_empty_stored_phone_never_matches(self):
-        User.objects.create_user("stu9", None, platform_role=PlatformRole.STUDENT, phone="")
-        assert student_login("stu9", "")[2].status_code == 401
-        assert student_login("stu9", "0")[2].status_code == 401
 
     def test_throttle_per_id(self):
         make_student("stu1")
         client, token = csrf_client()
         for _ in range(5):
             assert student_post(client, token, "stu1", "1").status_code == 401
-        assert student_post(client, token, "stu1", PHONE).status_code == 429
+        assert student_post(client, token, "stu1", "1234").status_code == 429
 
     def test_throttle_per_ip(self, monkeypatch):
         monkeypatch.setattr("apps.accounts.api.MAX_ATTEMPTS_PER_IP", 30)
@@ -217,7 +194,7 @@ class TestStudentLogin:
         client, token = csrf_client()
         url = f"/api/auth/{kind}-login"
         body = (
-            {"student_id": "stu1", "phone": "1"}
+            {"student_id": "stu1", "password": "1"}
             if kind == "student"
             else {"username": "stu1", "password": "x"}
         )
@@ -244,21 +221,21 @@ class TestStudentLogin:
         client, token = csrf_client()
         for _ in range(4):
             student_post(client, token, "stu1", "1")
-        assert student_post(client, token, "stu1", PHONE).status_code == 200
+        assert student_post(client, token, "stu1", "1234").status_code == 200
 
     def test_without_csrf_token_rejected(self):
         make_student("stu1")
         client = Client(enforce_csrf_checks=True)
         resp = client.post(
             "/api/auth/student-login",
-            data={"student_id": "stu1", "phone": PHONE},
+            data={"student_id": "stu1", "password": "1234"},
             content_type="application/json",
         )
         assert resp.status_code == 403
 
     def test_student_logout(self):
         make_student("stu1")
-        client, token, _ = student_login("stu1", PHONE)
+        client, token, _ = student_login("stu1", "1234")
         assert post(client, token, "/api/auth/logout").status_code == 204
         assert client.get("/api/auth/me").status_code == 401
 
@@ -268,7 +245,7 @@ class TestLoginAudit:
     def test_student_success_and_failure_rows(self):
         stu = make_student("stu1")
         student_login("stu1", "999999999")
-        student_login("stu1", PHONE)
+        student_login("stu1", "1234")
         failed = AuditLog.objects.get(action="auth.login_failed")
         assert (failed.entity_type, failed.entity_id) == ("user", str(stu.pk))
         assert failed.after == {"method": "student"}
@@ -355,12 +332,21 @@ class TestChangePassword:
         client, token = csrf_client()
         assert self.change(client, token, "a", "bbbbbbb").status_code == 401
 
-    def test_student_403(self):
+    def test_student_changes_password(self):
         stu = make_student("stu1")
-        client, token, _ = student_login("stu1", PHONE)
-        assert self.change(client, token, "", "newsecret1").status_code == 403
+        client, token, _ = student_login("stu1", "1234")
+        assert self.change(client, token, "1234", "newsecret1").status_code == 200
         stu.refresh_from_db()
-        assert not stu.has_usable_password()
+        assert stu.check_password("newsecret1") and stu.must_change_password is False
+        assert student_login("stu1", "newsecret1")[2].status_code == 200
+        assert student_login("stu1", "1234")[2].status_code == 401
+
+    def test_student_policy_rejections(self):
+        make_student("stu1")
+        client, token, _ = student_login("stu1", "1234")
+        assert self.change(client, token, "wrong", "newsecret1").status_code == 400
+        assert self.change(client, token, "1234", "1234").status_code == 400
+        assert self.change(client, token, "1234", "abc").status_code == 400
 
 
 @pytest.mark.django_db
@@ -369,7 +355,7 @@ class TestResetPassword:
         actor.must_change_password = False
         actor.save()
         if actor.platform_role == PlatformRole.STUDENT:
-            client, token, resp = student_login(actor.username, PHONE)
+            client, token, resp = student_login(actor.username, "1234")
         else:
             client, token, resp = login(actor.username, "1234")
         assert resp.status_code == 200
@@ -387,31 +373,52 @@ class TestResetPassword:
         assert self.reset(admin, inst).status_code == 204
         inst.refresh_from_db()
         assert inst.check_password("1234") and inst.must_change_password
+        row = AuditLog.objects.get(action="auth.password_reset")
+        assert row.actor_id == admin.pk and row.entity_id == str(inst.pk)
 
-    def test_admin_cannot_reset_student(self):
+    def test_admin_resets_student(self):
         admin = make("a1", PlatformRole.ADMIN)
         stu = make_student("s1")
-        assert self.reset(admin, stu).status_code == 403
+        self.dirty(stu)
+        assert self.reset(admin, stu).status_code == 204
         stu.refresh_from_db()
-        assert not stu.has_usable_password()
+        assert stu.check_password("1234") and stu.must_change_password
+        assert student_login("s1", "1234")[2].status_code == 200
 
-    def test_instructor_cannot_reset_anyone(self):
+    def test_instructor_resets_student(self):
+        inst = make("i1", PlatformRole.INSTRUCTOR)
+        stu = make_student("s1")
+        self.dirty(stu)
+        assert self.reset(inst, stu).status_code == 204
+        stu.refresh_from_db()
+        assert stu.check_password("1234") and stu.must_change_password
+        row = AuditLog.objects.get(action="auth.password_reset")
+        assert row.actor_id == inst.pk and row.entity_id == str(stu.pk)
+
+    def test_instructor_cannot_reset_staff(self):
         inst = make("i1", PlatformRole.INSTRUCTOR)
         other = make("i2", PlatformRole.INSTRUCTOR)
-        stu = make_student("s1")
+        admin = make("a1", PlatformRole.ADMIN)
+        self.dirty(other)
+        self.dirty(admin)
         assert self.reset(inst, other).status_code == 403
-        assert self.reset(inst, stu).status_code == 403
+        assert self.reset(inst, admin).status_code == 403
+        other.refresh_from_db()
+        assert other.check_password("changed99")
 
     def test_student_forbidden(self):
         stu = make_student("s1")
         other = make_student("s2")
         assert self.reset(stu, other).status_code == 403
+        other.refresh_from_db()
+        assert other.check_password("1234") and other.must_change_password
 
     def test_cross_institution_hidden(self):
         admin = make("a1", PlatformRole.ADMIN)
-        other_inst = Institution.objects.create(name="Other")
-        inst = make("i9", PlatformRole.INSTRUCTOR, institution=other_inst)
-        assert self.reset(admin, inst).status_code == 404
+        inst = Institution.objects.create(name="Other")
+        for role in (PlatformRole.INSTRUCTOR, PlatformRole.STUDENT):
+            target = make(f"x-{role}", role, institution=inst)
+            assert self.reset(admin, target).status_code == 404
 
 
 @pytest.mark.django_db
@@ -436,12 +443,6 @@ class TestPhoneNormalisation:
     def test_normalize(self, raw, expected):
         assert services.normalize_phone(raw) == expected
 
-    def test_matches(self):
-        assert services.phone_matches("0612345678", "+252 61 234 5678")
-        assert not services.phone_matches("0612345678", "0612345679")
-        assert not services.phone_matches("", "")
-        assert not services.phone_matches("0612345678", "")
-        assert not services.phone_matches("", "0612345678")
 
 
 @pytest.mark.django_db
@@ -451,9 +452,9 @@ class TestServices:
         with pytest.raises(services.ValidationFailed):
             services.initial_password("12-3")
 
-    def test_student_created_passwordless(self):
+    def test_student_created_with_initial_password(self):
         stu = make_student("s1")
-        assert not stu.has_usable_password() and stu.must_change_password is False
+        assert stu.check_password("1234") and stu.must_change_password is True
 
     def test_student_requires_phone(self):
         with pytest.raises(services.ValidationFailed):
@@ -489,16 +490,24 @@ class TestForcedPasswordChange:
         client, token, _ = login("a1", "1234")
         assert post(client, token, f"/api/auth/users/{inst.id}/reset-password").status_code == 204
 
-    def test_students_not_gated_even_if_flag_set(self):
-        stu = make_student("s1")
-        User.objects.filter(pk=stu.pk).update(must_change_password=True)
-        client, token, resp = student_login("s1", PHONE)
+    def test_flagged_student_blocked_like_staff(self):
+        stu = make_student("s1")  # flagged by create_user
+        client, token, resp = student_login("s1", "1234")
         assert resp.status_code == 200
-        # The route is reached: 403 comes from the role check, not the forced-change gate.
         r = post(client, token, f"/api/auth/users/{stu.id}/reset-password")
         assert r.status_code == 403
+        assert r.json()["detail"] == "Password change required"
+        assert client.get("/api/audit").json()["detail"] == "Password change required"
+        assert client.get("/api/auth/me").status_code == 200  # allowed
+        change = post(
+            client,
+            token,
+            "/api/auth/change-password",
+            {"current_password": "1234", "new_password": "newsecret1"},
+        )
+        assert change.status_code == 200
+        r = post(client, token, f"/api/auth/users/{stu.id}/reset-password")
         assert r.json()["detail"] != "Password change required"
-        assert client.get("/api/audit").json()["detail"] != "Password change required"
 
     def test_health_stays_public(self):
         assert Client().get("/api/health").status_code == 200
@@ -531,77 +540,76 @@ def test_csrf_endpoint_returns_token():
 
 
 @pytest.mark.django_db
-class TestAdminStudentsPasswordless:
+class TestAdminStudents:
     def _admin_client(self):
-        from django.test import Client as C
-
         User.objects.create_superuser("root", "pw123456", full_name="Root")
-        c = C()
+        c = Client()
         c.login(username="root", password="pw123456")
         return c
 
-    def test_add_student_without_password(self):
-        c = self._admin_client()
-        inst = Institution.objects.first()
-        resp = c.post(
+    def _add(self, c, username, role, phone="0615551234", pw=""):
+        return c.post(
             "/admin/accounts/user/add/",
             {
-                "username": "adm-stu",
-                "institution": inst.pk,
+                "username": username,
+                "institution": Institution.objects.first().pk,
                 "full_name": "X",
-                "phone": "0615551234",
-                "platform_role": "student",
-                "password1": "",
-                "password2": "",
+                "phone": phone,
+                "platform_role": role,
+                "password1": pw,
+                "password2": pw,
             },
         )
+
+    def test_add_student_without_password_gets_initial(self):
+        resp = self._add(self._admin_client(), "adm-stu", "student")
         assert resp.status_code == 302
         u = User.objects.get(username="adm-stu")
-        assert not u.has_usable_password() and u.must_change_password is False
+        assert u.check_password("1234") and u.must_change_password is True
+        assert student_login("adm-stu", "1234")[2].status_code == 200
 
     def test_add_student_ignores_given_password(self):
-        c = self._admin_client()
-        inst = Institution.objects.first()
-        c.post(
-            "/admin/accounts/user/add/",
-            {
-                "username": "adm-stu2",
-                "institution": inst.pk,
-                "phone": "0615551234",
-                "platform_role": "student",
-                "password1": "Sup3rSecret!x",
-                "password2": "Sup3rSecret!x",
-            },
-        )
-        assert not User.objects.get(username="adm-stu2").has_usable_password()
+        self._add(self._admin_client(), "adm-stu2", "student", pw="Sup3rSecret!x")
+        u = User.objects.get(username="adm-stu2")
+        assert u.check_password("1234") and not u.check_password("Sup3rSecret!x")
+        assert u.must_change_password is True
+
+    def test_add_student_needs_phone_with_4_digits(self):
+        resp = self._add(self._admin_client(), "adm-stu3", "student", phone="12")
+        assert resp.status_code == 200
+        assert not User.objects.filter(username="adm-stu3").exists()
 
     def test_staff_requires_password(self):
-        c = self._admin_client()
-        inst = Institution.objects.first()
-        resp = c.post(
-            "/admin/accounts/user/add/",
-            {
-                "username": "adm-i",
-                "institution": inst.pk,
-                "phone": "0615551234",
-                "platform_role": "instructor",
-            },
-        )
+        resp = self._add(self._admin_client(), "adm-i", "instructor")
         assert resp.status_code == 200
         assert not User.objects.filter(username="adm-i").exists()
 
-    def test_role_change_to_student_makes_password_unusable(self):
-        inst = make("i1")
-        assert inst.has_usable_password()
+    def test_role_change_to_student_sets_initial_password(self):
         from django.contrib import admin as dj_admin
 
         from apps.accounts.admin import UserAdmin
 
-        inst.platform_role = PlatformRole.STUDENT
-        inst.must_change_password = True
-        UserAdmin(User, dj_admin.site).save_model(None, inst, None, True)
-        inst.refresh_from_db()
-        assert not inst.has_usable_password() and inst.must_change_password is False
+        user = make("i1")
+        user.set_password("changed99")
+        user.must_change_password = False
+        user.platform_role = PlatformRole.STUDENT
+        form = type("F", (), {"changed_data": ["platform_role"]})()
+        UserAdmin(User, dj_admin.site).save_model(None, user, form, True)
+        user.refresh_from_db()
+        assert user.check_password("1234") and user.must_change_password is True
+
+    def test_unrelated_edit_of_student_keeps_password(self):
+        from django.contrib import admin as dj_admin
+
+        from apps.accounts.admin import UserAdmin
+
+        stu = make_student("s1")
+        stu.set_password("changed99")
+        stu.must_change_password = False
+        form = type("F", (), {"changed_data": ["full_name"]})()
+        UserAdmin(User, dj_admin.site).save_model(None, stu, form, True)
+        stu.refresh_from_db()
+        assert stu.check_password("changed99") and stu.must_change_password is False
 
 
 @pytest.mark.django_db
@@ -612,17 +620,17 @@ class TestThrottleReset:
         for i in range(15):
             client.post(
                 "/api/auth/student-login",
-                data={"student_id": "stu1", "phone": "1"},
+                data={"student_id": "stu1", "password": "1"},
                 content_type="application/json",
                 HTTP_X_CSRFTOKEN=token,
                 REMOTE_ADDR=f"10.1.0.{i + 1}",
             )
-        assert student_post(client, token, "stu1", PHONE).status_code == 200
+        assert student_post(client, token, "stu1", "1234").status_code == 200
         token = client.cookies["csrftoken"].value  # login rotates the CSRF token
         for i in range(15):
             r = client.post(
                 "/api/auth/student-login",
-                data={"student_id": "stu1", "phone": "1"},
+                data={"student_id": "stu1", "password": "1"},
                 content_type="application/json",
                 HTTP_X_CSRFTOKEN=token,
                 REMOTE_ADDR=f"10.2.0.{i + 1}",
@@ -633,4 +641,25 @@ class TestThrottleReset:
         for i in range(40):
             make_student(f"c{i}")
         for i in range(40):
-            assert student_login(f"c{i}", PHONE)[2].status_code == 200
+            assert student_login(f"c{i}", "1234")[2].status_code == 200
+
+
+@pytest.mark.django_db
+class TestMigration0004:
+    def test_students_without_usable_password_get_initial(self):
+        import importlib
+
+        from django.apps import apps as django_apps
+
+        mod = importlib.import_module("apps.accounts.migrations.0004_students_initial_password")
+        stu = make_student("s1", phone="061-555-9876")
+        User.objects.filter(pk=stu.pk).update(password="!", must_change_password=False)
+        keep = make_student("s2")
+        keep.set_password("mine-1234")
+        keep.must_change_password = False
+        keep.save()
+        mod.give_students_initial_password(django_apps, None)
+        stu.refresh_from_db()
+        keep.refresh_from_db()
+        assert stu.check_password("9876") and stu.must_change_password is True
+        assert keep.check_password("mine-1234") and keep.must_change_password is False

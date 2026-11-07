@@ -17,9 +17,9 @@ badges from [theme.md](theme.md). `R#` = ROADMAP item that builds it.
 ## 1. Public & account (R1.1)
 | Route | Screen | Users | Purpose |
 |-------|--------|-------|---------|
-| `/login` | Student login | student | Student ID + Phone (no password) |
+| `/login` | Student login | student | Student ID + Password |
 | `/staff/login` | Staff login | instructor, admin | Username + password |
-| `/change-password` | Change password | staff only | Forced on first staff login; simple policy; students have no password |
+| `/change-password` | Change password | all | Forced on first login (students and staff); simple policy; also in the user menu |
 
 ## 2. Instructor & admin (R1.2, R1.3, R1.13, R1.14)
 | Route | Screen | Purpose |

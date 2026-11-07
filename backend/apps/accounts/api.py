@@ -36,7 +36,7 @@ class StaffLoginIn(Schema):
 
 class StudentLoginIn(Schema):
     student_id: str
-    phone: str
+    password: str
 
 
 class ChangePasswordIn(Schema):
@@ -143,15 +143,14 @@ def staff_login_view(request, payload: StaffLoginIn):
 def student_login_view(request, payload: StudentLoginIn):
     _enforce_csrf(request)
     keys = _throttle(request, "slogin", payload.student_id)
-    known = User.objects.filter(username=payload.student_id).first()
-    is_student = known is not None and known.platform_role == PlatformRole.STUDENT
-    # Always run the comparison so unknown IDs cost the same as known ones.
-    phone_ok = services.phone_matches(known.phone if known else "", payload.phone)
-    if not (is_student and known.is_active and phone_ok):
+    # Always run the password check so unknown IDs cost the same as known ones.
+    user = authenticate(request, username=payload.student_id, password=payload.password)
+    if user is None or not user.is_active or user.platform_role != PlatformRole.STUDENT:
+        known = User.objects.filter(username=payload.student_id).first()
         _login_failed(request, known, "student")
         raise HttpError(401, INVALID_LOGIN)
-    _login_ok(request, known, keys, "student")
-    return {"user": known}
+    _login_ok(request, user, keys, "student")
+    return {"user": user}
 
 
 @router.post("/logout", auth=django_auth, response={204: None}, operation_id="auth_logout")

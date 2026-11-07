@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { isStudent, useChangePassword, useMe } from "@/lib/auth";
+import { useChangePassword } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FormError } from "@/components/auth/field";
@@ -10,8 +10,6 @@ import { Field, FormError } from "@/components/auth/field";
 export default function ChangePasswordPage() {
   const router = useRouter();
   const change = useChangePassword();
-  // AuthGate redirects students away; this is only a render guard.
-  const { data: me } = useMe();
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -35,8 +33,6 @@ export default function ChangePasswordPage() {
       { onSuccess: () => router.replace("/") },
     );
   }
-
-  if (isStudent(me)) return null;
 
   return (
     <Card>

@@ -55,7 +55,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </Badge>
               </>
             )}
-            {user && !isStudent(user) && (
+            {user && (
               <Link
                 href="/change-password"
                 className="text-text-muted underline hover:text-text-strong"

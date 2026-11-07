@@ -1,4 +1,3 @@
-import hmac
 import re
 
 from django.db import transaction
@@ -27,7 +26,7 @@ class PermissionDenied(AccountsError):
 
 
 def initial_password(phone: str) -> str:
-    """Staff only: the first password is the last 4 phone digits."""
+    """The first password (staff and students) is the last 4 phone digits."""
     digits = re.sub(r"\D", "", phone or "")
     if len(digits) < 4:
         raise ValidationFailed("Phone must contain at least 4 digits")
@@ -48,43 +47,26 @@ def normalize_phone(phone: str) -> str:
     return digits.lstrip("0")
 
 
-def phone_matches(stored: str, typed: str) -> bool:
-    """Constant-time comparison of normalised numbers; an empty value never matches."""
-    a, b = normalize_phone(stored), normalize_phone(typed)
-    equal = hmac.compare_digest(a.encode(), b.encode())
-    return bool(a) and bool(b) and equal
-
-
 @transaction.atomic
 def create_user(username, full_name, phone, platform_role, institution=None) -> User:
     if platform_role not in PlatformRole.values:
         raise ValidationFailed("Invalid platform role")
     if User.objects.filter(username=username).exists():
         raise ValidationFailed("Username already exists")
-    is_student = platform_role == PlatformRole.STUDENT
-    if is_student:
-        # Students sign in with Student ID + phone; they never have a password.
-        if not normalize_phone(phone):
-            raise ValidationFailed("Phone is required for students")
-        password = None
-    else:
-        password = initial_password(phone)
     return User.objects.create_user(
         username=username,
-        password=password,
+        password=initial_password(phone),
         full_name=full_name,
         phone=phone,
         platform_role=platform_role,
         institution=institution or get_default_institution(),
-        must_change_password=not is_student,
+        must_change_password=True,
     )
 
 
 @transaction.atomic
 def change_password(user: User, current: str, new: str) -> User:
     user = User.objects.select_for_update().get(pk=user.pk)
-    if user.platform_role == PlatformRole.STUDENT:
-        raise PermissionDenied("Students do not have a password")
     if not user.check_password(current):
         raise ValidationFailed("Current password is incorrect")
     if len(new) < MIN_PASSWORD_LENGTH:
@@ -101,13 +83,18 @@ def change_password(user: User, current: str, new: str) -> User:
 
 @transaction.atomic
 def reset_password(actor: User, target: User) -> User:
-    """Admin resets a staff member's password back to the initial one."""
-    if actor.platform_role != PlatformRole.ADMIN:
-        raise PermissionDenied("Not allowed to reset passwords")
+    """Reset a user's password back to the initial one (last 4 phone digits).
+
+    Admins may reset anyone in their institution; instructors may reset students only.
+    """
     if actor.institution_id != target.institution_id:
         raise PermissionDenied("Not allowed to reset passwords")
-    if target.platform_role == PlatformRole.STUDENT:
-        raise PermissionDenied("Students do not have a password")
+    if actor.platform_role == PlatformRole.INSTRUCTOR:
+        # TODO(1.3): scope to students enrolled in the instructor's own classes
+        if target.platform_role != PlatformRole.STUDENT:
+            raise PermissionDenied("Not allowed to reset passwords")
+    elif actor.platform_role != PlatformRole.ADMIN:
+        raise PermissionDenied("Not allowed to reset passwords")
     target = User.objects.select_for_update().get(pk=target.pk)
     target.set_password(initial_password(target.phone))
     target.must_change_password = True

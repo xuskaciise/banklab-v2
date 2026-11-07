@@ -12,8 +12,8 @@ export default function StudentLoginPage() {
   const router = useRouter();
   const login = useStudentLogin();
   const [studentId, setStudentId] = useState("");
-  const [phone, setPhone] = useState("");
-  const [errors, setErrors] = useState<{ studentId?: string; phone?: string }>(
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<{ studentId?: string; password?: string }>(
     {},
   );
 
@@ -21,12 +21,12 @@ export default function StudentLoginPage() {
     ev.preventDefault();
     const next = {
       studentId: studentId.trim() ? undefined : "Enter your Student ID",
-      phone: phone.trim() ? undefined : "Enter your phone number",
+      password: password ? undefined : "Enter your password",
     };
     setErrors(next);
-    if (next.studentId || next.phone) return;
+    if (next.studentId || next.password) return;
     login.mutate(
-      { student_id: studentId.trim(), phone: phone.trim() },
+      { student_id: studentId.trim(), password },
       { onSuccess: () => router.replace("/") },
     );
   }
@@ -48,13 +48,13 @@ export default function StudentLoginPage() {
             error={errors.studentId}
           />
           <Field
-            id="phone"
-            label="Phone number"
-            type="tel"
-            autoComplete="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            error={errors.phone}
+            id="password"
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={errors.password}
           />
           <FormError
             message={login.isError ? loginErrorMessage(login.error) : null}

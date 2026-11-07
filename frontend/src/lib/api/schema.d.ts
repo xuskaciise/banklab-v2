@@ -204,8 +204,8 @@ export interface components {
         StudentLoginIn: {
             /** Student Id */
             student_id: string;
-            /** Phone */
-            phone: string;
+            /** Password */
+            password: string;
         };
         /** ChangePasswordIn */
         ChangePasswordIn: {

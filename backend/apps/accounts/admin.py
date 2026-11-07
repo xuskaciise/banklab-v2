@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import UserCreationForm
 
+from . import services
 from .models import Institution, PlatformRole, User
 
 
@@ -12,7 +13,7 @@ class InstitutionAdmin(admin.ModelAdmin):
 
 
 class StaffOrStudentCreationForm(UserCreationForm):
-    """Students have no password; staff must be given one."""
+    """Students get the initial password automatically; staff must be given one."""
 
     class Meta(UserCreationForm.Meta):
         model = User
@@ -25,7 +26,12 @@ class StaffOrStudentCreationForm(UserCreationForm):
 
     def clean(self):
         cleaned = super().clean()
-        if cleaned.get("platform_role") != PlatformRole.STUDENT and not cleaned.get("password1"):
+        if cleaned.get("platform_role") == PlatformRole.STUDENT:
+            try:
+                services.initial_password(cleaned.get("phone", ""))
+            except services.ValidationFailed as exc:
+                raise forms.ValidationError(exc.message) from exc
+        elif not cleaned.get("password1"):
             raise forms.ValidationError("Staff users need a password.")
         return cleaned
 
@@ -39,9 +45,14 @@ class UserAdmin(BaseUserAdmin):
     add_form = StaffOrStudentCreationForm
 
     def save_model(self, request, obj, form, change):
-        if obj.platform_role == PlatformRole.STUDENT:
-            obj.set_unusable_password()
-            obj.must_change_password = False
+        # New students, and users whose role just became student, start with the initial
+        # password (last 4 phone digits) and must change it at first login.
+        became_student = obj.platform_role == PlatformRole.STUDENT and (
+            not change or (form is not None and "platform_role" in form.changed_data)
+        )
+        if became_student:
+            obj.set_password(services.initial_password(obj.phone))
+            obj.must_change_password = True
         super().save_model(request, obj, form, change)
 
     fieldsets = (

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { isStudent, useMe } from "@/lib/auth";
+import { useMe } from "@/lib/auth";
 import type { Me } from "@/lib/api/types";
 
 const AUTH_PAGES = ["/login", "/staff/login"];
@@ -18,12 +18,6 @@ function redirectFor(
 ): string | null {
   if (!user) {
     return AUTH_PAGES.includes(pathname) ? null : loginPathFor(pathname);
-  }
-  // Students have no password, so they are never sent to /change-password.
-  if (isStudent(user)) {
-    return AUTH_PAGES.includes(pathname) || pathname === "/change-password"
-      ? "/"
-      : null;
   }
   if (user.must_change_password) {
     return pathname === "/change-password" ? null : "/change-password";
