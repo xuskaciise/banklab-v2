@@ -93,13 +93,19 @@ def change_password(user: User, current: str, new: str) -> User:
 def reset_password(actor: User, target: User) -> User:
     """Reset a user's password back to the initial one (last 4 phone digits).
 
-    Admins may reset anyone in their institution; instructors may reset students only.
+    Admins may reset anyone in their institution; instructors only students of their own classes.
     """
     if actor.institution_id != target.institution_id:
         raise PermissionDenied("Not allowed to reset passwords")
     if actor.platform_role == PlatformRole.INSTRUCTOR:
-        # TODO(1.3): scope to students enrolled in the instructor's own classes
-        if target.platform_role != PlatformRole.STUDENT:
+        # Only students enrolled in one of the instructor's own classes.
+        from apps.lab.models import Enrollment  # local import: lab depends on accounts
+
+        own_student = (
+            target.platform_role == PlatformRole.STUDENT
+            and Enrollment.objects.filter(user=target, lab_class__instructor=actor).exists()
+        )
+        if not own_student:
             raise PermissionDenied("Not allowed to reset passwords")
     elif actor.platform_role != PlatformRole.ADMIN:
         raise PermissionDenied("Not allowed to reset passwords")

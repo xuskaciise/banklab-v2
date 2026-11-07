@@ -388,12 +388,31 @@ class TestResetPassword:
     def test_instructor_resets_student(self):
         inst = make("i1", PlatformRole.INSTRUCTOR)
         stu = make_student("s1")
+        from apps.lab.models import Class, Enrollment
+
+        cls = Class.objects.create(
+            institution_id=inst.institution_id, instructor=inst, name="C", code="C1"
+        )
+        Enrollment.objects.create(lab_class=cls, user=stu)
         self.dirty(stu)
         assert self.reset(inst, stu).status_code == 204
         stu.refresh_from_db()
         assert stu.check_password("1234") and stu.must_change_password
         row = AuditLog.objects.get(action="auth.password_reset")
         assert row.actor_id == inst.pk and row.entity_id == str(stu.pk)
+
+    def test_instructor_cannot_reset_student_outside_own_classes(self):
+        inst = make("i1", PlatformRole.INSTRUCTOR)
+        other = make("i2", PlatformRole.INSTRUCTOR)
+        stu = make_student("s1")
+        from apps.lab.models import Class, Enrollment
+
+        cls = Class.objects.create(
+            institution_id=other.institution_id, instructor=other, name="C", code="C2"
+        )
+        Enrollment.objects.create(lab_class=cls, user=stu)
+        assert self.reset(inst, stu).status_code == 403
+        assert self.reset(other, stu).status_code == 204
 
     def test_instructor_cannot_reset_staff(self):
         inst = make("i1", PlatformRole.INSTRUCTOR)
