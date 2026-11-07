@@ -24,8 +24,8 @@ Domain details for every item live in [CONCEPT.md](CONCEPT.md).
 | # | Item | Needs | Status |
 |---|------|-------|--------|
 | 1.1 | Auth: student ID + last-4-phone first login, forced change, instructor reset | 0.6 | [x] feat/1.1-auth |
-| 1.2 | Roles & permissions (default per role + instructor overrides), audit log | 1.1, 0.4 | [ ] |
-| 1.3 | Classes & Sessions: create/open/archive, templates, students (manual + CSV), role assignment, visibility mode, business date | 1.2 | [ ] |
+| 1.2 | Roles & permissions catalog + defaults + permission check service, audit log (per-session overrides move to 1.3, they need Session) | 1.1, 0.4 | [x] feat/1.2-permissions-audit |
+| 1.3 | Classes & Sessions: create/open/archive, templates, permission overrides, students (manual + CSV), role assignment, visibility mode, business date | 1.2 | [ ] |
 | 1.4 | Ledger engine: CoA per session from template, journal entries, posting service, balances (Decimal, row locks, Dr = Cr enforced) | 1.3, 0.3 | [ ] |
 | 1.5 | Branch & Vault (dual control) | 1.4 | [ ] |
 | 1.6 | Customers (CIF): individual, company, joint, NGO; ID documents; signatories | 1.3 | [ ] |

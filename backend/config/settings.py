@@ -29,6 +29,8 @@ INSTALLED_APPS = [
     "django_q",
     "apps.core",
     "apps.accounts",
+    "apps.rbac",
+    "apps.audit",
     "apps.lab",
     "apps.banking",
     "apps.ledger",

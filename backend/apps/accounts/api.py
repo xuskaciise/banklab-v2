@@ -2,12 +2,15 @@ from uuid import UUID
 
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.core.cache import cache
+from django.db import transaction
 from django.http import HttpResponse
 from django.middleware.csrf import CsrfViewMiddleware, get_token
 from django.shortcuts import get_object_or_404
 from ninja import Router, Schema
 from ninja.errors import HttpError
 from ninja.security import django_auth
+
+from apps.audit import services as audit
 
 from . import services
 from .models import User
@@ -81,14 +84,26 @@ def login_view(request, payload: LoginIn):
         raise HttpError(429, "Too many login attempts. Try again later.")
     user = authenticate(request, username=payload.username, password=payload.password)
     if user is None or not user.is_active:
+        # Never store the typed string: only a resolved user id, else a bare marker.
+        known = User.objects.filter(username=payload.username).first()
+        audit.record(
+            "auth.login_failed",
+            entity=("user", known.pk) if known else ("unknown_username", ""),
+            institution_id=known.institution_id if known else None,
+            request=request,
+        )
         raise HttpError(401, "Invalid username or password")
     cache.delete(user_key)
     login(request, user)
+    audit.record("auth.login", actor=user, entity=("user", user.pk), request=request)
     return {"user": user}
 
 
 @router.post("/logout", auth=django_auth, response={204: None}, operation_id="auth_logout")
 def logout_view(request):
+    audit.record(
+        "auth.logout", actor=request.user, entity=("user", request.user.pk), request=request
+    )
     logout(request)
     return 204, None
 
@@ -102,7 +117,11 @@ def me(request):
     "/change-password", response=MeOut, auth=django_auth, operation_id="auth_change_password"
 )
 def change_password_view(request, payload: ChangePasswordIn):
-    user = services.change_password(request.user, payload.current_password, payload.new_password)
+    with transaction.atomic():
+        user = services.change_password(
+            request.user, payload.current_password, payload.new_password
+        )
+        audit.record("auth.password_changed", actor=user, entity=("user", user.pk), request=request)
     # Keep the current session valid after the password hash changes.
     update_session_auth_hash(request, user)
     return user
@@ -115,5 +134,12 @@ def change_password_view(request, payload: ChangePasswordIn):
 )
 def reset_password_view(request, user_id: UUID):
     target = get_object_or_404(User, pk=user_id, institution_id=request.user.institution_id)
-    services.reset_password(request.user, target)
+    with transaction.atomic():
+        services.reset_password(request.user, target)
+        audit.record(
+            "auth.password_reset",
+            actor=request.user,
+            entity=("user", target.pk),
+            request=request,
+        )
     return 204, None

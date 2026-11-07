@@ -4,13 +4,21 @@ from ninja import NinjaAPI, Schema
 from apps.accounts.api import router as auth_router
 from apps.accounts.auth import ActiveSessionAuth
 from apps.accounts.services import AccountsError
+from apps.audit.api import router as audit_router
+from apps.rbac.services import RbacError
 
 api = NinjaAPI(title="BankLab API", version="0.1.0", auth=ActiveSessionAuth())
 api.add_router("/auth", auth_router)
+api.add_router("/audit", audit_router)
 
 
 @api.exception_handler(AccountsError)
 def accounts_error(request, exc):
+    return api.create_response(request, {"detail": exc.message}, status=exc.status)
+
+
+@api.exception_handler(RbacError)
+def rbac_error(request, exc):
     return api.create_response(request, {"detail": exc.message}, status=exc.status)
 
 

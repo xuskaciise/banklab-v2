@@ -44,8 +44,8 @@ A member has **one active bank role at a time**; the instructor rotates it.
 | `cash.vault_to_teller.request` | ✓ | – | ✓ | – | – |
 | `cash.teller_to_vault.request` | ✓ | – | – | – | – |
 | `cash.teller_to_teller.request` | ✓ | – | – | – | – |
-| `cash.vault.approve` (1st, custodian) | – | – | – | ✓ | – |
-| `cash.vault.approve` (2nd, manager) | – | – | ✓ | – | – |
+| `cash.vault.approve_custodian` (1st approval) | – | – | – | ✓ | – |
+| `cash.vault.approve_manager` (2nd approval) | – | – | ✓ | – | – |
 | `txn.cash_deposit` | A | – | – | – | – |
 | `txn.cash_withdrawal` | A | – | – | – | – |
 | `txn.cheque_withdrawal` | A | – | – | – | – |

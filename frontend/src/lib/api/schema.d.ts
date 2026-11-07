@@ -123,6 +123,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Audit List */
+        get: operations["audit_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -172,6 +189,71 @@ export interface components {
             current_password: string;
             /** New Password */
             new_password: string;
+        };
+        /** AuditFilters */
+        AuditFilters: {
+            /** Action */
+            action?: string | null;
+            /** Actor */
+            actor?: string | null;
+            /** Date From */
+            date_from?: string | null;
+            /** Date To */
+            date_to?: string | null;
+        };
+        /** Input */
+        Input: {
+            /**
+             * Page
+             * @default 1
+             */
+            page: number;
+            /** Page Size */
+            page_size?: number | null;
+        };
+        /** AuditOut */
+        AuditOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Actor Username */
+            actor_username?: string | null;
+            /** Actor Role */
+            actor_role: string;
+            /** Action */
+            action: string;
+            /** Entity Type */
+            entity_type: string;
+            /** Entity Id */
+            entity_id: string;
+            /** Before */
+            before?: {
+                [key: string]: unknown;
+            } | unknown[] | null;
+            /** After */
+            after?: {
+                [key: string]: unknown;
+            } | unknown[] | null;
+            /** Ip */
+            ip: string;
+            /** Session Id */
+            session_id?: string | null;
+            /** Bank Id */
+            bank_id?: string | null;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+        };
+        /** PagedAuditOut */
+        PagedAuditOut: {
+            /** Items */
+            items: components["schemas"]["AuditOut"][];
+            /** Count */
+            count: number;
         };
     };
     responses: never;
@@ -325,6 +407,33 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    audit_list: {
+        parameters: {
+            query?: {
+                action?: string | null;
+                actor?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                page?: number;
+                page_size?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedAuditOut"];
+                };
             };
         };
     };
