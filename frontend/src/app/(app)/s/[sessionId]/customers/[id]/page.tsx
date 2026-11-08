@@ -36,6 +36,11 @@ export default function CustomerDetailPage() {
             scope={{ kind: "student", sessionId }}
             id={id}
             canEdit={perms.has("customer.update") && !readOnly}
+            accounts={
+              perms.has("account.view")
+                ? { canOpen: perms.has("account.open") && !readOnly }
+                : undefined
+            }
           />
         )}
       </QueryState>

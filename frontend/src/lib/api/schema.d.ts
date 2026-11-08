@@ -1042,6 +1042,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/s/{session_id}/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Products List */
+        get: operations["products_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Accounts List */
+        get: operations["accounts_list"];
+        put?: never;
+        /** Accounts Open */
+        post: operations["accounts_open"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/accounts/{account_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Accounts Get */
+        get: operations["accounts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/accounts/{account_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accounts Close */
+        post: operations["accounts_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2318,6 +2387,114 @@ export interface components {
             phone?: string | null;
             /** Relationship */
             relationship?: string | null;
+        };
+        /** ProductOut */
+        ProductOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Banking Model */
+            banking_model: string;
+            /** Currency */
+            currency: string;
+            /** Min Balance */
+            min_balance: number | string;
+            /** Allows Cheques */
+            allows_cheques: boolean;
+        };
+        /** AccountFilters */
+        AccountFilters: {
+            /** Customer Id */
+            customer_id?: string | null;
+            /** Status */
+            status?: string | null;
+        };
+        /** AccountOut */
+        AccountOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Bank Id
+             * Format: uuid
+             */
+            bank_id: string;
+            /** Account No */
+            account_no: number;
+            /**
+             * Customer Id
+             * Format: uuid
+             */
+            customer_id: string;
+            /** Customer Name */
+            customer_name: string;
+            /** Cif No */
+            cif_no: number;
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /** Product Code */
+            product_code: string;
+            /** Product Name */
+            product_name: string;
+            /** Product Kind */
+            product_kind: string;
+            /** Currency */
+            currency: string;
+            /** Status */
+            status: string;
+            /** Mandate */
+            mandate: string;
+            /** Ledger Balance */
+            ledger_balance: number | string;
+            /** Is Seed */
+            is_seed: boolean;
+            /** Created By Id */
+            created_by_id?: string | null;
+            /**
+             * Opened At
+             * Format: date-time
+             */
+            opened_at: string;
+            /** Closed At */
+            closed_at?: string | null;
+        };
+        /** PagedAccountOut */
+        PagedAccountOut: {
+            /** Items */
+            items: components["schemas"]["AccountOut"][];
+            /** Count */
+            count: number;
+        };
+        /** AccountIn */
+        AccountIn: {
+            /**
+             * Customer Id
+             * Format: uuid
+             */
+            customer_id: string;
+            /**
+             * Product Id
+             * Format: uuid
+             */
+            product_id: string;
+            /**
+             * Mandate
+             * @default any_one
+             */
+            mandate: string;
         };
     };
     responses: never;
@@ -4090,6 +4267,127 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CustomerDetailOut"];
+                };
+            };
+        };
+    };
+    products_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductOut"][];
+                };
+            };
+        };
+    };
+    accounts_list: {
+        parameters: {
+            query?: {
+                customer_id?: string | null;
+                status?: string | null;
+                page?: number;
+                page_size?: number | null;
+            };
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedAccountOut"];
+                };
+            };
+        };
+    };
+    accounts_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountOut"];
+                };
+            };
+        };
+    };
+    accounts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountOut"];
+                };
+            };
+        };
+    };
+    accounts_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountOut"];
                 };
             };
         };

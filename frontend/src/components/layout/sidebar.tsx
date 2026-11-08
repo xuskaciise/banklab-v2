@@ -11,6 +11,7 @@ import {
   Landmark,
   Layers,
   Users,
+  Wallet,
 } from "lucide-react";
 import type { Me } from "@/lib/api/types";
 import { isStudent } from "@/lib/auth";
@@ -68,6 +69,13 @@ export function navFor(
       href: `/s/${session.id}/customers`,
       match: /^\/s\/[^/]+\/customers/,
       icon: Users,
+    });
+  if (session?.permissions.includes("account.view"))
+    items.push({
+      label: "Accounts",
+      href: `/s/${session.id}/accounts`,
+      match: /^\/s\/[^/]+\/accounts/,
+      icon: Wallet,
     });
   return items;
 }

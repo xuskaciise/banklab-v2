@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "apps.banking",
     "apps.customers",
     "apps.ledger",
+    "apps.products",
 ]
 
 MIDDLEWARE = [

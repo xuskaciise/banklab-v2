@@ -21,6 +21,7 @@ from apps.audit import services as audit
 from apps.banking.models import BusinessDay
 from apps.banking.provisioning import provision_bank_cash
 from apps.ledger import services as ledger
+from apps.products.provisioning import provision_bank_products
 from apps.rbac import services as rbac
 from apps.rbac.models import BankRole, Permission
 
@@ -602,6 +603,7 @@ def _create_bank(actor, session: Session, name: str, group_no, business_date) ->
         bank = Bank.objects.create(session=session, name=name, group_no=group_no)
         BusinessDay.objects.create(bank=bank, date=business_date)
         ledger.provision_bank_coa(bank)
+        provision_bank_products(bank)
         # A1: main branch + vault + opening capital; posts as the system actor, so the
         # session must already be active (open_session activates it first).
         provision_bank_cash(bank, session)

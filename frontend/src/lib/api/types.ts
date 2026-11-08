@@ -60,3 +60,10 @@ export type DocumentIn = Schemas["DocumentIn"];
 export type DocumentUpdateIn = Schemas["DocumentUpdateIn"];
 export type KinOut = Schemas["KinOut"];
 export type KinIn = Schemas["KinIn"];
+
+// Accounts 1.7
+export type ProductOut = Schemas["ProductOut"];
+export type AccountOut = Schemas["AccountOut"];
+export type PagedAccount = Schemas["PagedAccountOut"];
+export type AccountIn = Schemas["AccountIn"];
+export type KycItem = Schemas["KycItemOut"];

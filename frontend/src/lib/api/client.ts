@@ -8,6 +8,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public status?: number,
+    public body?: unknown,
   ) {
     super(message);
     this.name = "ApiError";
@@ -83,14 +84,16 @@ export async function apiFetch<T>(
   }
   if (!res.ok) {
     let message = `API error ${res.status}`;
+    let errBody: unknown;
     try {
       const body = await res.json();
+      errBody = body;
       if (body && typeof body.detail === "string") message = body.detail;
     } catch {
       // non-JSON error body
     }
     if (res.status === 403 && message.includes("CSRF")) csrfToken = null;
-    throw new ApiError(message, res.status);
+    throw new ApiError(message, res.status, errBody);
   }
   if (TOKEN_ROTATING_PATHS.has(path)) csrfToken = null;
   if (res.status === 204) return undefined as T;

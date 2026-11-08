@@ -15,6 +15,7 @@ from apps.lab.services import LabError
 from apps.ledger.api import router as ledger_router
 from apps.ledger.api import student_router as ledger_student_router
 from apps.ledger.services import LedgerError
+from apps.products.api import student_router as products_student_router
 from apps.rbac.services import RbacError
 
 api = NinjaAPI(title="BankLab API", version="0.1.0", auth=ActiveSessionAuth())
@@ -28,6 +29,7 @@ api.add_router("", banking_router)
 api.add_router("", banking_student_router)
 api.add_router("", customers_router)
 api.add_router("", customers_student_router)
+api.add_router("", products_student_router)
 
 
 @api.exception_handler(AccountsError)
@@ -64,5 +66,5 @@ def lab_error(request, exc):
 
 @api.exception_handler(LedgerError)
 def ledger_error(request, exc):
-    body = {"detail": exc.message, "code": exc.code}
+    body = {"detail": exc.message, "code": exc.code, **getattr(exc, "extra", {})}
     return api.create_response(request, body, status=exc.status)

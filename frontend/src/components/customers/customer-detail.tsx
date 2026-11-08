@@ -19,6 +19,7 @@ import { formatDateTime } from "@/lib/lab";
 import type { DocumentOut, PartyLink } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { CustomerAccounts } from "@/components/accounts/customer-accounts";
 import { QueryState, errorText } from "@/components/lab/common";
 import {
   AddDocumentDialog,
@@ -333,12 +334,15 @@ export function CustomerDetailView({
   scope,
   id,
   canEdit,
+  accounts,
   enabled = true,
 }: {
   scope: CustomerScope;
   id: string;
   /** Student with customer.update on a non-archived session. */
   canEdit: boolean;
+  /** Student only: shows the Accounts section (account.view / account.open). */
+  accounts?: { canOpen: boolean };
   enabled?: boolean;
 }) {
   const q = useCustomer(scope, id, enabled);
@@ -398,6 +402,14 @@ export function CustomerDetailView({
                 ))}
               </ul>
             </section>
+          )}
+
+          {scope.kind === "student" && accounts && (
+            <CustomerAccounts
+              sessionId={scope.sessionId}
+              customerId={c.id}
+              canOpen={accounts.canOpen}
+            />
           )}
 
           <div className="flex items-center justify-between">
