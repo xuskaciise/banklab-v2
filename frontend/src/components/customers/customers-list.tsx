@@ -108,6 +108,7 @@ export function CustomersList({
                 <Th>CIF</Th>
                 <Th>Name</Th>
                 <Th>Type</Th>
+                <Th>KYC</Th>
                 <Th>Phone</Th>
                 <Th>Created</Th>
               </tr>
@@ -128,6 +129,13 @@ export function CustomersList({
                   </Td>
                   <Td>
                     <StatusBadge status={c.type} label={typeLabel(c.type)} tone="info" />
+                  </Td>
+                  <Td>
+                    <StatusBadge
+                      status={c.kyc_complete ? "kyc_complete" : "kyc_incomplete"}
+                      label={c.kyc_complete ? "Complete" : "Incomplete"}
+                      tone={c.kyc_complete ? "success" : "pending"}
+                    />
                   </Td>
                   <Td>{c.phone || "—"}</Td>
                   <Td className="whitespace-nowrap tabular-nums">

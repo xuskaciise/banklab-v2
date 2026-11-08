@@ -2010,6 +2010,8 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+            /** Kyc Complete */
+            kyc_complete: boolean;
         };
         /** PagedCustomerOut */
         PagedCustomerOut: {
@@ -2058,8 +2060,12 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+            /** Kyc Complete */
+            kyc_complete: boolean;
             /** Parties */
             parties: components["schemas"]["PartyLinkOut"][];
+            /** Kyc Missing */
+            kyc_missing: components["schemas"]["KycItemOut"][];
         };
         /** DocumentOut */
         DocumentOut: {
@@ -2098,6 +2104,15 @@ export interface components {
             phone: string;
             /** Relationship */
             relationship: string;
+        };
+        /** KycItemOut */
+        KycItemOut: {
+            /** Code */
+            code: string;
+            /** Party Id */
+            party_id?: string | null;
+            /** Label */
+            label: string;
         };
         /** PartyLinkOut */
         PartyLinkOut: {

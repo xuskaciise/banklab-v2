@@ -319,7 +319,7 @@ def _kin_dict(k: NextOfKin) -> dict:
 
 def list_customers(member: SessionMember, *, q=None, type=None):
     _, _, scope = _read_scope(member, PERM_VIEW)
-    return _filtered(_visible(member, scope), q, type).order_by("cif_no")
+    return _detail_qs(_filtered(_visible(member, scope), q, type)).order_by("cif_no")
 
 
 def get_customer(member: SessionMember, customer_id) -> Customer:
@@ -340,7 +340,7 @@ def _staff_bank(actor: User, session_id, bank_id) -> Bank:
 
 def staff_list_customers(actor: User, session_id, bank_id, *, q=None, type=None):
     bank = _staff_bank(actor, session_id, bank_id)
-    return _filtered(Customer.objects.filter(bank=bank), q, type).order_by("cif_no")
+    return _detail_qs(_filtered(Customer.objects.filter(bank=bank), q, type)).order_by("cif_no")
 
 
 def staff_get_customer(actor: User, session_id, bank_id, customer_id) -> Customer:
@@ -791,3 +791,40 @@ def upload_document_file(member, customer_id, party_id, doc_id, upload) -> Custo
     except BaseException:
         _remove_saved(saved)
         raise
+
+
+def kyc_missing(customer: Customer) -> list[dict]:
+    """KYC gaps as {code, party_id|None, label}; empty list = complete.
+
+    Uses prefetched links/parties/documents/next_of_kin when available (no N+1 on lists).
+    """
+    missing: list[dict] = []
+
+    def add(code, party, label):
+        missing.append({"code": code, "party_id": party.pk if party else None, "label": label})
+
+    if not (customer.address or "").strip():
+        add("address_missing", None, "Customer address")
+    links = list(customer.links.all())
+    signers = {}
+    for link in links:
+        if link.can_sign:
+            signers.setdefault(link.party_id, link.party)
+    for party in signers.values():
+        if not party.photo:
+            add("photo_missing", party, f"Photo of {party.full_name}")
+        if not party.signature:
+            add("signature_missing", party, f"Signature of {party.full_name}")
+        if not any(d.file for d in party.documents.all()):
+            add("id_scan_missing", party, f"ID document scan of {party.full_name}")
+    if customer.type in (CustomerType.INDIVIDUAL, CustomerType.JOINT):
+        seen = set()
+        for link in links:
+            if (
+                link.relation in (Relation.OWNER, Relation.JOINT_HOLDER)
+                and link.party_id not in seen
+            ):
+                seen.add(link.party_id)
+                if not link.party.next_of_kin.all():
+                    add("next_of_kin_missing", link.party, f"Next of kin of {link.party.full_name}")
+    return missing

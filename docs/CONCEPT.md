@@ -269,6 +269,7 @@ Exam-ku waa session sida kuwa kale (data cusub, ka go'an xiisadaha kale), laakii
 ### Qaybta 3 — Macmiil (CIF) & KYC (go'aan)
 - Noocyada macaamiisha: **Shakhsi, Shirkad/Ganacsi, Joint, Hay'ad/NGO** (shirkad/hay'ad → signatories + mandate).
 - Furitaanka akoonka: **isla markiiba** (CSO) — ansixin KYC ma jirto MVP-ga.
+- **KYC buuxa ka hor akoon (go'aan 2026-11-08):** akoon lama furi karo ilaa macmiilku leeyahay: address; qof kasta oo saxiixa — sawir (profile), saxiix sawir ah, iyo ugu yaraan hal ID document oo scan/sawir leh; individual/joint — owner kasta next of kin. Server-ka ayaa xisaabiya (`kyc_complete`, `kyc_missing`); 1.7 ayaa dhaqangelinaya.
 - Dokumentiyada: **National ID, Passport, Warqad xaafadeed**.
 - Risk rating: **mustaqbalka** (AML phase).
 

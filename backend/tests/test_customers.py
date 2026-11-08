@@ -567,7 +567,7 @@ class TestIsolation:
         with pytest.raises(LedgerError) as e:
             cs.add_party(
                 cso2[1],
-                make(Env.__new__(Env) if False else env, "cso").pk,
+                make(env, "cso").pk,
                 relation="owner",
                 party_id=pid,
             )
@@ -785,3 +785,88 @@ class TestSharedParties:
             )
         assert not [p for p in settings.MEDIA_ROOT.rglob("*") if p.is_file()]
         assert Party.objects.get(pk=pid).photo.name == ""
+
+
+# ---------------------------------------------------------------------------- KYC
+
+
+def complete_kyc(env, c, key="cso"):
+    m = env.member(key)
+    for link in CustomerParty.objects.filter(customer=c, can_sign=True):
+        pid = link.party_id
+        cs.upload_party_file(m, c.pk, pid, "photo", SimpleUploadedFile("a.png", PNG))
+        cs.upload_party_file(m, c.pk, pid, "signature", SimpleUploadedFile("a.png", PNG))
+        for d in IdentityDocument.objects.filter(party_id=pid):
+            cs.upload_document_file(m, c.pk, pid, d.pk, SimpleUploadedFile("a.pdf", PDF))
+
+
+def codes(c):
+    c = Customer.objects.get(pk=c.pk)
+    return sorted(i["code"] for i in cs.kyc_missing(c))
+
+
+@pytest.mark.django_db
+class TestKyc:
+    def test_incomplete_then_complete(self, env):
+        c = make(env, data=individual(address=""))
+        assert codes(c) == [
+            "address_missing",
+            "id_scan_missing",
+            "photo_missing",
+            "signature_missing",
+        ]
+        cs.update_customer(env.member("cso"), c.pk, address="Hodan")
+        complete_kyc(env, c)
+        assert codes(c) == []
+
+    @pytest.mark.parametrize("missing", ["photo", "signature", "scan", "address", "kin"])
+    def test_each_item(self, env, missing):
+        c = make(env, data=individual(address="Hodan"))
+        complete_kyc(env, c)
+        pid = c.links.get().party_id
+        if missing == "photo":
+            Party.objects.filter(pk=pid).update(photo="")
+        elif missing == "signature":
+            Party.objects.filter(pk=pid).update(signature="")
+        elif missing == "scan":
+            IdentityDocument.objects.filter(party_id=pid).update(file="")
+        elif missing == "address":
+            Customer.objects.filter(pk=c.pk).update(address="")
+        else:
+            c2 = make(
+                env,
+                data={"type": "individual", "address": "H", "parties": [person(next_of_kin=[])]},
+            )
+            complete_kyc(env, c2)
+            assert codes(c2) == ["next_of_kin_missing"]
+            return
+        expect = {
+            "photo": "photo_missing",
+            "signature": "signature_missing",
+            "scan": "id_scan_missing",
+            "address": "address_missing",
+        }[missing]
+        assert codes(c) == [expect]
+
+    def test_company_only_signers_need_media_and_no_kin(self, env):
+        c = make(env, data=company(address="Hodan"))
+        # director (can_sign False) needs nothing; the signatory needs photo/signature/scan
+        assert codes(c) == ["id_scan_missing", "photo_missing", "signature_missing"]
+        item = cs.kyc_missing(Customer.objects.get(pk=c.pk))[0]
+        assert item["party_id"] == c.links.get(relation="signatory").party_id
+        complete_kyc(env, c)
+        assert codes(c) == []
+
+    def test_api_shapes_and_staff(self, env):
+        client = api(env.user("cso"))
+        c = cust_json(client, env, individual(address="Hodan"))
+        assert c["kyc_complete"] is False
+        assert {"code", "party_id", "label"} == set(c["kyc_missing"][0])
+        listed = client.get(env.url()).json()["items"][0]
+        assert listed["kyc_complete"] is False and "kyc_missing" not in listed
+        complete_kyc(env, Customer.objects.get(pk=c["id"]))
+        assert client.get(env.url(f"/{c['id']}")).json()["kyc_complete"] is True
+        assert client.get(env.url()).json()["items"][0]["kyc_complete"] is True
+        base = f"/api/sessions/{env.session.pk}/banks/{env.bank.pk}/customers"
+        staff = api(env.world["ia"]).get(f"{base}/{c['id']}").json()
+        assert staff["kyc_complete"] is True and staff["kyc_missing"] == []

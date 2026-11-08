@@ -193,10 +193,26 @@ class CustomerOut(Schema):
     created_by_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
+    kyc_complete: bool
+
+    @staticmethod
+    def resolve_kyc_complete(obj):
+        return not services.kyc_missing(obj)
+
+
+class KycItemOut(Schema):
+    code: str
+    party_id: UUID | None = None
+    label: str
 
 
 class CustomerDetailOut(CustomerOut):
     parties: list[PartyLinkOut]
+    kyc_missing: list[KycItemOut]
+
+    @staticmethod
+    def resolve_kyc_missing(obj):
+        return services.kyc_missing(obj)
 
     @staticmethod
     def resolve_parties(obj):

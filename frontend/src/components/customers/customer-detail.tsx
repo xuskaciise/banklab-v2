@@ -364,6 +364,11 @@ export function CustomerDetailView({
               <h2 className="flex flex-wrap items-center gap-3 text-xl font-semibold text-text-strong">
                 {c.display_name}
                 <StatusBadge status={c.type} label={typeLabel(c.type)} tone="info" />
+                <StatusBadge
+                  status={c.kyc_complete ? "kyc_complete" : "kyc_incomplete"}
+                  label={c.kyc_complete ? "KYC complete" : "KYC incomplete"}
+                  tone={c.kyc_complete ? "success" : "pending"}
+                />
               </h2>
               <dl className="grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
                 <div><dt className="inline text-text-muted">Phone: </dt><dd className="inline">{c.phone || "—"}</dd></div>
@@ -381,6 +386,19 @@ export function CustomerDetailView({
               </Button>
             )}
           </section>
+
+          {!c.kyc_complete && (
+            <section className="space-y-2 rounded-xl border border-border bg-fin-pending-bg p-4">
+              <h2 className="text-sm font-semibold text-fin-pending">
+                KYC incomplete: an account cannot be opened until these are added
+              </h2>
+              <ul className="list-disc space-y-1 pl-5 text-sm text-text-body">
+                {c.kyc_missing.map((m) => (
+                  <li key={`${m.code}-${m.party_id ?? "customer"}`}>{m.label}</li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-text-strong">
