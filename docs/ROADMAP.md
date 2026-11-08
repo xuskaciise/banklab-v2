@@ -32,7 +32,7 @@ Domain details for every item live in [CONCEPT.md](CONCEPT.md).
 | 1.5 | Branch & Vault (dual control) | 1.4 | [x] feat/1.5-branch-vault |
 | 1.6 | Customers (CIF): individual, company, joint, NGO; ID documents; signatories | 1.3 | [x] feat/1.6-customers |
 | 1.7 | Products (Savings, Current) & Accounts (Active/Closed, sequential numbers, USD/SOS); open only if customer `kyc_complete` (see CONCEPT §3) | 1.4, 1.6 | [x] feat/1.7-accounts |
-| 1.8 | Teller session: open with supervisor approval, denomination count on close, over/short | 1.5 | [ ] |
+| 1.8 | Teller session: open with supervisor approval, denomination count on close, over/short | 1.5 | [x] feat/1.8-teller-session |
 | 1.9 | Transactions: cash deposit, cash withdrawal, transfer (same currency), depositor name/ID/phone, teller limits + supervisor approval, reversal, PDF receipt | 1.7, 1.8 | [ ] |
 | 1.10 | Cheques: chequebook issue (series), paid once, stop payment | 1.9 | [ ] |
 | 1.11 | End-of-Day by Manager: all tellers closed → close day → next business date | 1.9 | [ ] |

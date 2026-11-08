@@ -19,12 +19,13 @@ from apps.banking.models import (
     CashPosition,
     CashTransfer,
     Denomination,
+    TellerSession,
     Till,
     TransferStatus,
     Vault,
 )
 from apps.lab import services as lab
-from apps.lab.models import Bank, SessionMember
+from apps.lab.models import Bank, RoleAssignment, SessionMember
 from apps.ledger import services as ledger
 from apps.ledger.models import (
     GLAccount,
@@ -64,17 +65,29 @@ def gl_balance(bank, tag, currency="USD"):
 
 
 @pytest.fixture
-def teller_holders(monkeypatch):
-    """Stand-in for 1.8: teller-session ids that exist (per bank). Test-only."""
-    known: set[tuple[object, uuid.UUID]] = set()
-    monkeypatch.setitem(
-        cash._HOLDER_EXISTS, "teller_session", lambda bank, pk: (bank.pk, pk) in known
-    )
+def teller_holders():
+    """An OPEN teller session of the bank's teller (one per bank); returns its id."""
+    made: dict[object, uuid.UUID] = {}
 
     def make(bank):
-        holder = uuid.uuid4()
-        known.add((bank.pk, holder))
-        return holder
+        if bank.pk in made:
+            return made[bank.pk]
+        assignment = RoleAssignment.objects.select_related("session_member").get(
+            session_member__bank=bank, role="teller", active_to__isnull=True
+        )
+        branch = Branch.objects.filter(bank=bank).first()
+        till = Till.objects.create(bank=bank, branch=branch, code="TT")
+        day = BusinessDay.objects.get(bank=bank, status="open")
+        ts = TellerSession.objects.create(
+            bank=bank,
+            till=till,
+            teller_member=assignment.session_member,
+            business_date=day.date,
+            status="open",
+        )
+        cash.create_position_rows(bank, "teller_session", ts.pk)
+        made[bank.pk] = ts.pk
+        return ts.pk
 
     return make
 
@@ -482,10 +495,12 @@ class TestDualControl:
             )
         assert not CashTransfer.objects.exists()
 
-    def test_teller_holder_unknown_until_registered(self, env):
-        # no teller_session holder type registered here (1.8 does that)
-        with pytest.raises(LedgerError) as e:
+    def test_unknown_teller_session_rejected(self, env):
+        with pytest.raises(LedgerError) as e:  # teller without a session
             request_transfer(env, uuid.uuid4())
+        assert e.value.code == "no_open_till"
+        with pytest.raises(LedgerError) as e:  # manager naming a session that does not exist
+            request_transfer(env, uuid.uuid4(), role="manager")
         assert e.value.code == "unknown_cash_holder"
 
     def test_post_rechecks_balance(self, env, teller_holders):
@@ -633,7 +648,7 @@ class TestCashApi:
         with pytest.raises(LedgerError) as e:
             banking.request_vault_transfer(
                 mgr2[1], from_type="vault", from_id=vault_of(bank1).pk,
-                to_type="teller_session", to_id=teller_holders(bank2), currency="USD",
+                to_type="teller_session", to_id=teller_holders(bank1), currency="USD",
                 amount=D("1"),
             )
         assert e.value.code == "unknown_cash_holder"

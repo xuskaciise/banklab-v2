@@ -148,9 +148,7 @@ def staff_gl_accounts(request, session_id: UUID, bank_id: UUID):
     operation_id="ledger_staff_journal_list",
 )
 @paginate(JournalPagination, page_size=50)
-def staff_journal_list(
-    request, session_id: UUID, bank_id: UUID, filters: JournalFilters = FILTERS
-):
+def staff_journal_list(request, session_id: UUID, bank_id: UUID, filters: JournalFilters = FILTERS):
     return services.list_entries(
         _staff_bank(request, session_id, bank_id),
         currency=filters.currency,

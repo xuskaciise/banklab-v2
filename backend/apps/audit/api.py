@@ -54,9 +54,7 @@ def _scoped(request, qs):
         return qs.filter(session__lab_class__instructor=user)
     if user.platform_role == PlatformRole.STUDENT:
         scope_q, found = Q(pk__in=[]), False
-        assignments = RoleAssignment.objects.select_related(
-            "session_member__session"
-        ).filter(
+        assignments = RoleAssignment.objects.select_related("session_member__session").filter(
             session_member__user=user,
             session_member__bank__isnull=False,
             active_to__isnull=True,

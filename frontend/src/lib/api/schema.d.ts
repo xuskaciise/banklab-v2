@@ -828,6 +828,193 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/s/{session_id}/tills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tellers Tills */
+        get: operations["tellers_tills"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/teller-sessions/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tellers Me */
+        get: operations["tellers_my_session"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/teller-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tellers List */
+        get: operations["tellers_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/teller-sessions/open-request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tellers Open Request */
+        post: operations["tellers_open_request"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/teller-sessions/{ts_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tellers Cancel */
+        post: operations["tellers_cancel_open"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/teller-sessions/{ts_id}/approve-open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tellers Approve Open */
+        post: operations["tellers_approve_open"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/teller-sessions/{ts_id}/reject-open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tellers Reject Open */
+        post: operations["tellers_reject_open"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/teller-sessions/{ts_id}/close-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tellers Close Count */
+        post: operations["tellers_close_count"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/teller-sessions/{ts_id}/approve-close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tellers Approve Close */
+        post: operations["tellers_approve_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/teller-sessions/{ts_id}/reject-close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tellers Reject Close */
+        post: operations["tellers_reject_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/teller-sessions/{ts_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tellers Get */
+        get: operations["tellers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sessions/{session_id}/banks/{bank_id}/customers": {
         parameters: {
             query?: never;
@@ -2010,18 +2197,12 @@ export interface components {
         TransferIn: {
             /** From Type */
             from_type: string;
-            /**
-             * From Id
-             * Format: uuid
-             */
-            from_id: string;
+            /** From Id */
+            from_id?: string | null;
             /** To Type */
             to_type: string;
-            /**
-             * To Id
-             * Format: uuid
-             */
-            to_id: string;
+            /** To Id */
+            to_id?: string | null;
             /** Currency */
             currency: string;
             /** Amount */
@@ -2031,6 +2212,189 @@ export interface components {
         RejectIn: {
             /** Reason */
             reason: string;
+        };
+        /** TillAvailabilityOut */
+        TillAvailabilityOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /** Branch Code */
+            branch_code: string;
+            /**
+             * Vault Id
+             * Format: uuid
+             */
+            vault_id: string;
+            /** Available */
+            available: boolean;
+            /** In Use By */
+            in_use_by?: string | null;
+            /** Session Status */
+            session_status?: string | null;
+        };
+        /** CashCountOut */
+        CashCountOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Currency */
+            currency: string;
+            /** Attempt */
+            attempt: number;
+            /** Counted Total */
+            counted_total: number | string;
+            /** System Total */
+            system_total: number | string;
+            /** Difference */
+            difference: number | string;
+            /** Approved */
+            approved: boolean;
+            /** Lines */
+            lines: components["schemas"]["CountLineOut"][];
+        };
+        /** CountLineOut */
+        CountLineOut: {
+            /** Denomination Id */
+            denomination_id: number;
+            /** Value */
+            value: number | string;
+            /** Quantity */
+            quantity: number;
+        };
+        /** PendingTransferOut */
+        PendingTransferOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Direction */
+            direction: string;
+            /** Currency */
+            currency: string;
+            /** Amount */
+            amount: number | string;
+            /** Status */
+            status: string;
+        };
+        /** TellerSessionOut */
+        TellerSessionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Bank Id
+             * Format: uuid
+             */
+            bank_id: string;
+            /**
+             * Till Id
+             * Format: uuid
+             */
+            till_id: string;
+            /** Till Code */
+            till_code: string;
+            /**
+             * Branch Id
+             * Format: uuid
+             */
+            branch_id: string;
+            /**
+             * Teller Member Id
+             * Format: uuid
+             */
+            teller_member_id: string;
+            /** Teller Name */
+            teller_name?: string | null;
+            /**
+             * Business Date
+             * Format: date
+             */
+            business_date: string;
+            /** Status */
+            status: string;
+            /**
+             * Open Requested At
+             * Format: date-time
+             */
+            open_requested_at: string;
+            /** Opened At */
+            opened_at?: string | null;
+            /** Open Approved By Name */
+            open_approved_by_name?: string | null;
+            /** Open Reject Note */
+            open_reject_note: string;
+            /** Close Requested At */
+            close_requested_at?: string | null;
+            /** Closed At */
+            closed_at?: string | null;
+            /** Close Approved By Name */
+            close_approved_by_name?: string | null;
+            /** Close Reject Note */
+            close_reject_note: string;
+            /** Balances */
+            balances: components["schemas"]["CashPositionOut"][];
+            /** Pending Transfers */
+            pending_transfers: components["schemas"]["PendingTransferOut"][];
+            /** Latest Counts */
+            latest_counts: components["schemas"]["CashCountOut"][];
+        };
+        /** FloatIn */
+        FloatIn: {
+            /** Currency */
+            currency: string;
+            /** Amount */
+            amount: number | string;
+        };
+        /** OpenRequestIn */
+        OpenRequestIn: {
+            /**
+             * Till Id
+             * Format: uuid
+             */
+            till_id: string;
+            /**
+             * Floats
+             * @default []
+             */
+            floats: components["schemas"]["FloatIn"][];
+        };
+        /** CloseCountIn */
+        CloseCountIn: {
+            /** Counts */
+            counts: components["schemas"]["CurrencyCountIn"][];
+        };
+        /** CountLineIn */
+        CountLineIn: {
+            /** Denomination Id */
+            denomination_id: number;
+            /** Quantity */
+            quantity: number;
+        };
+        /** CurrencyCountIn */
+        CurrencyCountIn: {
+            /** Currency */
+            currency: string;
+            /**
+             * Lines
+             * @default []
+             */
+            lines: components["schemas"]["CountLineIn"][];
         };
         /** CustomerFilters */
         CustomerFilters: {
@@ -3827,6 +4191,273 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TransferOut"];
+                };
+            };
+        };
+    };
+    tellers_tills: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TillAvailabilityOut"][];
+                };
+            };
+        };
+    };
+    tellers_my_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TellerSessionOut"] | null;
+                };
+            };
+        };
+    };
+    tellers_list: {
+        parameters: {
+            query?: {
+                business_date?: string | null;
+            };
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TellerSessionOut"][];
+                };
+            };
+        };
+    };
+    tellers_open_request: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpenRequestIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TellerSessionOut"];
+                };
+            };
+        };
+    };
+    tellers_cancel_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                ts_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TellerSessionOut"];
+                };
+            };
+        };
+    };
+    tellers_approve_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                ts_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TellerSessionOut"];
+                };
+            };
+        };
+    };
+    tellers_reject_open: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                ts_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TellerSessionOut"];
+                };
+            };
+        };
+    };
+    tellers_close_count: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                ts_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseCountIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TellerSessionOut"];
+                };
+            };
+        };
+    };
+    tellers_approve_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                ts_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TellerSessionOut"];
+                };
+            };
+        };
+    };
+    tellers_reject_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                ts_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TellerSessionOut"];
+                };
+            };
+        };
+    };
+    tellers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                ts_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TellerSessionOut"];
                 };
             };
         };

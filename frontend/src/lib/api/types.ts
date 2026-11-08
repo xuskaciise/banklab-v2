@@ -67,3 +67,11 @@ export type AccountOut = Schemas["AccountOut"];
 export type PagedAccount = Schemas["PagedAccountOut"];
 export type AccountIn = Schemas["AccountIn"];
 export type KycItem = Schemas["KycItemOut"];
+
+// Teller session 1.8
+export type TillAvailability = Schemas["TillAvailabilityOut"];
+export type TellerSession = Schemas["TellerSessionOut"];
+export type CashCount = Schemas["CashCountOut"];
+export type OpenRequestIn = Schemas["OpenRequestIn"];
+export type CloseCountIn = Schemas["CloseCountIn"];
+export type DenominationOut = Schemas["DenominationOut"];

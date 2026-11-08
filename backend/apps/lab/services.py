@@ -723,9 +723,11 @@ def add_group_bank(actor: User, session_id) -> Bank:
 def business_days(actor: User, session_id):
     """Current open business day of each bank in the session."""
     session = get_session(actor, session_id)
-    return BusinessDay.objects.select_related("bank").filter(
-        bank__session=session, status="open"
-    ).order_by("bank__group_no", "bank__created_at")
+    return (
+        BusinessDay.objects.select_related("bank")
+        .filter(bank__session=session, status="open")
+        .order_by("bank__group_no", "bank__created_at")
+    )
 
 
 # --------------------------------------------------------------------------- members

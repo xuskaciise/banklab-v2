@@ -39,7 +39,14 @@ DEFAULT_COA = [
     ("4300", "Financing / Interest Income", INCOME, "4000", True, "INC_FINANCING", False),
     ("4900", "Cash Over", INCOME, "4000", True, "CASH_OVER", True),
     ("5000", "Expenses", EXPENSE, "", False, "", True),
-    ("5100", "Interest / Profit Paid to Depositors", EXPENSE, "5000", True, "EXP_PROFIT_PAID",
-     False),
+    (
+        "5100",
+        "Interest / Profit Paid to Depositors",
+        EXPENSE,
+        "5000",
+        True,
+        "EXP_PROFIT_PAID",
+        False,
+    ),
     ("5900", "Cash Short", EXPENSE, "5000", True, "CASH_SHORT", True),
 ]

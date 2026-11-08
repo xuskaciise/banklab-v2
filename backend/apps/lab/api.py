@@ -396,9 +396,7 @@ def sessions_reopen(request, session_id: UUID):
     return services.reopen_session(request.user, session_id)
 
 
-@router.get(
-    "/sessions/{session_id}/banks", response=list[BankOut], operation_id="lab_banks_list"
-)
+@router.get("/sessions/{session_id}/banks", response=list[BankOut], operation_id="lab_banks_list")
 def banks_list(request, session_id: UUID):
     return services.list_banks(request.user, session_id)
 
@@ -455,9 +453,7 @@ def members_move(request, session_id: UUID, member_id: UUID, payload: MoveMember
     operation_id="lab_members_visibility",
 )
 def members_visibility(request, session_id: UUID, member_id: UUID, payload: VisibilityIn):
-    return services.set_visibility_override(
-        request.user, session_id, member_id, payload.visibility
-    )
+    return services.set_visibility_override(request.user, session_id, member_id, payload.visibility)
 
 
 @router.post(
@@ -566,9 +562,7 @@ def my_sessions(request):
     return out
 
 
-@student_router.get(
-    "/s/{session_id}/me", response=SessionMeOut, operation_id="lab_session_me"
-)
+@student_router.get("/s/{session_id}/me", response=SessionMeOut, operation_id="lab_session_me")
 def session_me(request, session_id: UUID):
     _require_student(request.user)
     ctx = rbac_context.resolve_bank_context(request, session_id, require_role=False)
@@ -599,5 +593,3 @@ def session_me(request, session_id: UUID):
         "read_only": session.status == "archived",
         "permissions": permissions,
     }
-
-

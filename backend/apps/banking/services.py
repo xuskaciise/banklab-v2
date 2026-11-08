@@ -10,6 +10,7 @@ positions by id -> GL balances by id).
 
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 
 from apps.accounts.models import User
@@ -23,6 +24,7 @@ from apps.rbac import services as rbac
 
 from . import cash
 from .models import (
+    ACTIVE_SESSION_STATUSES,
     Branch,
     BusinessDay,
     BusinessDayStatus,
@@ -30,6 +32,8 @@ from .models import (
     CashTransfer,
     Denomination,
     HolderType,
+    TellerSession,
+    TellerSessionStatus,
     Till,
     TransferStatus,
 )
@@ -281,8 +285,58 @@ def _locked_transfer(member: SessionMember, transfer_id) -> CashTransfer:
     return transfer
 
 
+def _resolve_teller_side(member, role, bank, from_type, from_id, to_type, to_id):
+    """Pick the teller-session holder of a vault <-> teller transfer and lock its row.
+
+    A teller always uses their OWN pending_open/open session; a client-supplied id that
+    differs is rejected (never trusted). Other roles (manager issuing cash) must name a
+    pending_open/open session of this bank. Cash leaves a session only while it is `open`;
+    it may be issued to a `pending_open` session (opening float) or an `open` one.
+    Returns (from_id, to_id).
+    """
+    sending = from_type == HolderType.TELLER_SESSION
+    supplied = from_id if sending else to_id
+    wanted = (
+        [TellerSessionStatus.OPEN]
+        if sending
+        else [
+            TellerSessionStatus.PENDING_OPEN,
+            TellerSessionStatus.OPEN,
+        ]
+    )
+    qs = TellerSession.objects.select_for_update(of=("self",)).select_related("till__branch__vault")
+    if role == "teller":
+        ts = qs.filter(bank=bank, teller_member=member, status__in=ACTIVE_SESSION_STATUSES).first()
+        if ts is None:
+            raise _conflict("no_open_till", "You have no teller session today")
+        if supplied is not None and str(supplied) != str(ts.pk):
+            raise LedgerError(
+                "foreign_teller_session", "You can only use your own teller session", status=403
+            )
+    else:
+        if supplied is None:
+            raise LedgerError("teller_session_required", "A teller session is required")
+        try:
+            ts = qs.filter(bank=bank, pk=supplied).first()
+        except (ValueError, TypeError, ValidationError):
+            ts = None
+        if ts is None:
+            raise LedgerError("unknown_cash_holder", "teller_session not found in this bank")
+    if ts.status not in wanted:
+        raise _conflict(
+            "till_not_open",
+            "The teller session is not open"
+            if sending
+            else "The teller session cannot receive cash",
+        )
+    vault_id = to_id if sending else from_id
+    if vault_id is not None and str(vault_id) != str(ts.till.branch.vault.pk):
+        raise _conflict("wrong_vault", "Cash must go through the vault of the till's branch")
+    return (ts.pk, to_id) if sending else (from_id, ts.pk)
+
+
 def request_vault_transfer(
-    member: SessionMember, *, from_type, from_id, to_type, to_id, currency, amount
+    member: SessionMember, *, from_type, to_type, currency, amount, from_id=None, to_id=None
 ) -> CashTransfer:
     """Create a pending vault <-> teller transfer (B1 / B2); nothing posts before both approvals."""
     with transaction.atomic():
@@ -302,6 +356,9 @@ def request_vault_transfer(
         if value <= 0:
             raise LedgerError("invalid_amount", "Amount must be greater than zero")
         bank = member.bank
+        from_id, to_id = _resolve_teller_side(
+            member, role, bank, from_type, from_id, to_type, to_id
+        )
         for holder_type, holder_id in ((from_type, from_id), (to_type, to_id)):
             if not cash.holder_exists(bank, holder_type, holder_id):
                 raise LedgerError("unknown_cash_holder", f"{holder_type} not found in this bank")
@@ -374,6 +431,7 @@ def approve_manager(member: SessionMember, transfer_id) -> CashTransfer:
         rbac.assert_dual_control(
             transfer.requested_by.user_id, transfer.approved_by_1.user_id, member.user_id
         )
+        _recheck_teller_state(transfer)
         entry = _post_cash_transfer(transfer, member)
         transfer.approved_by_2 = member
         transfer.status = TransferStatus.POSTED
@@ -429,6 +487,28 @@ def reject_transfer(member: SessionMember, transfer_id, reason) -> CashTransfer:
             after={"status": transfer.status, "reason": reason},
         )
         return transfer
+
+
+def _recheck_teller_state(transfer: CashTransfer) -> None:
+    """At posting time the teller side must still be in a state that allows the movement."""
+    for side, holder_type, holder_id in (
+        ("from", transfer.from_type, transfer.from_id),
+        ("to", transfer.to_type, transfer.to_id),
+    ):
+        if holder_type != HolderType.TELLER_SESSION:
+            continue
+        ts = (
+            TellerSession.objects.select_for_update(of=("self",))
+            .filter(bank_id=transfer.bank_id, pk=holder_id)
+            .first()
+        )
+        allowed = (
+            (TellerSessionStatus.OPEN,)
+            if side == "from"
+            else (TellerSessionStatus.PENDING_OPEN, TellerSessionStatus.OPEN)
+        )
+        if ts is None or ts.status not in allowed:
+            raise _conflict("till_not_open", "The teller session can no longer take part")
 
 
 def _post_cash_transfer(transfer: CashTransfer, poster: SessionMember):

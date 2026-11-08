@@ -447,9 +447,7 @@ def post_entry(
             raise _conflict("wrong_business_date", "Entry date is not the open business day")
         accounts = {
             a.pk: a
-            for a in GLAccount.objects.filter(
-                pk__in={s.gl_account.pk for s in specs}, bank=locked
-            )
+            for a in GLAccount.objects.filter(pk__in={s.gl_account.pk for s in specs}, bank=locked)
         }
         for s in specs:
             acc = accounts.get(s.gl_account.pk)

@@ -10,6 +10,8 @@ import {
   LayoutDashboard,
   Landmark,
   Layers,
+  Banknote,
+  Store,
   Users,
   Wallet,
 } from "lucide-react";
@@ -62,6 +64,26 @@ export function navFor(
       href: `/s/${session.id}/vault`,
       match: /^\/s\/[^/]+\/vault/,
       icon: Landmark,
+    });
+  if (
+    session?.permissions.includes("till.open.request") ||
+    session?.permissions.includes("till.close")
+  )
+    items.push({
+      label: "My till",
+      href: `/s/${session.id}/teller/till`,
+      match: /^\/s\/[^/]+\/teller\/till/,
+      icon: Banknote,
+    });
+  if (
+    session?.permissions.includes("till.open.approve") ||
+    session?.permissions.includes("till.close.approve")
+  )
+    items.push({
+      label: "Tills",
+      href: `/s/${session.id}/tills`,
+      match: /^\/s\/[^/]+\/tills/,
+      icon: Store,
     });
   if (session?.permissions.includes("customer.view"))
     items.push({

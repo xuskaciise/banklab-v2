@@ -5,7 +5,7 @@ need a bank role: `vault.view` for the vault screens, the cash permissions for t
 (checked again inside the service).
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -14,7 +14,7 @@ from ninja import Router, Schema
 from apps.rbac import context as rbac_context
 from apps.rbac.context import require_bank_permission
 
-from . import services
+from . import services, tellers
 
 router = Router(tags=["banking"])
 student_router = Router(tags=["banking-student"])
@@ -94,9 +94,9 @@ class VaultOut(Schema):
 
 class TransferIn(Schema):
     from_type: str
-    from_id: UUID
+    from_id: UUID | None = None  # a teller never sends their own session id
     to_type: str
-    to_id: UUID
+    to_id: UUID | None = None
     currency: str
     amount: Decimal
 
@@ -256,3 +256,176 @@ def transfers_approve_manager(request, session_id: UUID, transfer_id: UUID):
 )
 def transfers_reject(request, session_id: UUID, transfer_id: UUID, payload: RejectIn):
     return services.reject_transfer(_member(request, session_id), transfer_id, payload.reason)
+
+
+# ----------------------------------------------------------------------- teller sessions
+
+
+class TillAvailabilityOut(Schema):
+    id: UUID
+    code: str
+    branch_id: UUID
+    branch_code: str
+    vault_id: UUID
+    available: bool
+    in_use_by: str | None = None
+    session_status: str | None = None
+
+
+class FloatIn(Schema):
+    currency: str
+    amount: Decimal
+
+
+class OpenRequestIn(Schema):
+    till_id: UUID
+    floats: list[FloatIn] = []
+
+
+class CountLineIn(Schema):
+    denomination_id: int
+    quantity: int
+
+
+class CurrencyCountIn(Schema):
+    currency: str
+    lines: list[CountLineIn] = []
+
+
+class CloseCountIn(Schema):
+    counts: list[CurrencyCountIn]
+
+
+class CountLineOut(Schema):
+    denomination_id: int
+    value: Decimal
+    quantity: int
+
+
+class CashCountOut(Schema):
+    id: UUID
+    kind: str
+    currency: str
+    attempt: int
+    counted_total: Decimal
+    system_total: Decimal
+    difference: Decimal
+    approved: bool
+    lines: list[CountLineOut]
+
+
+class PendingTransferOut(Schema):
+    id: UUID
+    direction: str
+    currency: str
+    amount: Decimal
+    status: str
+
+
+class TellerSessionOut(Schema):
+    id: UUID
+    bank_id: UUID
+    till_id: UUID
+    till_code: str
+    branch_id: UUID
+    teller_member_id: UUID
+    teller_name: str | None = None
+    business_date: date
+    status: str
+    open_requested_at: datetime
+    opened_at: datetime | None = None
+    open_approved_by_name: str | None = None
+    open_reject_note: str
+    close_requested_at: datetime | None = None
+    closed_at: datetime | None = None
+    close_approved_by_name: str | None = None
+    close_reject_note: str
+    balances: list[CashPositionOut]
+    pending_transfers: list[PendingTransferOut]
+    latest_counts: list[CashCountOut]
+
+
+_TS = "/s/{session_id}/teller-sessions"
+
+
+@student_router.get(
+    "/s/{session_id}/tills", response=list[TillAvailabilityOut], operation_id="tellers_tills"
+)
+def tellers_tills(request, session_id: UUID):
+    return tellers.list_tills_availability(_member(request, session_id))
+
+
+@student_router.get(
+    _TS + "/me", response=TellerSessionOut | None, operation_id="tellers_my_session"
+)
+def tellers_me(request, session_id: UUID):
+    return tellers.my_session(_member(request, session_id))
+
+
+@student_router.get(_TS, response=list[TellerSessionOut], operation_id="tellers_list")
+def tellers_list(request, session_id: UUID, business_date: date | None = None):
+    return tellers.list_sessions(_member(request, session_id), business_date)
+
+
+@student_router.post(
+    _TS + "/open-request", response=TellerSessionOut, operation_id="tellers_open_request"
+)
+def tellers_open_request(request, session_id: UUID, payload: OpenRequestIn):
+    member = _member(request, session_id)
+    ts = tellers.request_open(member, payload.till_id, [f.dict() for f in payload.floats])
+    return tellers.view_by_id(ts)
+
+
+@student_router.post(
+    _TS + "/{ts_id}/cancel", response=TellerSessionOut, operation_id="tellers_cancel_open"
+)
+def tellers_cancel(request, session_id: UUID, ts_id: UUID):
+    return tellers.view_by_id(tellers.cancel_open(_member(request, session_id), ts_id))
+
+
+@student_router.post(
+    _TS + "/{ts_id}/approve-open", response=TellerSessionOut, operation_id="tellers_approve_open"
+)
+def tellers_approve_open(request, session_id: UUID, ts_id: UUID):
+    return tellers.view_by_id(tellers.approve_open(_member(request, session_id), ts_id))
+
+
+@student_router.post(
+    _TS + "/{ts_id}/reject-open", response=TellerSessionOut, operation_id="tellers_reject_open"
+)
+def tellers_reject_open(request, session_id: UUID, ts_id: UUID, payload: RejectIn):
+    return tellers.view_by_id(
+        tellers.reject_open(_member(request, session_id), ts_id, payload.reason)
+    )
+
+
+@student_router.post(
+    _TS + "/{ts_id}/close-count", response=TellerSessionOut, operation_id="tellers_close_count"
+)
+def tellers_close_count(request, session_id: UUID, ts_id: UUID, payload: CloseCountIn):
+    counts = [c.dict() for c in payload.counts]
+    return tellers.view_by_id(
+        tellers.submit_close_count(_member(request, session_id), ts_id, counts)
+    )
+
+
+@student_router.post(
+    _TS + "/{ts_id}/approve-close", response=TellerSessionOut, operation_id="tellers_approve_close"
+)
+def tellers_approve_close(request, session_id: UUID, ts_id: UUID):
+    return tellers.view_by_id(tellers.approve_close(_member(request, session_id), ts_id))
+
+
+@student_router.post(
+    _TS + "/{ts_id}/reject-close", response=TellerSessionOut, operation_id="tellers_reject_close"
+)
+def tellers_reject_close(request, session_id: UUID, ts_id: UUID, payload: RejectIn):
+    return tellers.view_by_id(
+        tellers.reject_close(_member(request, session_id), ts_id, payload.reason)
+    )
+
+
+# Registered last: `/{ts_id}` would otherwise shadow the fixed `/open-request` and `/me` paths.
+@student_router.get(_TS + "/{ts_id}", response=TellerSessionOut, operation_id="tellers_get")
+def tellers_get(request, session_id: UUID, ts_id: UUID):
+    return tellers.get_session(_member(request, session_id), ts_id)

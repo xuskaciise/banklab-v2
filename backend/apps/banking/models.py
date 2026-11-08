@@ -183,3 +183,115 @@ class CashTransfer(NoDeleteModel):
                 name="cash_transfer_distinct_holders",
             ),
         ]
+
+
+# --------------------------------------------------------------------------- teller sessions
+
+
+class TellerSessionStatus(models.TextChoices):
+    PENDING_OPEN = "pending_open", "Waiting for opening approval"
+    OPEN = "open", "Open"
+    CLOSING = "closing", "Waiting for closing approval"
+    CLOSED = "closed", "Closed"
+    CANCELLED = "cancelled", "Request cancelled"
+
+
+# Sessions that still occupy a till.
+ACTIVE_SESSION_STATUSES = (
+    TellerSessionStatus.PENDING_OPEN,
+    TellerSessionStatus.OPEN,
+    TellerSessionStatus.CLOSING,
+)
+
+
+class TellerSession(NoDeleteModel):
+    """One teller on one till for one business day. Holds the teller's cash (CashPosition)."""
+
+    bank = models.ForeignKey("lab.Bank", on_delete=models.PROTECT, related_name="teller_sessions")
+    till = models.ForeignKey(Till, on_delete=models.PROTECT, related_name="teller_sessions")
+    teller_member = models.ForeignKey(
+        "lab.SessionMember", on_delete=models.PROTECT, related_name="teller_sessions"
+    )
+    business_date = models.DateField()
+    status = models.CharField(
+        max_length=12, choices=TellerSessionStatus.choices, default=TellerSessionStatus.PENDING_OPEN
+    )
+    open_requested_at = models.DateTimeField(auto_now_add=True)
+    open_approved_by = models.ForeignKey(
+        "lab.SessionMember", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    opened_at = models.DateTimeField(null=True, blank=True)
+    open_reject_note = models.CharField(max_length=300, blank=True, default="")
+    close_requested_at = models.DateTimeField(null=True, blank=True)
+    close_approved_by = models.ForeignKey(
+        "lab.SessionMember", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    closed_at = models.DateTimeField(null=True, blank=True)
+    close_reject_note = models.CharField(max_length=300, blank=True, default="")
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-business_date", "-open_requested_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["bank", "teller_member", "business_date"],
+                condition=~models.Q(status="cancelled"),
+                name="uniq_teller_session_per_day",
+            ),
+            models.UniqueConstraint(
+                fields=["till"],
+                condition=models.Q(status__in=["pending_open", "open", "closing"]),
+                name="uniq_active_session_per_till",
+            ),
+        ]
+
+
+class CashCountKind(models.TextChoices):
+    OPEN = "open", "Opening count"
+    CLOSE = "close", "Closing count"
+
+
+class CashCount(NoDeleteModel):
+    """Denomination count of one currency; `difference` = counted - system (over/short).
+
+    A rejected closing count stays as history; the teller's recount gets the next `attempt`.
+    """
+
+    teller_session = models.ForeignKey(
+        TellerSession, on_delete=models.PROTECT, related_name="counts"
+    )
+    kind = models.CharField(max_length=5, choices=CashCountKind.choices)
+    currency = models.CharField(max_length=3, choices=Currency.choices)
+    attempt = models.PositiveSmallIntegerField(default=1)
+    counted_total = models.DecimalField(max_digits=18, decimal_places=2)
+    system_total = models.DecimalField(max_digits=18, decimal_places=2)
+    difference = models.DecimalField(max_digits=18, decimal_places=2)
+    counted_by = models.ForeignKey("lab.SessionMember", on_delete=models.PROTECT, related_name="+")
+    approved_by = models.ForeignKey(
+        "lab.SessionMember", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    journal_entry = models.ForeignKey(
+        "ledger.JournalEntry", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+
+    class Meta:
+        ordering = ["teller_session_id", "kind", "attempt", "currency"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["teller_session", "kind", "currency", "attempt"], name="uniq_cash_count"
+            ),
+        ]
+
+
+class CashCountLine(NoDeleteModel):
+    cash_count = models.ForeignKey(CashCount, on_delete=models.PROTECT, related_name="lines")
+    denomination = models.ForeignKey(Denomination, on_delete=models.PROTECT, related_name="+")
+    quantity = models.PositiveIntegerField()
+
+    class Meta:
+        ordering = ["-denomination__value"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cash_count", "denomination"], name="uniq_cash_count_line"
+            ),
+        ]

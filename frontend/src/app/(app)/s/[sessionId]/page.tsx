@@ -13,6 +13,25 @@ import {
   Th,
 } from "@/components/lab/common";
 import { Badge } from "@/components/ui/badge";
+import { useMyTellerSession } from "@/lib/tellers";
+import { SessionStatus } from "@/components/tellers/session-bits";
+
+function TillStatus({ sid }: { sid: string }) {
+  const mine = useMyTellerSession(sid);
+  if (!mine.data) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-3 text-sm">
+      <span className="text-text-muted">My till {mine.data.till_code}</span>
+      <SessionStatus status={mine.data.status} />
+      <Link
+        href={`/s/${sid}/teller/till`}
+        className="text-bank-accent hover:underline"
+      >
+        Open
+      </Link>
+    </div>
+  );
+}
 
 export default function RoleHomePage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -52,6 +71,9 @@ export default function RoleHomePage() {
                     </span>
                   </span>
                 </div>
+                {d.permissions.some(
+                  (p) => p.code === "till.open.request" || p.code === "till.close",
+                ) && <TillStatus sid={sessionId} />}
                 <p className="text-sm text-text-muted">
                   Banking screens for your role are coming soon. Here is what
                   you will be allowed to do.
