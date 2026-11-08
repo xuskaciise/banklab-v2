@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { QueryState, ReadOnlyBanner, Tabs } from "@/components/lab/common";
 import { BranchesTab } from "@/components/banking/branches-tab";
+import { CustomersTab } from "@/components/customers/customers-tab";
 import { OverviewTab } from "@/components/lab/session-overview-tab";
 import {
   BanksTab,
@@ -23,6 +24,7 @@ const TABS = (counts: { members?: number; banks?: number }) => [
   { id: "members", label: "Members", count: counts.members },
   { id: "banks", label: "Banks", count: counts.banks },
   { id: "branches", label: "Branches" },
+  { id: "customers", label: "Customers" },
   { id: "permissions", label: "Permissions" },
   { id: "activity", label: "Activity" },
   { id: "settings", label: "Settings" },
@@ -57,6 +59,7 @@ export default function SessionControlPage() {
             {tab === "branches" && (
               <BranchesTab session={s} readOnly={readOnly} />
             )}
+            {tab === "customers" && <CustomersTab session={s} />}
             {tab === "permissions" && (
               <PermissionsTab session={s} readOnly={readOnly} />
             )}

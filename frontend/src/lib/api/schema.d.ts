@@ -828,6 +828,220 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sessions/{session_id}/banks/{bank_id}/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Staff List */
+        get: operations["customers_staff_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/banks/{bank_id}/customers/{customer_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Staff Get */
+        get: operations["customers_staff_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Customers List */
+        get: operations["customers_list"];
+        put?: never;
+        /** Customers Create */
+        post: operations["customers_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/customers/{customer_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Customers Get */
+        get: operations["customers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Customers Update */
+        patch: operations["customers_update"];
+        trace?: never;
+    };
+    "/api/s/{session_id}/customers/{customer_id}/parties": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Party Add */
+        post: operations["customers_party_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/customers/{customer_id}/parties/{party_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Party Update */
+        patch: operations["customers_party_update"];
+        trace?: never;
+    };
+    "/api/s/{session_id}/customers/{customer_id}/parties/{party_id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Document Add */
+        post: operations["customers_document_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/customers/{customer_id}/parties/{party_id}/documents/{doc_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Document Update */
+        patch: operations["customers_document_update"];
+        trace?: never;
+    };
+    "/api/s/{session_id}/customers/{customer_id}/parties/{party_id}/next-of-kin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Kin Add */
+        post: operations["customers_kin_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/customers/{customer_id}/parties/{party_id}/next-of-kin/{kin_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Kin Update */
+        patch: operations["customers_kin_update"];
+        trace?: never;
+    };
+    "/api/s/{session_id}/customers/{customer_id}/parties/{party_id}/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Party File Get */
+        get: operations["customers_party_file_get"];
+        put?: never;
+        /**
+         * Party File Upload
+         * @description kind = `photo` or `signature` (JPEG/PNG, max 2 MB).
+         */
+        post: operations["customers_party_file_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/customers/{customer_id}/parties/{party_id}/documents/{doc_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Document File Get */
+        get: operations["customers_document_file_get"];
+        put?: never;
+        /**
+         * Document File Upload
+         * @description ID scan (JPEG/PNG/PDF, max 2 MB).
+         */
+        post: operations["customers_document_file_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1748,6 +1962,347 @@ export interface components {
         RejectIn: {
             /** Reason */
             reason: string;
+        };
+        /** CustomerFilters */
+        CustomerFilters: {
+            /** Q */
+            q?: string | null;
+            /** Type */
+            type?: string | null;
+        };
+        /** CustomerOut */
+        CustomerOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Bank Id
+             * Format: uuid
+             */
+            bank_id: string;
+            /** Cif No */
+            cif_no: number;
+            /** Type */
+            type: string;
+            /** Display Name */
+            display_name: string;
+            /** Phone */
+            phone: string;
+            /** Email */
+            email: string;
+            /** Address */
+            address: string;
+            /** Reg No */
+            reg_no: string;
+            /** Is Seed */
+            is_seed: boolean;
+            /** Created By Id */
+            created_by_id?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** PagedCustomerOut */
+        PagedCustomerOut: {
+            /** Items */
+            items: components["schemas"]["CustomerOut"][];
+            /** Count */
+            count: number;
+        };
+        /** CustomerDetailOut */
+        CustomerDetailOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Bank Id
+             * Format: uuid
+             */
+            bank_id: string;
+            /** Cif No */
+            cif_no: number;
+            /** Type */
+            type: string;
+            /** Display Name */
+            display_name: string;
+            /** Phone */
+            phone: string;
+            /** Email */
+            email: string;
+            /** Address */
+            address: string;
+            /** Reg No */
+            reg_no: string;
+            /** Is Seed */
+            is_seed: boolean;
+            /** Created By Id */
+            created_by_id?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Parties */
+            parties: components["schemas"]["PartyLinkOut"][];
+        };
+        /** DocumentOut */
+        DocumentOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Type */
+            type: string;
+            /** Number */
+            number: string;
+            /**
+             * Issue Date
+             * Format: date
+             */
+            issue_date: string;
+            /**
+             * Expiry Date
+             * Format: date
+             */
+            expiry_date: string;
+            /** Has File */
+            has_file: boolean;
+        };
+        /** KinOut */
+        KinOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Phone */
+            phone: string;
+            /** Relationship */
+            relationship: string;
+        };
+        /** PartyLinkOut */
+        PartyLinkOut: {
+            /**
+             * Party Id
+             * Format: uuid
+             */
+            party_id: string;
+            /** Relation */
+            relation: string;
+            /** Can Sign */
+            can_sign: boolean;
+            /** Full Name */
+            full_name: string;
+            /** Sex */
+            sex: string;
+            /** Date Of Birth */
+            date_of_birth: string | null;
+            /** Phone */
+            phone: string;
+            /** Has Photo */
+            has_photo: boolean;
+            /** Has Signature */
+            has_signature: boolean;
+            /** Identity Documents */
+            identity_documents: components["schemas"]["DocumentOut"][];
+            /** Next Of Kin */
+            next_of_kin: components["schemas"]["KinOut"][];
+        };
+        /** CustomerIn */
+        CustomerIn: {
+            /** Type */
+            type: string;
+            /**
+             * Display Name
+             * @default
+             */
+            display_name: string;
+            /**
+             * Phone
+             * @default
+             */
+            phone: string;
+            /**
+             * Email
+             * @default
+             */
+            email: string;
+            /**
+             * Address
+             * @default
+             */
+            address: string;
+            /**
+             * Reg No
+             * @default
+             */
+            reg_no: string;
+            /** Parties */
+            parties: components["schemas"]["PartyIn"][];
+        };
+        /** DocumentIn */
+        DocumentIn: {
+            /** Type */
+            type: string;
+            /** Number */
+            number: string;
+            /**
+             * Issue Date
+             * Format: date
+             */
+            issue_date: string;
+            /**
+             * Expiry Date
+             * Format: date
+             */
+            expiry_date: string;
+        };
+        /** KinIn */
+        KinIn: {
+            /** Name */
+            name: string;
+            /**
+             * Phone
+             * @default
+             */
+            phone: string;
+            /** Relationship */
+            relationship: string;
+        };
+        /** PartyIn */
+        PartyIn: {
+            /** Full Name */
+            full_name: string;
+            /**
+             * Sex
+             * @default
+             */
+            sex: string;
+            /** Date Of Birth */
+            date_of_birth?: string | null;
+            /**
+             * Phone
+             * @default
+             */
+            phone: string;
+            /** Relation */
+            relation: string;
+            /** Can Sign */
+            can_sign?: boolean | null;
+            /**
+             * Identity Documents
+             * @default []
+             */
+            identity_documents: components["schemas"]["DocumentIn"][];
+            /**
+             * Next Of Kin
+             * @default []
+             */
+            next_of_kin: components["schemas"]["KinIn"][];
+        };
+        /** CustomerUpdateIn */
+        CustomerUpdateIn: {
+            /** Display Name */
+            display_name?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Address */
+            address?: string | null;
+            /** Reg No */
+            reg_no?: string | null;
+        };
+        /**
+         * AddPartyIn
+         * @description A new person (full_name + identity_documents) or an existing one (party_id).
+         */
+        AddPartyIn: {
+            /** Relation */
+            relation: string;
+            /** Can Sign */
+            can_sign?: boolean | null;
+            /** Party Id */
+            party_id?: string | null;
+            /**
+             * Full Name
+             * @default
+             */
+            full_name: string;
+            /**
+             * Sex
+             * @default
+             */
+            sex: string;
+            /** Date Of Birth */
+            date_of_birth?: string | null;
+            /**
+             * Phone
+             * @default
+             */
+            phone: string;
+            /**
+             * Identity Documents
+             * @default []
+             */
+            identity_documents: components["schemas"]["DocumentIn"][];
+            /**
+             * Next Of Kin
+             * @default []
+             */
+            next_of_kin: components["schemas"]["KinIn"][];
+        };
+        /** PartyUpdateIn */
+        PartyUpdateIn: {
+            /** Full Name */
+            full_name?: string | null;
+            /** Sex */
+            sex?: string | null;
+            /** Date Of Birth */
+            date_of_birth?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Can Sign */
+            can_sign?: boolean | null;
+        };
+        /** DocumentUpdateIn */
+        DocumentUpdateIn: {
+            /** Type */
+            type?: string | null;
+            /** Number */
+            number?: string | null;
+            /** Issue Date */
+            issue_date?: string | null;
+            /** Expiry Date */
+            expiry_date?: string | null;
+        };
+        /** KinUpdateIn */
+        KinUpdateIn: {
+            /** Name */
+            name?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Relationship */
+            relationship?: string | null;
         };
     };
     responses: never;
@@ -3080,6 +3635,446 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TransferOut"];
+                };
+            };
+        };
+    };
+    customers_staff_list: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                type?: string | null;
+                page?: number;
+                page_size?: number | null;
+            };
+            header?: never;
+            path: {
+                session_id: string;
+                bank_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedCustomerOut"];
+                };
+            };
+        };
+    };
+    customers_staff_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                bank_id: string;
+                customer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetailOut"];
+                };
+            };
+        };
+    };
+    customers_list: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                type?: string | null;
+                page?: number;
+                page_size?: number | null;
+            };
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedCustomerOut"];
+                };
+            };
+        };
+    };
+    customers_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomerIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetailOut"];
+                };
+            };
+        };
+    };
+    customers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                customer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetailOut"];
+                };
+            };
+        };
+    };
+    customers_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                customer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomerUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetailOut"];
+                };
+            };
+        };
+    };
+    customers_party_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                customer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddPartyIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetailOut"];
+                };
+            };
+        };
+    };
+    customers_party_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                customer_id: string;
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartyUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetailOut"];
+                };
+            };
+        };
+    };
+    customers_document_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                customer_id: string;
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetailOut"];
+                };
+            };
+        };
+    };
+    customers_document_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                customer_id: string;
+                party_id: string;
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetailOut"];
+                };
+            };
+        };
+    };
+    customers_kin_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                customer_id: string;
+                party_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KinIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetailOut"];
+                };
+            };
+        };
+    };
+    customers_kin_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                customer_id: string;
+                party_id: string;
+                kin_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KinUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetailOut"];
+                };
+            };
+        };
+    };
+    customers_party_file_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                customer_id: string;
+                party_id: string;
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    customers_party_file_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                customer_id: string;
+                party_id: string;
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * File
+                     * Format: binary
+                     */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetailOut"];
+                };
+            };
+        };
+    };
+    customers_document_file_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                customer_id: string;
+                party_id: string;
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    customers_document_file_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                customer_id: string;
+                party_id: string;
+                doc_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * File
+                     * Format: binary
+                     */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetailOut"];
                 };
             };
         };

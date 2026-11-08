@@ -58,9 +58,9 @@ const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
  */
 export async function apiFetch<T>(
   path: string,
-  options: Omit<RequestInit, "body"> & { json?: unknown } = {},
+  options: Omit<RequestInit, "body"> & { json?: unknown; form?: FormData } = {},
 ): Promise<T> {
-  const { json, headers, ...rest } = options;
+  const { json, form, headers, ...rest } = options;
   const method = (rest.method ?? "GET").toUpperCase();
   const h = new Headers(headers);
   h.set("Accept", "application/json");
@@ -76,7 +76,7 @@ export async function apiFetch<T>(
       method,
       headers: h,
       credentials: "include",
-      body: json !== undefined ? JSON.stringify(json) : undefined,
+      body: form ?? (json !== undefined ? JSON.stringify(json) : undefined),
     });
   } catch {
     throw new ApiError("API unreachable");
@@ -113,4 +113,16 @@ export async function apiGet<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function getHealth() {
   return apiGet<HealthResponse>("/api/health");
+}
+
+/** Fetches a binary file with the session cookie and returns a blob. */
+export async function apiBlob(path: string): Promise<Blob> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, { credentials: "include" });
+  } catch {
+    throw new ApiError("API unreachable");
+  }
+  if (!res.ok) throw new ApiError(`API error ${res.status}`, res.status);
+  return res.blob();
 }

@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "apps.audit",
     "apps.lab",
     "apps.banking",
+    "apps.customers",
     "apps.ledger",
 ]
 
@@ -117,3 +118,8 @@ CACHES = {
         "LOCATION": "django_cache",
     }
 }
+
+# Uploaded customer files (photos, signatures, ID documents). Never served statically:
+# they are only streamed by the customers API after a bank/visibility check.
+MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", str(BASE_DIR / "media")))
+MAX_UPLOAD_BYTES = 2 * 1024 * 1024

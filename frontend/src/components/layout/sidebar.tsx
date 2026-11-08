@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Landmark,
   Layers,
+  Users,
 } from "lucide-react";
 import type { Me } from "@/lib/api/types";
 import { isStudent } from "@/lib/auth";
@@ -60,6 +61,13 @@ export function navFor(
       href: `/s/${session.id}/vault`,
       match: /^\/s\/[^/]+\/vault/,
       icon: Landmark,
+    });
+  if (session?.permissions.includes("customer.view"))
+    items.push({
+      label: "Customers",
+      href: `/s/${session.id}/customers`,
+      match: /^\/s\/[^/]+\/customers/,
+      icon: Users,
     });
   return items;
 }

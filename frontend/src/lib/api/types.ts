@@ -44,3 +44,19 @@ export type TillIn = Schemas["TillIn"];
 export type VaultOut = Schemas["VaultOut"];
 export type CashReconciliation = Schemas["CashReconciliationOut"];
 export type CashTransferOut = Schemas["TransferOut"];
+
+// Customers 1.6
+export type CustomerOut = Schemas["CustomerOut"];
+export type PagedCustomer = Schemas["PagedCustomerOut"];
+export type CustomerDetail = Schemas["CustomerDetailOut"];
+export type CustomerIn = Schemas["CustomerIn"];
+export type CustomerUpdateIn = Schemas["CustomerUpdateIn"];
+export type PartyLink = Schemas["PartyLinkOut"];
+export type PartyIn = Schemas["PartyIn"];
+export type AddPartyIn = Schemas["AddPartyIn"];
+export type PartyUpdateIn = Schemas["PartyUpdateIn"];
+export type DocumentOut = Schemas["DocumentOut"];
+export type DocumentIn = Schemas["DocumentIn"];
+export type DocumentUpdateIn = Schemas["DocumentUpdateIn"];
+export type KinOut = Schemas["KinOut"];
+export type KinIn = Schemas["KinIn"];
