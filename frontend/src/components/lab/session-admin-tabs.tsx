@@ -41,9 +41,20 @@ import { DataTable } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Pagination } from "@/components/shared/pagination";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { ConfirmButton, ErrorMsg, Labeled, QueryState, TextInput } from "./common";
+import {
+  ConfirmButton,
+  ErrorMsg,
+  Labeled,
+  QueryState,
+  TextInput,
+} from "./common";
 import { formatTemplateLabel } from "./common";
 import { cn } from "@/lib/utils";
+import {
+  RolePermissions,
+  RoleTabs,
+  categoryLabel,
+} from "./permissions-by-role";
 
 // ---------------- Permissions ----------------
 function Cell({
@@ -105,7 +116,10 @@ function Cell({
             disabled={set.isPending}
             onClick={toggle}
             aria-label={`${roleName}: ${cell.permission_code} is ${allowed ? `allowed (${scope})` : "denied"}. Click to ${allowed ? "deny" : "allow"}.`}
-            className={cn(pillCls, "cursor-pointer hover:brightness-95 disabled:opacity-50")}
+            className={cn(
+              pillCls,
+              "cursor-pointer hover:brightness-95 disabled:opacity-50",
+            )}
           >
             {pill}
           </button>
@@ -136,7 +150,9 @@ function Cell({
             )}
           </span>
         )}
-        {err && <span className="text-[11px] text-fin-danger">{err.message}</span>}
+        {err && (
+          <span className="text-[11px] text-fin-danger">{err.message}</span>
+        )}
       </div>
     </td>
   );
@@ -185,6 +201,8 @@ export function PermissionsTab({
 }) {
   const matrix = usePermissionMatrix(session.id);
   const [q, setQ] = useState("");
+  const [view, setView] = useState<"role" | "matrix">("role");
+  const [role, setRole] = useState<string>(BANK_ROLES[0]);
   const cells = useMemo(() => matrix.data ?? [], [matrix.data]);
   const { codes, byKey, meta, categories } = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -211,9 +229,9 @@ export function PermissionsTab({
         <div className="space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <p className="max-w-xl text-sm text-text-muted">
-              Defaults come from the role matrix. Click a cell to override a role
+              Choose a role to see what it may do. Turning a switch changes it
               for this session only. Separation-of-duties rules cannot be
-              overridden and the server rejects them.
+              changed and the server rejects them.
             </p>
             <div className="relative w-full sm:w-64">
               <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-text-muted" />
@@ -226,59 +244,104 @@ export function PermissionsTab({
               />
             </div>
           </div>
-          <Legend />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {view === "role" ? (
+              <RoleTabs cells={cells} role={role} onChange={setRole} />
+            ) : (
+              <Legend />
+            )}
+            <div className="inline-flex rounded-lg border border-border bg-card p-0.5 text-sm">
+              {(["role", "matrix"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  aria-pressed={view === v}
+                  onClick={() => setView(v)}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 font-medium outline-none focus-visible:ring-2 focus-visible:ring-bank-accent",
+                    view === v
+                      ? "bg-bank-sky-light text-bank-primary"
+                      : "text-text-muted hover:text-text-strong",
+                  )}
+                >
+                  {v === "role" ? "By role" : "Compare roles"}
+                </button>
+              ))}
+            </div>
+          </div>
           {readOnly && (
             <p className="flex items-center gap-2 text-sm text-text-muted">
-              <Lock className="size-4" /> Read-only while the session is archived.
+              <Lock className="size-4" /> Read-only while the session is
+              archived.
             </p>
           )}
-          <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-card shadow-xs">
-            <table className="w-full min-w-max border-separate border-spacing-0 text-left text-sm text-text-body">
-              <thead>
-                <tr>
-                  <th className="sticky top-0 left-0 z-30 min-w-64 border-b border-border bg-surface px-4 py-3 text-xs font-medium tracking-wide text-text-muted uppercase">
-                    Permission
-                  </th>
-                  {BANK_ROLES.map((r) => (
-                    <th
-                      key={r}
-                      className="sticky top-0 z-20 border-b border-border bg-surface px-3 py-3 text-center text-xs font-medium tracking-wide whitespace-nowrap text-text-muted uppercase"
-                    >
-                      {ROLE_LABEL[r]}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {categories.map((cat) => {
-                  const rows = codes.filter((c) => meta.get(c)?.category === cat);
-                  if (!rows.length) return null;
-                  return (
-                    <CategoryRows
-                      key={cat}
-                      category={cat}
-                      codes={rows}
-                      meta={meta}
-                      byKey={byKey}
-                      sessionId={session.id}
-                      readOnly={readOnly}
-                    />
-                  );
-                })}
-                {codes.length === 0 && (
+          {view === "role" ? (
+            codes.length ? (
+              <RolePermissions
+                cells={cells}
+                role={role}
+                codes={codes}
+                categories={categories}
+                sessionId={session.id}
+                readOnly={readOnly}
+              />
+            ) : (
+              <EmptyState
+                title="No matching permissions"
+                description="Try a different search term."
+              />
+            )
+          ) : (
+            <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-card shadow-xs">
+              <table className="w-full min-w-max border-separate border-spacing-0 text-left text-sm text-text-body">
+                <thead>
                   <tr>
-                    <td colSpan={BANK_ROLES.length + 1}>
-                      <EmptyState
-                        className="rounded-none border-0"
-                        title="No matching permissions"
-                        description="Try a different search term."
-                      />
-                    </td>
+                    <th className="sticky top-0 left-0 z-30 min-w-64 border-b border-border bg-surface px-4 py-3 text-xs font-medium tracking-wide text-text-muted uppercase">
+                      Permission
+                    </th>
+                    {BANK_ROLES.map((r) => (
+                      <th
+                        key={r}
+                        className="sticky top-0 z-20 border-b border-border bg-surface px-3 py-3 text-center text-xs font-medium tracking-wide whitespace-nowrap text-text-muted uppercase"
+                      >
+                        {ROLE_LABEL[r]}
+                      </th>
+                    ))}
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {categories.map((cat) => {
+                    const rows = codes.filter(
+                      (c) => meta.get(c)?.category === cat,
+                    );
+                    if (!rows.length) return null;
+                    return (
+                      <CategoryRows
+                        key={cat}
+                        category={cat}
+                        codes={rows}
+                        meta={meta}
+                        byKey={byKey}
+                        sessionId={session.id}
+                        readOnly={readOnly}
+                      />
+                    );
+                  })}
+                  {codes.length === 0 && (
+                    <tr>
+                      <td colSpan={BANK_ROLES.length + 1}>
+                        <EmptyState
+                          className="rounded-none border-0"
+                          title="No matching permissions"
+                          description="Try a different search term."
+                        />
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </QueryState>
@@ -308,7 +371,7 @@ function CategoryRows({
           colSpan={BANK_ROLES.length + 1}
           className="sticky left-0 border-b border-border bg-hover px-4 py-1.5 text-left text-xs font-semibold tracking-wide text-text-strong uppercase"
         >
-          {category}
+          {categoryLabel(category)}
         </th>
       </tr>
       {codes.map((code) => (
@@ -327,7 +390,12 @@ function CategoryRows({
           {BANK_ROLES.map((r) => {
             const cell = byKey.get(`${code}|${r}`);
             return cell ? (
-              <Cell key={r} cell={cell} sessionId={sessionId} readOnly={readOnly} />
+              <Cell
+                key={r}
+                cell={cell}
+                sessionId={sessionId}
+                readOnly={readOnly}
+              />
             ) : (
               <td
                 key={r}
@@ -507,7 +575,6 @@ export function ActivityTab({ sessionId }: { sessionId: string }) {
   );
 }
 
-
 // ---------------- Settings ----------------
 function Section({
   title,
@@ -566,7 +633,9 @@ export function SettingsTab({ session }: { session: SessionOut }) {
       accessorKey: "bank_name",
       header: "Bank",
       cell: ({ getValue }) => (
-        <span className="font-medium text-text-strong">{getValue<string>()}</span>
+        <span className="font-medium text-text-strong">
+          {getValue<string>()}
+        </span>
       ),
     },
     {
@@ -584,8 +653,16 @@ export function SettingsTab({ session }: { session: SessionOut }) {
   ];
 
   const dl: [string, React.ReactNode][] = [
-    ["Kind", <span key="k" className="capitalize">{session.kind}</span>],
-    ["Structure", perGroup ? "One bank per group" : formatTemplateLabel(session.structure)],
+    [
+      "Kind",
+      <span key="k" className="capitalize">
+        {session.kind}
+      </span>,
+    ],
+    [
+      "Structure",
+      perGroup ? "One bank per group" : formatTemplateLabel(session.structure),
+    ],
     ["Opened", formatDateTime(session.opened_at)],
     ["Archived", formatDateTime(session.archived_at)],
     [
@@ -613,7 +690,9 @@ export function SettingsTab({ session }: { session: SessionOut }) {
               ? "The session is open for students."
               : "The session is archived and read-only."
         }
-        action={<StatusBadge status={session.status} className="h-6 px-2.5 text-sm" />}
+        action={
+          <StatusBadge status={session.status} className="h-6 px-2.5 text-sm" />
+        }
       >
         <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
           {dl.map(([k, v]) => (
@@ -654,7 +733,9 @@ export function SettingsTab({ session }: { session: SessionOut }) {
                 variant="destructive"
                 size="default"
                 pending={t.isPending}
-                onConfirm={() => t.mutate({ action: "archive" }, ok("Session archived"))}
+                onConfirm={() =>
+                  t.mutate({ action: "archive" }, ok("Session archived"))
+                }
               />
             )}
             {session.status === "archived" && (
@@ -663,7 +744,9 @@ export function SettingsTab({ session }: { session: SessionOut }) {
                 message="Re-open this archived session?"
                 size="default"
                 pending={t.isPending}
-                onConfirm={() => t.mutate({ action: "reopen" }, ok("Session re-opened"))}
+                onConfirm={() =>
+                  t.mutate({ action: "reopen" }, ok("Session re-opened"))
+                }
               />
             )}
           </div>
