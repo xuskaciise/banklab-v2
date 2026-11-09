@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { formatDateTime, useSessionMe } from "@/lib/lab";
-import { formatMoney } from "@/lib/banking";
+import { useSessionMe } from "@/lib/lab";
 import { useMyTellerSession, useTellerAction } from "@/lib/tellers";
 import type { TellerSession } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,9 @@ import {
 } from "@/components/lab/common";
 import { CloseCountForm } from "./close-count-form";
 import { OpenRequestForm } from "./open-request-form";
-import { Balances, CountSummary, SessionStatus } from "./session-bits";
+import { Balances, CountSummary } from "./session-bits";
+import { PendingTransfers, TillStatusCard } from "./till-status-card";
+import { Lock, XCircle } from "lucide-react";
 
 function Note({ title, text }: { title: string; text: string }) {
   return (
@@ -31,64 +32,44 @@ function Note({ title, text }: { title: string; text: string }) {
   );
 }
 
-function Pending({ s }: { s: TellerSession }) {
-  if (!s.pending_transfers.length) return null;
-  return (
-    <section className="space-y-2">
-      <h2 className="text-sm font-semibold text-text-strong">
-        Pending cash transfers
-      </h2>
-      <ul className="divide-y divide-border rounded-xl border border-border bg-card text-sm">
-        {s.pending_transfers.map((t) => (
-          <li key={t.id} className="flex justify-between gap-3 px-4 py-2">
-            <span className="text-text-muted">
-              {t.direction === "vault_to_teller"
-                ? "Vault → till"
-                : "Till → vault"}{" "}
-              · {t.status.replace(/_/g, " ")}
-            </span>
-            <span className="font-medium tabular-nums">
-              {formatMoney(t.amount, t.currency)}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function SessionBody({ sid, s, readOnly }: { sid: string; s: TellerSession; readOnly: boolean }) {
+function SessionBody({
+  sid,
+  s,
+  readOnly,
+}: {
+  sid: string;
+  s: TellerSession;
+  readOnly: boolean;
+}) {
   const act = useTellerAction(sid);
   const [counting, setCounting] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-3 text-sm">
-        <span className="font-semibold text-text-strong">Till {s.till_code}</span>
-        <SessionStatus status={s.status} />
-        <span className="text-text-muted">
-          Requested {formatDateTime(s.open_requested_at)}
-          {s.opened_at && <> · Opened {formatDateTime(s.opened_at)}</>}
-          {s.closed_at && <> · Closed {formatDateTime(s.closed_at)}</>}
-        </span>
-      </div>
+      <TillStatusCard s={s}>
+        {s.status === "pending_open" && !readOnly && (
+          <Button
+            variant="outline"
+            disabled={act.isPending}
+            onClick={() => setConfirmCancel(true)}
+            className="text-fin-danger"
+          >
+            <XCircle />
+            Cancel request
+          </Button>
+        )}
+        {s.status === "open" && !readOnly && !counting && (
+          <Button onClick={() => setCounting(true)}>
+            <Lock />
+            Close till
+          </Button>
+        )}
+      </TillStatusCard>
 
       {s.status === "pending_open" && (
         <>
-          <p className="text-sm text-text-muted">
-            Waiting for a manager to approve opening this till.
-          </p>
-          <Pending s={s} />
-          {!readOnly && (
-            <Button
-              variant="outline"
-              disabled={act.isPending}
-              onClick={() => setConfirmCancel(true)}
-            >
-              Cancel request
-            </Button>
-          )}
+          <PendingTransfers s={s} />
           <ConfirmDialog
             open={confirmCancel}
             onOpenChange={setConfirmCancel}
@@ -122,32 +103,26 @@ function SessionBody({ sid, s, readOnly }: { sid: string; s: TellerSession; read
             <Note title="Closing rejected" text={s.close_reject_note} />
           )}
           <Balances s={s} />
-          <Pending s={s} />
-          {counting ? (
+          <PendingTransfers s={s} />
+          {counting && (
             <CloseCountForm sid={sid} s={s} onDone={() => setCounting(false)} />
-          ) : (
-            !readOnly && (
-              <Button onClick={() => setCounting(true)}>Close till</Button>
-            )
           )}
         </>
       )}
 
       {s.status === "closing" && (
         <>
-          <p className="text-sm text-text-muted">
-            Your count was submitted. Waiting for a manager to approve closing.
-          </p>
           <CountSummary counts={s.latest_counts} />
         </>
       )}
 
       {s.status === "closed" && (
         <>
-          <p className="text-sm text-text-muted">
-            This till is closed for the day. All cash was returned to the vault.
-            {s.close_approved_by_name && ` Approved by ${s.close_approved_by_name}.`}
-          </p>
+          {s.close_approved_by_name && (
+            <p className="text-sm text-text-muted">
+              Closing approved by {s.close_approved_by_name}.
+            </p>
+          )}
           <CountSummary counts={s.latest_counts} />
         </>
       )}
@@ -172,7 +147,10 @@ export function MyTill({ sid }: { sid: string }) {
       <QueryState query={me}>
         {readOnly && <ReadOnlyBanner />}
         {!allowed ? (
-          <EmptyState title="No access" description="Your role does not use a till." />
+          <EmptyState
+            title="No access"
+            description="Your role does not use a till."
+          />
         ) : mine.isPending ? (
           <Loading label="Loading till" />
         ) : mine.isError ? (
@@ -185,7 +163,10 @@ export function MyTill({ sid }: { sid: string }) {
             <SessionBody sid={sid} s={s} readOnly={readOnly} />
           </>
         ) : readOnly ? (
-          <EmptyState title="No till session" description="No till was opened today." />
+          <EmptyState
+            title="No till session"
+            description="No till was opened today."
+          />
         ) : (
           <OpenRequestForm sid={sid} />
         )}
