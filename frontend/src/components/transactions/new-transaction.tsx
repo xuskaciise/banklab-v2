@@ -7,24 +7,15 @@ import { useMyTellerSession } from "@/lib/tellers";
 import type { TransactionOut } from "@/lib/api/types";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import {
-  PageHeader,
-  QueryState,
-  ReadOnlyBanner,
-  Tabs,
-} from "@/components/lab/common";
-import { TxnForm, type Kind } from "./txn-form";
+import { PageHeader, QueryState, ReadOnlyBanner } from "@/components/lab/common";
+import { TxnForm } from "./txn-form";
+import { TypeSelector, type Kind } from "./type-selector";
 import { TxnResult } from "./txn-result";
 
 const PERM: Record<Kind, string> = {
   deposit: "txn.cash_deposit",
   withdrawal: "txn.cash_withdrawal",
   transfer: "txn.transfer",
-};
-const LABEL: Record<Kind, string> = {
-  deposit: "Cash deposit",
-  withdrawal: "Cash withdrawal",
-  transfer: "Transfer",
 };
 
 export function NewTransaction({ sid }: { sid: string }) {
@@ -39,6 +30,11 @@ export function NewTransaction({ sid }: { sid: string }) {
   const needsTill = !!kind && kind !== "transfer" && isTeller;
   const readOnly = !!me.data?.read_only;
 
+  const bizDate = me.data?.business_date;
+  const dateLabel = bizDate
+    ? `${bizDate} (business date)`
+    : `${new Date().toISOString().slice(0, 10)} (today)`;
+
   let body: React.ReactNode = null;
   if (!kind) {
     body = (
@@ -49,11 +45,7 @@ export function NewTransaction({ sid }: { sid: string }) {
   } else {
     body = (
       <div className="space-y-5">
-        <Tabs
-          tabs={kinds.map((k) => ({ id: k, label: LABEL[k] }))}
-          value={kind}
-          onChange={(k) => setTab(k as Kind)}
-        />
+        <TypeSelector kinds={kinds} value={kind} onChange={setTab} />
         {needsTill && till.isPending ? (
           <p className="text-sm text-text-muted">Checking your till…</p>
         ) : needsTill && till.data?.status !== "open" ? (
@@ -67,15 +59,27 @@ export function NewTransaction({ sid }: { sid: string }) {
             }
           />
         ) : (
-          !readOnly && <TxnForm key={kind} sid={sid} kind={kind} onDone={setResult} />
+          !readOnly && (
+            <TxnForm
+              key={kind}
+              sid={sid}
+              kind={kind}
+              dateLabel={dateLabel}
+              onDone={setResult}
+            />
+          )
         )}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="New transaction" subtitle="Post a customer transaction." />
+    <div className="mx-auto w-full max-w-6xl space-y-6">
+      <PageHeader
+        title="New Transaction"
+        subtitle="Process customer financial transactions securely."
+        className="mb-0"
+      />
       <QueryState query={me}>
         {readOnly && <ReadOnlyBanner />}
         {body}

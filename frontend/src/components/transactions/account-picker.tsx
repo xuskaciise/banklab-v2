@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { Loader2, Search } from "lucide-react";
 import { formatAccountNo } from "@/lib/accounts";
 import { formatMoney } from "@/lib/banking";
 import { lookupAccount } from "@/lib/transactions";
 import type { AccountOut } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { errorText, Labeled } from "@/components/lab/common";
+import { errorText, StatusBadge } from "@/components/lab/common";
 
 /** Looks an active account up by number; reports the match to the parent. */
 export function AccountPicker({
@@ -24,6 +25,7 @@ export function AccountPicker({
   const [no, setNo] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | undefined>();
+  const id = `acct-${label.replace(/\W+/g, "-").toLowerCase()}`;
 
   async function find() {
     setErr(undefined);
@@ -42,13 +44,18 @@ export function AccountPicker({
   }
 
   return (
-    <div className="space-y-2">
-      <Labeled label={label} error={err}>
+    <div className="space-y-3">
+      <div className="space-y-1.5">
+        <label htmlFor={id} className="text-sm font-medium text-text-strong">
+          {label}
+        </label>
         <div className="flex gap-2">
           <Input
+            id={id}
             inputMode="numeric"
-            placeholder="Account number"
+            placeholder="Enter account number"
             value={no}
+            aria-invalid={!!err}
             onChange={(e) => {
               setNo(e.target.value);
               if (value) onChange(null);
@@ -60,25 +67,52 @@ export function AccountPicker({
               }
             }}
           />
-          <Button type="button" variant="outline" disabled={busy} onClick={find}>
-            {busy ? "Searching…" : "Find"}
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={find}
+            className="shrink-0 focus-visible:ring-bank-accent"
+          >
+            {busy ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Search className="size-4" aria-hidden />
+            )}
+            {busy ? "Searching…" : "Find account"}
           </Button>
         </div>
-      </Labeled>
+        {err && (
+          <p role="alert" className="text-sm text-fin-danger">
+            {err}
+          </p>
+        )}
+      </div>
       {value && (
-        <div className="rounded-md border border-border bg-surface px-3 py-2 text-sm">
-          <p className="font-medium text-text-strong">
-            {value.customer_name}{" "}
-            <span className="font-mono text-xs text-text-muted">
-              {formatAccountNo(value.account_no)}
-            </span>
-          </p>
-          <p className="text-text-muted">
-            {value.product_name} · {value.currency} · Balance{" "}
-            <span className="tabular-nums">
-              {formatMoney(value.ledger_balance, value.currency)}
-            </span>
-          </p>
+        <div className="rounded-lg border border-border bg-surface p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-text-strong">
+                {value.customer_name}
+              </p>
+              <p className="font-mono text-xs text-text-muted">
+                {formatAccountNo(value.account_no)}
+              </p>
+            </div>
+            <StatusBadge status={value.status} />
+          </div>
+          <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <dt className="text-xs text-text-muted">Product</dt>
+              <dd className="text-text-body">{value.product_name}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-text-muted">Current balance</dt>
+              <dd className="font-semibold text-text-strong tabular-nums">
+                {formatMoney(value.ledger_balance, value.currency)}
+              </dd>
+            </div>
+          </dl>
         </div>
       )}
     </div>
