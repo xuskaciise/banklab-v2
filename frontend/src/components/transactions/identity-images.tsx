@@ -45,8 +45,9 @@ export function IdentityImage({
   const { has, img } = useIdentityImage(sid, customerId, party, kind);
   const title = kind === "photo" ? "Photo" : "Signature";
   const alt = `${title} of ${party.full_name}`;
-  const box = "block h-44 w-full sm:h-48";
-  const fit = kind === "photo" ? "object-cover" : "object-contain p-2";
+  const box =
+    kind === "photo" ? "block h-48 w-36 sm:h-52 sm:w-40" : "block h-48 w-full sm:h-52";
+  const fit = kind === "photo" ? "object-cover object-top" : "object-contain p-3";
   return (
     <figure className="min-w-0 space-y-1.5">
       {img.data ? (
@@ -131,7 +132,7 @@ export function IdentityVerification({
           {shown.length > 1 && (
             <p className="text-sm font-medium text-text-strong">{p.full_name}</p>
           )}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[auto_minmax(0,1fr)]">
             <IdentityImage sid={sid} customerId={customerId} party={p} kind="photo" />
             <IdentityImage
               sid={sid}

@@ -3,7 +3,7 @@
 import { User } from "lucide-react";
 import { formatAccountNo } from "@/lib/accounts";
 import { formatMoney } from "@/lib/banking";
-import { useCustomer } from "@/lib/customers";
+import { formatCif, useCustomer } from "@/lib/customers";
 import type { AccountOut, PartyLink } from "@/lib/api/types";
 import { StatusBadge } from "@/components/lab/common";
 import { IdentityVerification, useIdentityImage } from "./identity-images";
@@ -87,7 +87,7 @@ export function CustomerProfile({ sid, account }: { sid: string; account: Accoun
           </p>
           <p className="font-mono text-xs text-text-muted">
             {formatAccountNo(account.account_no)}
-            {c && <span className="font-sans"> · CIF {c.cif_no}</span>}
+            {c && <span className="font-sans"> · CIF {formatCif(c.cif_no)}</span>}
           </p>
           {doc && (
             <p className="text-xs text-text-muted">
