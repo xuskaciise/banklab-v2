@@ -26,6 +26,12 @@ export function NewTransaction({ sid }: { sid: string }) {
   const kinds = (Object.keys(PERM) as Kind[]).filter((k) => perms.has(PERM[k]));
   const [tab, setTab] = useState<Kind | null>(null);
   const [result, setResult] = useState<TransactionOut | null>(null);
+  const [formKey, setFormKey] = useState(0);
+  // Any way of closing the result modal resets the form.
+  const startNew = () => {
+    setResult(null);
+    setFormKey((k) => k + 1);
+  };
   const kind = tab && kinds.includes(tab) ? tab : kinds[0];
   const needsTill = !!kind && kind !== "transfer" && isTeller;
   const readOnly = !!me.data?.read_only;
@@ -40,8 +46,6 @@ export function NewTransaction({ sid }: { sid: string }) {
     body = (
       <EmptyState title="No access" description="Your role cannot post transactions." />
     );
-  } else if (result) {
-    body = <TxnResult sid={sid} txn={result} onNew={() => setResult(null)} />;
   } else {
     body = (
       <>
@@ -60,7 +64,7 @@ export function NewTransaction({ sid }: { sid: string }) {
         ) : (
           !readOnly && (
             <TxnForm
-              key={kind}
+              key={`${kind}-${formKey}`}
               sid={sid}
               kind={kind}
               dateLabel={dateLabel}
@@ -84,13 +88,21 @@ export function NewTransaction({ sid }: { sid: string }) {
             Process customer financial transactions securely.
           </p>
         </div>
-        {kind && !result && <TypeSelector kinds={kinds} value={kind} onChange={setTab} />}
+        {kind && <TypeSelector kinds={kinds} value={kind} onChange={setTab} />}
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-3 lg:overflow-y-auto">
         <QueryState query={me}>
           {readOnly && <ReadOnlyBanner />}
           {body}
         </QueryState>
+        {result && (
+          <TxnResult
+            sid={sid}
+            txn={result}
+            onNew={startNew}
+            tillCode={isTeller ? till.data?.till_code : null}
+          />
+        )}
       </div>
     </div>
   );

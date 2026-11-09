@@ -134,3 +134,16 @@ export function useDecideApproval(sid: string) {
     onSuccess: refresh,
   });
 }
+
+/** Saves the receipt PDF through a temporary download link. */
+export async function downloadReceipt(sid: string, txnId: string, refNo: string) {
+  const blob = await apiBlob(`${base(sid)}/${txnId}/receipt.pdf`);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `receipt-${refNo}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
