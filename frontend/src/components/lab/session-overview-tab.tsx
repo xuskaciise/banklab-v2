@@ -4,6 +4,7 @@ import {
   Activity,
   Building2,
   CalendarDays,
+  Check,
   ChevronRight,
   Eye,
   GraduationCap,
@@ -12,6 +13,7 @@ import {
   PanelRight,
   ShieldCheck,
   Users,
+  X,
 } from "lucide-react";
 import type { SessionOut } from "@/lib/api/types";
 import {
@@ -158,18 +160,41 @@ export function OverviewTab({
             </Fact>
           </dl>
           <div className="border-t border-border pt-4">
-            <p className="text-xs text-text-muted">
-              Allowed roles ({session.allowed_roles.length} of {BANK_ROLES.length})
-            </p>
-            <ul className="mt-2 flex flex-wrap justify-start gap-1.5">
-              {session.allowed_roles.map((r) => (
-                <li
-                  key={r}
-                  className="rounded-full bg-bank-sky-light px-2.5 py-0.5 text-xs font-medium text-bank-primary"
-                >
-                  {ROLE_LABEL[r] ?? r}
-                </li>
-              ))}
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="text-sm font-medium text-text-strong">Allowed roles</p>
+              <span className="text-xs text-text-muted tabular-nums">
+                {session.allowed_roles.length} of {BANK_ROLES.length}
+              </span>
+            </div>
+            <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+              {BANK_ROLES.map((r) => {
+                const on = session.allowed_roles.includes(r);
+                return (
+                  <li
+                    key={r}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-lg border px-3 py-2 text-sm",
+                      on
+                        ? "border-border bg-card text-text-strong"
+                        : "border-dashed border-border bg-surface text-text-muted",
+                    )}
+                  >
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "flex size-5 shrink-0 items-center justify-center rounded-full",
+                        on ? "bg-fin-success-bg text-fin-success-dark" : "bg-hover text-text-muted",
+                      )}
+                    >
+                      {on ? <Check className="size-3" strokeWidth={3} /> : <X className="size-3" />}
+                    </span>
+                    <span className={cn("truncate", on ? "font-medium" : "line-through")}>
+                      {ROLE_LABEL[r] ?? r}
+                    </span>
+                    <span className="sr-only">{on ? "allowed" : "not allowed"}</span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </FormSection>
