@@ -67,7 +67,7 @@ export function IdentityImage({
         <div
           className={cn(
             box,
-            "flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-surface px-2 text-center text-xs text-text-muted",
+            "flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-surface px-2 text-center text-sm text-text-muted",
           )}
         >
           <ImageIcon className="size-4" aria-hidden />
@@ -78,7 +78,7 @@ export function IdentityImage({
               : "Loading…"}
         </div>
       )}
-      <figcaption className="text-xs text-text-muted">{title}</figcaption>
+      <figcaption className="text-sm text-text-muted">{title}</figcaption>
       {img.data && (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent>
@@ -118,11 +118,11 @@ export function IdentityVerification({
   return (
     <section className="space-y-3 border-t border-border pt-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h4 className="text-sm font-semibold text-text-strong">
+        <h4 className="text-base font-semibold text-text-strong">
           Identity Verification
         </h4>
         {shown.length > 1 && mandate && (
-          <p className="text-xs text-text-body">
+          <p className="text-sm text-text-body">
             {MANDATE_LABEL[mandate] ?? mandate}
           </p>
         )}
@@ -130,7 +130,7 @@ export function IdentityVerification({
       {shown.map((p) => (
         <div key={p.party_id} className="space-y-2">
           {shown.length > 1 && (
-            <p className="text-sm font-medium text-text-strong">{p.full_name}</p>
+            <p className="text-base font-medium text-text-strong">{p.full_name}</p>
           )}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-[auto_minmax(0,1fr)]">
             <IdentityImage sid={sid} customerId={customerId} party={p} kind="photo" />

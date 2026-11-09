@@ -12,8 +12,8 @@ function Item({ label, children }: { label: string; children: React.ReactNode })
   if (children === null || children === undefined || children === "") return null;
   return (
     <div className="min-w-0">
-      <dt className="text-xs text-text-muted">{label}</dt>
-      <dd className="text-sm break-words text-text-body">
+      <dt className="text-sm text-text-muted">{label}</dt>
+      <dd className="text-base font-medium break-words text-text-strong">
         {children}
       </dd>
     </div>
@@ -85,12 +85,12 @@ export function CustomerProfile({ sid, account }: { sid: string; account: Accoun
           <p className="truncate text-xl font-semibold text-text-strong">
             {account.customer_name}
           </p>
-          <p className="mt-0.5 font-mono text-sm text-text-body">
+          <p className="mt-0.5 font-mono text-base text-text-body">
             {formatAccountNo(account.account_no)}
             {c && <span className="font-sans"> · CIF {formatCif(c.cif_no)}</span>}
           </p>
           {doc && (
-            <p className="text-sm text-text-muted capitalize">
+            <p className="text-base text-text-muted capitalize">
               {doc.type.replace(/_/g, " ")}: <span className="font-mono normal-case text-text-body">{doc.number}</span>
             </p>
           )}
@@ -107,8 +107,8 @@ export function CustomerProfile({ sid, account }: { sid: string; account: Accoun
       </div>
 
       <div className="rounded-lg border border-border bg-card p-3">
-        <p className="text-xs text-text-muted">Current balance</p>
-        <p className="text-2xl font-semibold text-text-strong tabular-nums">
+        <p className="text-sm text-text-muted">Current balance</p>
+        <p className="text-3xl font-semibold text-text-strong tabular-nums">
           {formatMoney(account.ledger_balance, account.currency)}
         </p>
       </div>
@@ -141,7 +141,7 @@ export function CustomerProfile({ sid, account }: { sid: string; account: Accoun
             mandate={account.mandate}
           />
           <section className="space-y-2 border-t border-border pt-4">
-            <h4 className="text-sm font-semibold text-text-strong">
+            <h4 className="text-base font-semibold text-text-strong">
               Customer Details
             </h4>
             <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
