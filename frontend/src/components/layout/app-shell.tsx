@@ -79,7 +79,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   // Full-bleed one-screen pages manage their own padding and height.
-  const wide = pathname.endsWith("/teller/transactions") && pathname.startsWith("/s/");
+  const wide =
+    pathname.startsWith("/s/") &&
+    (pathname.endsWith("/teller/transactions") ||
+      pathname.split("/").filter(Boolean).length === 2);
 
   const studentSession = isStudent(user)
     ? pathname.match(/^\/s\/([^/]+)/)?.[1]
