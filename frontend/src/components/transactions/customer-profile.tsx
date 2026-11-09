@@ -82,16 +82,16 @@ export function CustomerProfile({ sid, account }: { sid: string; account: Accoun
       <div className="flex items-start gap-3">
         <Thumb sid={sid} customerId={account.customer_id} party={holder} />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-base font-semibold text-text-strong">
+          <p className="truncate text-xl font-semibold text-text-strong">
             {account.customer_name}
           </p>
-          <p className="font-mono text-xs text-text-muted">
+          <p className="mt-0.5 font-mono text-sm text-text-body">
             {formatAccountNo(account.account_no)}
             {c && <span className="font-sans"> · CIF {formatCif(c.cif_no)}</span>}
           </p>
           {doc && (
-            <p className="text-xs text-text-muted">
-              {doc.type.replace(/_/g, " ")}: {doc.number}
+            <p className="text-sm text-text-muted capitalize">
+              {doc.type.replace(/_/g, " ")}: <span className="font-mono normal-case text-text-body">{doc.number}</span>
             </p>
           )}
         </div>
