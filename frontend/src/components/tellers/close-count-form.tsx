@@ -5,6 +5,11 @@ import { toast } from "sonner";
 import { formatMoney } from "@/lib/banking";
 import { useDenominations, useTellerAction } from "@/lib/tellers";
 import type { TellerSession } from "@/lib/api/types";
+import {
+  FormActions,
+  FormSection,
+} from "@/components/shared/form-layout";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ErrorMsg, Loading } from "@/components/lab/common";
@@ -60,7 +65,7 @@ export function CloseCountForm({
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form onSubmit={submit} className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-2">
         {CURRENCIES.map((c) => {
           const rows = (denoms.data ?? []).filter((d) => d.currency === c);
@@ -71,13 +76,7 @@ export function CloseCountForm({
           const system =
             s.balances.find((b) => b.currency === c)?.balance ?? "0";
           return (
-            <fieldset
-              key={c}
-              className="space-y-2 rounded-xl border border-border bg-card p-4 shadow-xs"
-            >
-              <legend className="px-1 text-sm font-semibold text-text-strong">
-                {c} cash count
-              </legend>
+            <FormSection key={c} title={`${c} cash count`} className="space-y-2">
               {rows.map((d) => (
                 <div key={d.id} className="flex items-center gap-3 text-sm">
                   <span className="w-24 text-text-muted tabular-nums">
@@ -115,15 +114,12 @@ export function CloseCountForm({
                   </dd>
                 </div>
               </dl>
-            </fieldset>
+            </FormSection>
           );
         })}
       </div>
       {err && <ErrorMsg error={new Error(err)} />}
-      <div className="flex gap-2">
-        <Button type="submit" disabled={act.isPending}>
-          {act.isPending ? "Submitting…" : "Submit count"}
-        </Button>
+      <FormActions>
         <Button
           type="button"
           variant="outline"
@@ -132,7 +128,11 @@ export function CloseCountForm({
         >
           Cancel
         </Button>
-      </div>
+        <Button type="submit" disabled={act.isPending}>
+          {act.isPending && <Loader2 className="animate-spin" />}
+          {act.isPending ? "Submitting…" : "Submit count"}
+        </Button>
+      </FormActions>
     </form>
   );
 }

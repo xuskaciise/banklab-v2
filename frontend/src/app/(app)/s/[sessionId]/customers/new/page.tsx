@@ -4,12 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Trash2, UserPlus } from "lucide-react";
 import { CUSTOMER_TYPES, useCreateCustomer } from "@/lib/customers";
 import { useSessionMe } from "@/lib/lab";
 import type { PartyIn } from "@/lib/api/types";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  FormActions,
+  FormGrid,
+  FormSection,
+  OptionCards,
+} from "@/components/shared/form-layout";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
   ErrorMsg,
@@ -24,7 +30,6 @@ import {
   validatePerson,
   type PersonDraft,
 } from "@/components/customers/person-fields";
-import { cn } from "@/lib/utils";
 
 const isOrg = (t: string) => t === "company" || t === "ngo";
 
@@ -110,7 +115,7 @@ export default function NewCustomerPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-3xl space-y-6">
       <PageHeader
         title="New customer"
         subtitle="Open a customer information file (CIF)."
@@ -132,34 +137,24 @@ export default function NewCustomerPage() {
           />
         ) : (
           <form onSubmit={submit} noValidate className="space-y-6">
-            <section className="space-y-3 rounded-xl border border-border bg-card p-5">
-              <p className="text-sm font-semibold text-text-strong">Customer type</p>
-              <div role="radiogroup" aria-label="Customer type" className="flex flex-wrap gap-2">
-                {CUSTOMER_TYPES.map((t) => (
-                  <button
-                    key={t.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={type === t.value}
-                    onClick={() => changeType(t.value)}
-                    className={cn(
-                      "h-9 rounded-md border px-4 text-sm font-medium transition-colors",
-                      type === t.value
-                        ? "border-bank-primary bg-bank-sky-light text-bank-primary"
-                        : "border-border text-text-body hover:bg-hover",
-                    )}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-text-muted">
-                {type === "individual" && "One owner."}
-                {type === "joint" && "At least two joint holders; all can sign."}
-                {isOrg(type) &&
-                  "Registration number and at least one signatory. Directors are optional."}
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2">
+            <FormSection
+              title="Customer Type"
+              description={
+                (type === "individual" && "One owner.") ||
+                (type === "joint" && "At least two joint holders; all can sign.") ||
+                "Registration number and at least one signatory. Directors are optional."
+              }
+            >
+              <OptionCards
+                label="Customer type"
+                columns={3}
+                options={CUSTOMER_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+                value={type}
+                onChange={changeType}
+              />
+            </FormSection>
+            <FormSection title="Customer Details">
+              <FormGrid>
                 <Labeled
                   label={
                     isOrg(type)
@@ -171,57 +166,55 @@ export default function NewCustomerPage() {
                 >
                   <Input value={name} onChange={(e) => setName(e.target.value)} />
                 </Labeled>
-                <Labeled label="Phone">
+                <Labeled label="Phone" required>
                   <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
                 </Labeled>
-                <Labeled label="Email (optional)">
+                <Labeled label="Email" optional>
                   <Input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </Labeled>
-                <Labeled label="Address (optional)">
+                <Labeled label="Address" optional>
                   <Input value={address} onChange={(e) => setAddress(e.target.value)} />
                 </Labeled>
                 {isOrg(type) && (
-                  <Labeled label="Registration number">
+                  <Labeled label="Registration number" required>
                     <Input value={regNo} onChange={(e) => setRegNo(e.target.value)} />
                   </Labeled>
                 )}
-              </div>
-            </section>
+              </FormGrid>
+            </FormSection>
 
             {people.map((p, i) => (
-              <section
+              <FormSection
                 key={i}
-                className="space-y-3 rounded-xl border border-border bg-card p-5"
+                title={
+                  type === "individual"
+                    ? "Owner"
+                    : type === "joint"
+                      ? `Joint holder ${i + 1}`
+                      : `Person ${i + 1}`
+                }
               >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-text-strong">
-                    {type === "individual"
-                      ? "Owner"
-                      : type === "joint"
-                        ? `Joint holder ${i + 1}`
-                        : `Person ${i + 1}`}
-                  </p>
-                  {type !== "individual" && people.length > (type === "joint" ? 2 : 1) && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setPeople(people.filter((_, j) => j !== i))}
-                    >
-                      <Trash2 /> Remove
-                    </Button>
-                  )}
-                </div>
+                {type !== "individual" && people.length > (type === "joint" ? 2 : 1) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="-mt-2 ml-auto flex"
+                    onClick={() => setPeople(people.filter((_, j) => j !== i))}
+                  >
+                    <Trash2 /> Remove
+                  </Button>
+                )}
                 <PersonFields
                   value={p}
                   relationOptions={relationsFor(type)}
                   onChange={(np) => setPeople(people.map((x, j) => (j === i ? np : x)))}
                 />
-              </section>
+              </FormSection>
             ))}
             {type !== "individual" && (
               <Button
@@ -238,7 +231,7 @@ export default function NewCustomerPage() {
 
             {error && <ErrorMsg error={new Error(error)} />}
             <ErrorMsg error={create.error} />
-            <div className="flex justify-end gap-2">
+            <FormActions>
               <Link
                 href={`/s/${sessionId}/customers`}
                 className={buttonVariants({ variant: "outline" })}
@@ -246,9 +239,14 @@ export default function NewCustomerPage() {
                 Cancel
               </Link>
               <Button type="submit" disabled={create.isPending}>
+                {create.isPending ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <UserPlus />
+                )}
                 {create.isPending ? "Creating…" : "Create customer"}
               </Button>
-            </div>
+            </FormActions>
           </form>
         )}
       </QueryState>

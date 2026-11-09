@@ -6,6 +6,7 @@ import { useCreateTxn } from "@/lib/transactions";
 import type { AccountOut, TransactionOut } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormActions } from "@/components/shared/form-layout";
 import { ErrorMsg } from "@/components/lab/common";
 import { Textarea } from "@/components/ui/input";
 import { FieldLabel } from "./field-label";
@@ -175,13 +176,15 @@ export function TxnForm({
           </CardContent>
         </Card>
         <ErrorMsg error={create.error} />
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
-          {!valid && (
-            <p className="text-xs text-text-muted sm:mr-auto">
+        <FormActions
+          hint={
+            !valid &&
+            (<>
               Find the account{kind === "transfer" ? "s" : ""}, enter an amount
               {cash ? " and the party details" : ""} to continue.
-            </p>
-          )}
+            </>)
+          }
+        >
           <Button
             type="button"
             variant="outline"
@@ -201,7 +204,7 @@ export function TxnForm({
             )}
             {create.isPending ? "Posting…" : label}
           </Button>
-        </div>
+        </FormActions>
       </div>
       <aside>
         <TxnSummary

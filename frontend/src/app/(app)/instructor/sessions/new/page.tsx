@@ -6,17 +6,27 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   BANK_ROLES,
-  ROLE_LABEL,
   useCreateSession,
   useTemplates,
 } from "@/lib/lab";
 import type { TemplateOut } from "@/lib/api/types";
-import { Button } from "@/components/ui/button";
+import { Loader2, Plus } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { KIND_OPTS, STRUCTURE_OPTS, VIS_OPTS } from "@/components/lab/session-options";
+import { RolesField } from "@/components/lab/roles-field";
+import { Checkbox } from "@/components/shared/checkbox";
+import {
+  FormActions,
+  FormGrid,
+  FormPage,
+  FormSection,
+  OptionCards,
+  SummaryCard,
+} from "@/components/shared/form-layout";
 import {
   ErrorMsg,
   Labeled,
   Loading,
-  PageHeader,
   Select,
   TextInput,
 } from "@/components/lab/common";
@@ -100,32 +110,36 @@ function Wizard({ classId }: { classId: string }) {
     );
   }
 
+  const label = (o: { value: string; label: string }[], v: string) =>
+    o.find((x) => x.value === v)?.label ?? v;
+
   return (
-    <div className="max-w-2xl">
-      <PageHeader
-        title="Open new session"
-        subtitle="The session is created as a draft. Open it from its control page once members are ready."
-      />
-      <form
-        onSubmit={submit}
-        noValidate
-        className="space-y-5 rounded-xl border border-border bg-card p-6 shadow-xs"
-      >
-        <Labeled label="Session name" error={errors.name}>
-          <TextInput value={name} onChange={(e) => setName(e.target.value)} />
-        </Labeled>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Labeled label="Kind">
-            <Select
-              className="w-full"
-              value={kind}
-              onChange={(e) => setKind(e.target.value as "practice" | "exam")}
-            >
-              <option value="practice">Practice</option>
-              <option value="exam">Exam</option>
-            </Select>
+    <FormPage
+      title="Open new session"
+      subtitle="The session is created as a draft. Open it from its control page once members are ready."
+      aside={
+        <div className="lg:sticky lg:top-4">
+          <SummaryCard
+            title="Session Summary"
+            rows={[
+              { label: "Name", value: name.trim() || "--" },
+              { label: "Kind", value: label(KIND_OPTS, kind) },
+              { label: "Structure", value: label(STRUCTURE_OPTS, eStructure) },
+              { label: "Visibility", value: label(VIS_OPTS, eVisibility) },
+              { label: "Roles", value: `${roles.length} allowed` },
+              { label: "Capital (USD)", value: capUsd.trim() || "--" },
+              { label: "Capital (SOS)", value: capSos.trim() || "--" },
+            ]}
+          />
+        </div>
+      }
+    >
+      <form onSubmit={submit} noValidate className="space-y-6">
+        <FormSection title="Session Details">
+          <Labeled label="Session name" required error={errors.name}>
+            <TextInput value={name} onChange={(e) => setName(e.target.value)} />
           </Labeled>
-          <Labeled label="Template (optional)">
+          <Labeled label="Template" optional>
             <Select
               className="w-full"
               value={templateId}
@@ -140,92 +154,91 @@ function Wizard({ classId }: { classId: string }) {
               ))}
             </Select>
           </Labeled>
-          <Labeled label="Structure">
-            <Select
-              className="w-full"
-              value={eStructure}
-              disabled={exam}
-              onChange={(e) => setStructure(e.target.value)}
-            >
-              <option value="single_bank">Single bank</option>
-              <option value="per_group">One bank per group</option>
-            </Select>
-          </Labeled>
-          <Labeled label="Default visibility">
-            <Select
-              className="w-full"
-              value={eVisibility}
-              disabled={exam}
-              onChange={(e) => setVisibility(e.target.value)}
-            >
-              <option value="all">Whole bank</option>
-              <option value="own">Own work only</option>
-            </Select>
-          </Labeled>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Labeled
-            label="Opening capital (USD)"
-            error={errors.capUsd}
-            hint="Starting capital for each bank in this session."
-          >
-            <TextInput
-              inputMode="decimal"
-              value={capUsd}
-              onChange={(e) => setCapUsd(e.target.value)}
-            />
-          </Labeled>
-          <Labeled label="Opening capital (SOS)" error={errors.capSos}>
-            <TextInput
-              inputMode="decimal"
-              value={capSos}
-              onChange={(e) => setCapSos(e.target.value)}
-            />
-          </Labeled>
-        </div>
-        {exam && (
-          <p className="rounded-md bg-bank-sky-light px-3 py-2 text-sm text-bank-primary">
-            Exams use a single bank, own-work visibility and no Dr/Cr learning
-            panel.
-          </p>
-        )}
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-medium text-text-strong">
-            Allowed roles
-          </legend>
-          <div className="flex flex-wrap gap-4">
-            {BANK_ROLES.map((r) => (
-              <label key={r} className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={roles.includes(r)}
-                  onChange={() => toggleRole(r)}
-                  className="size-4 accent-bank-primary"
-                />
-                {ROLE_LABEL[r]}
-              </label>
-            ))}
-          </div>
-          {errors.roles && (
-            <p className="text-sm text-fin-danger">{errors.roles}</p>
-          )}
-        </fieldset>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={ePanel}
-            disabled={exam}
-            onChange={(e) => setPanel(e.target.checked)}
-            className="size-4 accent-bank-primary"
+          <p className="text-sm font-medium text-text-strong">Kind</p>
+          <OptionCards
+            label="Kind"
+            columns={2}
+            options={KIND_OPTS}
+            value={kind}
+            onChange={setKind}
           />
-          Show the Dr/Cr learning panel after each posting
-        </label>
+        </FormSection>
+        <FormSection title="Bank Setup">
+          <p className="text-sm font-medium text-text-strong">Structure</p>
+          <OptionCards
+            label="Structure"
+            columns={2}
+            options={STRUCTURE_OPTS}
+            value={eStructure as "single_bank" | "per_group"}
+            onChange={setStructure}
+            disabled={exam}
+          />
+          <p className="text-sm font-medium text-text-strong">
+            Default visibility
+          </p>
+          <OptionCards
+            label="Default visibility"
+            columns={2}
+            options={VIS_OPTS}
+            value={eVisibility as "all" | "own"}
+            onChange={setVisibility}
+            disabled={exam}
+          />
+          {exam && (
+            <p className="rounded-md bg-bank-sky-light px-3 py-2 text-sm text-bank-primary">
+              Exams use a single bank, own-work visibility and no Dr/Cr
+              learning panel.
+            </p>
+          )}
+          <FormGrid>
+            <Labeled
+              label="Opening capital (USD)"
+              required
+              error={errors.capUsd}
+              hint="Starting capital for each bank in this session."
+            >
+              <TextInput
+                inputMode="decimal"
+                value={capUsd}
+                onChange={(e) => setCapUsd(e.target.value)}
+              />
+            </Labeled>
+            <Labeled label="Opening capital (SOS)" required error={errors.capSos}>
+              <TextInput
+                inputMode="decimal"
+                value={capSos}
+                onChange={(e) => setCapSos(e.target.value)}
+              />
+            </Labeled>
+          </FormGrid>
+        </FormSection>
+        <FormSection title="Roles and Learning">
+          <RolesField roles={roles} onToggle={toggleRole} error={errors.roles} />
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={ePanel}
+              disabled={exam}
+              onChange={(e) => setPanel(e.target.checked)}
+            />
+            Show the Dr/Cr learning panel after each posting
+          </label>
+        </FormSection>
         <ErrorMsg error={create.error} />
-        <Button type="submit" disabled={create.isPending}>
-          {create.isPending ? "Creating…" : "Create session"}
-        </Button>
+        <FormActions>
+          <Link href="/instructor/classes" className={buttonVariants({ variant: "outline" })}>
+            Cancel
+          </Link>
+          <Button type="submit" disabled={create.isPending}>
+            {create.isPending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Plus className="size-4" aria-hidden />
+            )}
+            {create.isPending ? "Creating…" : "Create session"}
+          </Button>
+        </FormActions>
       </form>
-    </div>
+    </FormPage>
   );
 }
 

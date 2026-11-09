@@ -4,6 +4,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Landmark } from "lucide-react";
 import { useTellerAction, useTillAvailability } from "@/lib/tellers";
+import {
+  FormActions,
+  FormGrid,
+  FormSection,
+} from "@/components/shared/form-layout";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -51,12 +57,9 @@ export function OpenRequestForm({ sid }: { sid: string }) {
   }
 
   return (
-    <form
-      onSubmit={submit}
-      className="max-w-xl space-y-4 rounded-xl border border-border bg-card p-5 shadow-xs"
-    >
-      <h2 className="text-sm font-semibold text-text-strong">Open my till</h2>
-      <Labeled label="Till">
+    <form onSubmit={submit} className="max-w-2xl space-y-6">
+      <FormSection title="Open my till">
+      <Labeled label="Till" required>
         <Select value={tillId} onChange={(e) => setTillId(e.target.value)}>
           <option value="">Select a till…</option>
           {tills.data.map((t) => (
@@ -68,9 +71,9 @@ export function OpenRequestForm({ sid }: { sid: string }) {
           ))}
         </Select>
       </Labeled>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <FormGrid>
         {CURRENCIES.map((c) => (
-          <Labeled key={c} label={`Opening float ${c} (optional)`}>
+          <Labeled key={c} label={`Opening float ${c}`} optional>
             <Input
               inputMode="decimal"
               placeholder="0.00"
@@ -79,15 +82,19 @@ export function OpenRequestForm({ sid }: { sid: string }) {
             />
           </Labeled>
         ))}
-      </div>
+      </FormGrid>
       <p className="text-xs text-text-muted">
         An opening float is requested from the vault and needs approval before
         the till opens.
       </p>
+      </FormSection>
       {err && <ErrorMsg error={new Error(err)} />}
-      <Button type="submit" disabled={act.isPending}>
-        {act.isPending ? "Sending…" : "Request open"}
-      </Button>
+      <FormActions>
+        <Button type="submit" disabled={act.isPending}>
+          {act.isPending && <Loader2 className="animate-spin" />}
+          {act.isPending ? "Sending…" : "Request open"}
+        </Button>
+      </FormActions>
     </form>
   );
 }
