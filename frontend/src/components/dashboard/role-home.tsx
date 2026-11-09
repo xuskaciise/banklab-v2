@@ -16,7 +16,7 @@ function Permissions({ codes, note }: { codes: string[]; note: boolean }) {
       <summary className="cursor-pointer rounded font-medium text-text-strong outline-none select-none focus-visible:ring-2 focus-visible:ring-bank-accent">
         What can I do in this role?
       </summary>
-      <ul className="mt-3 grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+      <ul className="mt-3 grid gap-1.5 sm:grid-cols-2">
         {can.map((s) => (
           <li key={s} className="flex items-start gap-2 text-text-body">
             <Check className="mt-0.5 size-4 shrink-0 text-fin-success" aria-hidden />
@@ -47,13 +47,13 @@ export function RoleHome({ sid, codes }: { sid: string; codes: string[] }) {
     <div className="min-w-0 space-y-4">
       <KpiCards sid={sid} has={has} pending={pending} />
       <QuickActions sid={sid} has={has} counts={counts} />
-      <div className="grid items-start gap-4 xl:grid-cols-2">
+      <div className="grid items-start gap-4 lg:grid-cols-2">
         {pending.show && (
           <PendingPreview items={pending.items} loading={pending.loading} viewAll={viewAll} />
         )}
         <RecentActivity sid={sid} has={has} />
+        <Permissions codes={codes} note={makes} />
       </div>
-      <Permissions codes={codes} note={makes} />
     </div>
   );
 }
