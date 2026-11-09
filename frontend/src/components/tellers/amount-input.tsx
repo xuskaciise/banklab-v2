@@ -14,7 +14,7 @@ export function amountValid(display: string, decimals: number) {
   const raw = stripAmount(display).trim();
   if (!raw) return true;
   return decimals
-    ? new RegExp(`^\d+(\.\d{0,${decimals}})?$`).test(raw)
+    ? new RegExp(String.raw`^\d+(\.\d{0,${decimals}})?$`).test(raw)
     : /^\d+$/.test(raw);
 }
 
