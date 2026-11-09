@@ -144,7 +144,7 @@ export function OpenAccountDialog({
               <div className="space-y-2">
                 <span className="text-sm font-medium text-text-strong">Customer</span>
                 <div className="relative">
-                  <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-text-muted" />
+                  <Search className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 size-4 text-text-muted" />
                   <Input
                     aria-label="Search customers"
                     placeholder="Search name, phone or CIF…"

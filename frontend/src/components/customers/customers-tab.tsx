@@ -21,6 +21,7 @@ export function CustomersTab({ session }: { session: SessionOut }) {
               <span className="text-sm text-text-muted">Bank</span>
               <Select
                 aria-label="Bank"
+                className="h-9"
                 value={current}
                 onChange={(e) => setBankId(e.target.value)}
               >

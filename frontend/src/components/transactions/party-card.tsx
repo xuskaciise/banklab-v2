@@ -3,7 +3,6 @@
 import { CreditCard, Phone, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { FieldLabel } from "./field-label";
-import { FIELD } from "./field-styles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export type Party = { name: string; idNo: string; phone: string };
@@ -30,7 +29,7 @@ function Field({
           className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-muted"
           aria-hidden
         />
-        <Input id={id} aria-invalid={!!error} className={`${FIELD} pl-9`} {...props} />
+        <Input id={id} aria-invalid={!!error} className="pl-9" {...props} />
       </div>
       {error && (
         <p role="alert" className="text-sm text-fin-danger">

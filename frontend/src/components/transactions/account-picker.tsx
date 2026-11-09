@@ -7,7 +7,6 @@ import type { AccountOut } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { errorText } from "@/components/lab/common";
-import { BTN_FIND, FIELD } from "./field-styles";
 import { FieldLabel } from "./field-label";
 import { CustomerProfile } from "./customer-profile";
 
@@ -50,14 +49,13 @@ export function AccountPicker({
         <FieldLabel htmlFor={id} required>
           {label}
         </FieldLabel>
-        <div className="flex items-stretch gap-2">
+        <div className="flex items-center gap-2">
           <Input
             id={id}
             inputMode="numeric"
             placeholder="Enter account number"
             value={no}
             aria-invalid={!!err}
-            className={FIELD}
             onChange={(e) => {
               setNo(e.target.value);
               if (value) onChange(null);
@@ -71,10 +69,9 @@ export function AccountPicker({
           />
           <Button
             type="button"
-            variant="ghost"
+            variant="secondary"
             disabled={busy}
             onClick={find}
-            className={BTN_FIND}
           >
             {busy ? (
               <Loader2 className="size-4 animate-spin" aria-hidden />

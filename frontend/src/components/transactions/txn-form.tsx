@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorMsg } from "@/components/lab/common";
 import { Textarea } from "@/components/ui/input";
-import { AREA, BTN_PRIMARY, BTN_SECONDARY } from "./field-styles";
 import { FieldLabel } from "./field-label";
 import { AccountLookupCard } from "./account-lookup-card";
 import { AmountField } from "./amount-field";
@@ -172,7 +171,6 @@ export function TxnForm({
               placeholder="Enter transaction description..."
               value={narration}
               onChange={(e) => setNarration(e.target.value)}
-              className={AREA}
             />
           </CardContent>
         </Card>
@@ -186,17 +184,15 @@ export function TxnForm({
           )}
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             onClick={reset}
             disabled={create.isPending}
-            className={BTN_SECONDARY}
           >
             Cancel
           </Button>
           <Button
             type="submit"
             disabled={!valid || create.isPending}
-            className={BTN_PRIMARY}
           >
             {create.isPending ? (
               <Loader2 className="size-4 animate-spin" aria-hidden />

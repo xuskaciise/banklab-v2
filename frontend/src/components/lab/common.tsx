@@ -156,16 +156,33 @@ export function Labeled({
   label,
   error,
   hint,
+  required,
+  optional,
   children,
 }: {
   label: string;
   error?: string;
   hint?: string;
+  required?: boolean;
+  optional?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-sm font-medium text-text-strong">{label}</span>
+      <span className="text-sm font-medium text-text-strong">
+        {label}
+        {required && (
+          <>
+            <span aria-hidden className="ml-0.5 text-fin-danger">
+              *
+            </span>
+            <span className="sr-only"> (required)</span>
+          </>
+        )}
+        {optional && (
+          <span className="ml-1 font-normal text-text-muted">(optional)</span>
+        )}
+      </span>
       {children}
       {hint && !error && (
         <span className="block text-xs text-text-muted">{hint}</span>

@@ -32,7 +32,7 @@ export function ClassPickerMenu({
       <DropdownMenuTrigger
         disabled={none}
         render={
-          <Button variant={variant} className="w-full justify-between">
+          <Button variant={variant} size="sm" className="w-full justify-between">
             <span className="flex items-center gap-2">
               {icon} {label}
             </span>

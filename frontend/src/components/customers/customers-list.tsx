@@ -60,13 +60,14 @@ export function CustomersList({
           <Input
             aria-label="Search customers"
             placeholder="Search name, phone or CIF…"
-            className="pl-9"
+            className="h-9 pl-9"
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
         </form>
         <Select
           aria-label="Customer type"
+          className="h-9"
           value={type}
           onChange={(e) => {
             setPage(1);

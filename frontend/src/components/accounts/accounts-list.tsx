@@ -32,6 +32,7 @@ export function AccountsList({
       <div className="flex flex-wrap items-center gap-2">
         <Select
           aria-label="Account status"
+          className="h-9"
           value={status}
           onChange={(e) => {
             setPage(1);
