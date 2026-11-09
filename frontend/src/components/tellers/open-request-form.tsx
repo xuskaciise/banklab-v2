@@ -70,14 +70,6 @@ export function OpenRequestForm({ sid }: { sid: string }) {
       noValidate
       className="grid w-full gap-6 lg:grid-flow-dense lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start"
     >
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight text-text-strong">
-          Open Till
-        </h2>
-        <p className="text-sm text-text-muted">
-          Choose a free till and request an opening float from the vault.
-        </p>
-      </div>
       <FormSection title="Choose your till">
         <TillSelector tills={tills.data} value={tillId} onChange={setTillId} />
         <TillSummary till={selected} />

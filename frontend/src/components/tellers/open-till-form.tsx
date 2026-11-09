@@ -108,7 +108,7 @@ export function OpenTillForm({
         </p>
       </FormSection>
 
-      <div className="space-y-4 lg:sticky lg:top-4 lg:col-start-2 lg:row-span-3 lg:row-start-1">
+      <div className="space-y-4 lg:sticky lg:top-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
         <FormSection title="Request summary">
           <dl className="divide-y divide-border text-sm">
             {[
