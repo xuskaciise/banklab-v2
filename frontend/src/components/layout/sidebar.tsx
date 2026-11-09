@@ -12,6 +12,7 @@ import {
   Layers,
   ArrowLeftRight,
   Banknote,
+  CalendarCheck,
   Receipt,
   ShieldCheck,
   Store,
@@ -123,6 +124,13 @@ export function navFor(
       href: `/s/${session.id}/approvals`,
       match: /^\/s\/[^/]+\/approvals/,
       icon: ShieldCheck,
+    });
+  if (session && has("eod.run"))
+    items.push({
+      label: "End of day",
+      href: `/s/${session.id}/eod`,
+      match: /^\/s\/[^/]+\/eod/,
+      icon: CalendarCheck,
     });
   return items;
 }

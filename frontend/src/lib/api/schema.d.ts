@@ -1015,6 +1015,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/s/{session_id}/eod": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Eod Status */
+        get: operations["banking_eod_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/eod/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Eod Close */
+        post: operations["banking_eod_close"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/s/{session_id}/transactions/deposit": {
         parameters: {
             query?: never;
@@ -2652,6 +2686,53 @@ export interface components {
              * @default []
              */
             lines: components["schemas"]["CountLineIn"][];
+        };
+        /** EodCheckOut */
+        EodCheckOut: {
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            /** Ok */
+            ok: boolean;
+            /** Detail */
+            detail: string;
+            /** Count */
+            count: number;
+            /** Items */
+            items: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** EodStatusOut */
+        EodStatusOut: {
+            /**
+             * Business Date
+             * Format: date
+             */
+            business_date: string;
+            /** Can Close */
+            can_close: boolean;
+            /** Checks */
+            checks: components["schemas"]["EodCheckOut"][];
+        };
+        /** EodCloseOut */
+        EodCloseOut: {
+            /**
+             * Closed Date
+             * Format: date
+             */
+            closed_date: string;
+            /**
+             * Business Date
+             * Format: date
+             */
+            business_date: string;
+            /**
+             * Closed At
+             * Format: date-time
+             */
+            closed_at: string;
         };
         /** TransactionOut */
         TransactionOut: {
@@ -5046,6 +5127,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TellerSessionOut"];
+                };
+            };
+        };
+    };
+    banking_eod_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EodStatusOut"];
+                };
+            };
+        };
+    };
+    banking_eod_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EodCloseOut"];
                 };
             };
         };

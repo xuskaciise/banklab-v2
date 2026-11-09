@@ -14,7 +14,7 @@ from ninja import Router, Schema
 from apps.rbac import context as rbac_context
 from apps.rbac.context import require_bank_permission
 
-from . import services, tellers
+from . import eod, services, tellers
 
 router = Router(tags=["banking"])
 student_router = Router(tags=["banking-student"])
@@ -441,3 +441,39 @@ def tellers_reject_close(request, session_id: UUID, ts_id: UUID, payload: Reject
 @student_router.get(_TS + "/{ts_id}", response=TellerSessionOut, operation_id="tellers_get")
 def tellers_get(request, session_id: UUID, ts_id: UUID):
     return tellers.get_session(_member(request, session_id), ts_id)
+
+
+# ----------------------------------------------------------------------- end of day (1.11)
+
+
+class EodCheckOut(Schema):
+    code: str
+    label: str
+    ok: bool
+    detail: str
+    count: int
+    items: list[dict]
+
+
+class EodStatusOut(Schema):
+    business_date: date
+    can_close: bool
+    checks: list[EodCheckOut]
+
+
+class EodCloseOut(Schema):
+    closed_date: date
+    business_date: date
+    closed_at: datetime
+
+
+@student_router.get("/s/{session_id}/eod", response=EodStatusOut, operation_id="banking_eod_status")
+def eod_status(request, session_id: UUID):
+    return eod.eod_status(_member(request, session_id))
+
+
+@student_router.post(
+    "/s/{session_id}/eod/close", response=EodCloseOut, operation_id="banking_eod_close"
+)
+def eod_close(request, session_id: UUID):
+    return eod.close_day(_member(request, session_id))

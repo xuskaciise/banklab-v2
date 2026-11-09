@@ -86,3 +86,8 @@ export type ChequeWithdrawalIn = Schemas["ChequeWithdrawalIn"];
 export type ChequebookOut = Schemas["ChequebookOut"];
 export type ChequeOut = Schemas["ChequeOut"];
 export type TransferIn = Schemas["TransferIn"];
+
+// 1.11 End of day
+export type EodStatus = Schemas["EodStatusOut"];
+export type EodCheck = Schemas["EodCheckOut"];
+export type EodClose = Schemas["EodCloseOut"];
