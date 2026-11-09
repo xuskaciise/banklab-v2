@@ -12,18 +12,20 @@ function Permissions({ codes, note }: { codes: string[]; note: boolean }) {
   const can = abilities(codes);
   if (!can.length) return null;
   return (
-    <aside className="rounded-xl border border-border bg-card p-4 shadow-xs">
-      <h2 className="mb-2 text-sm font-semibold text-text-strong">Your permissions</h2>
-      <ul className="space-y-1.5">
+    <details className="group rounded-xl border border-border bg-card px-4 py-3 text-sm shadow-xs">
+      <summary className="cursor-pointer rounded font-medium text-text-strong outline-none select-none focus-visible:ring-2 focus-visible:ring-bank-accent">
+        What can I do in this role?
+      </summary>
+      <ul className="mt-3 grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
         {can.map((s) => (
-          <li key={s} className="flex items-start gap-2 text-sm text-text-body">
+          <li key={s} className="flex items-start gap-2 text-text-body">
             <Check className="mt-0.5 size-4 shrink-0 text-fin-success" aria-hidden />
             {s}
           </li>
         ))}
       </ul>
       {note && <p className="mt-3 border-t border-border pt-3 text-xs text-text-muted">{LIMIT_NOTE}</p>}
-    </aside>
+    </details>
   );
 }
 
@@ -42,10 +44,10 @@ export function RoleHome({ sid, codes }: { sid: string; codes: string[] }) {
       ? `/s/${sid}/vault`
       : `/s/${sid}/tills`;
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-      <div className="min-w-0 space-y-4">
-        <KpiCards sid={sid} has={has} pending={pending} />
-        <QuickActions sid={sid} has={has} counts={counts} />
+    <div className="min-w-0 space-y-4">
+      <KpiCards sid={sid} has={has} pending={pending} />
+      <QuickActions sid={sid} has={has} counts={counts} />
+      <div className="grid items-start gap-4 xl:grid-cols-2">
         {pending.show && (
           <PendingPreview items={pending.items} loading={pending.loading} viewAll={viewAll} />
         )}

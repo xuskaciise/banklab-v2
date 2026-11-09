@@ -1,7 +1,6 @@
 "use client";
 
-import { CalendarDays, Eye } from "lucide-react";
-import { roleLabel } from "@/lib/lab";
+import { Eye } from "lucide-react";
 import { useMe } from "@/lib/auth";
 import type { SessionMe } from "@/lib/api/types";
 
@@ -35,21 +34,10 @@ export function WelcomeBanner({ d }: { d: SessionMe }) {
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        {d.role && (
-          <span className="inline-flex rounded-full bg-bank-primary px-3 py-1 text-xs font-semibold text-white">
-            {roleLabel(d.role)}
-          </span>
-        )}
         <Chip>
           <Eye className="size-3.5 text-bank-primary" aria-hidden />
           Visibility: {d.visibility === "own" ? "Own work only" : "Whole bank"}
         </Chip>
-        {d.business_date && (
-          <Chip>
-            <CalendarDays className="size-3.5 text-bank-primary" aria-hidden />
-            Business date {d.business_date}
-          </Chip>
-        )}
       </div>
     </div>
   );

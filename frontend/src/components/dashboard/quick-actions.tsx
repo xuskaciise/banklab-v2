@@ -37,11 +37,12 @@ export function QuickActions({
   counts: Record<string, number>;
 }) {
   const actions = QUICK_ACTIONS.filter((a) => a.any.some(has));
-  if (!actions.length) return null;
+  // A single destination is already in the sidebar.
+  if (actions.length <= 1) return null;
   return (
     <section aria-label="Quick actions" className="space-y-2">
       <h2 className="text-sm font-semibold text-text-strong">Quick actions</h2>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
         {actions.map((a) => {
           const Icon = ICON[a.title] ?? ArrowRight;
           const n = counts[a.title];
@@ -49,7 +50,7 @@ export function QuickActions({
             <Link
               key={a.title}
               href={a.href(sid)}
-              className="group relative flex flex-col gap-1.5 rounded-xl border border-border bg-card p-3.5 shadow-xs transition-all outline-none hover:-translate-y-0.5 hover:border-bank-accent hover:shadow-md focus-visible:ring-2 focus-visible:ring-bank-accent motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              className="group relative flex min-w-0 flex-col gap-1.5 rounded-xl border border-border bg-card p-3.5 shadow-xs transition-all outline-none hover:-translate-y-0.5 hover:border-bank-accent hover:shadow-md focus-visible:ring-2 focus-visible:ring-bank-accent motion-reduce:transition-none motion-reduce:hover:translate-y-0"
             >
               <span className="flex items-center justify-between">
                 <span className="flex size-8 items-center justify-center rounded-full bg-bank-sky-light text-bank-primary">
