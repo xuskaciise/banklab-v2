@@ -57,16 +57,23 @@ export function OpenRequestForm({ sid }: { sid: string }) {
     act.mutate(
       { kind: "open-request", body: { till_id: tillId, floats: lines } },
       {
-        onSuccess: () => toast.success("Request sent — waiting for manager approval"),
+        onSuccess: () =>
+          toast.success("Request sent — waiting for manager approval"),
         onError: (e) => setErr(e.message),
       },
     );
   }
 
   return (
-    <form onSubmit={submit} noValidate className="mx-auto w-full max-w-3xl space-y-6">
+    <form
+      onSubmit={submit}
+      noValidate
+      className="grid w-full gap-6 lg:grid-flow-dense lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start"
+    >
       <div>
-        <h2 className="text-lg font-semibold tracking-tight text-text-strong">Open Till</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-text-strong">
+          Open Till
+        </h2>
         <p className="text-sm text-text-muted">
           Choose a free till and request an opening float from the vault.
         </p>
