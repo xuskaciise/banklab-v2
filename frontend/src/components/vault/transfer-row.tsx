@@ -9,7 +9,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { directionOf, fmtWhen, STATUS_LABEL, stepsOf, titleCase } from "./vault-utils";
 
 export const ROW_GRID =
-  "md:grid md:grid-cols-[minmax(0,.8fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,.9fr)_9.5rem] md:items-center md:gap-3";
+  "md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,.9fr)_9.5rem] md:items-center md:gap-3";
 
 export function DirectionBadge({ t }: { t: CashTransferOut }) {
   const d = directionOf(t);
@@ -106,9 +106,6 @@ export function TransferRow({
         mine && "bg-fin-pending-bg/40",
       )}
     >
-      <div>
-        <DirectionBadge t={t} />
-      </div>
       <p className="min-w-0 font-medium break-words text-text-strong">
         {titleCase(t.from_label)} <span className="text-text-muted">→</span> {titleCase(t.to_label)}
       </p>

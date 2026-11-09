@@ -2,16 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Inbox, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTransferAction } from "@/lib/banking";
 import type { CashTransferOut } from "@/lib/api/types";
-import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorMsg } from "@/components/lab/common";
 import { ApproveDialog, DetailsDialog, RejectDialog } from "./transfer-dialogs";
-import { ROW_GRID, TransferRow } from "./transfer-row";
+import { TransferSection } from "./transfer-section";
 import { canReject, directionOf, myStep, type Tab } from "./vault-utils";
 
 const TABS: { id: Tab; label: string }[] = [
@@ -21,8 +19,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "rejected", label: "Rejected" },
   { id: "all", label: "All" },
 ];
-const SIZES = [10, 25, 50];
-const HEADS = ["Direction", "Transfer", "Amount", "Requested", "Progress", "Status", ""];
 
 export function TransfersPanel({
   sid,
@@ -42,12 +38,9 @@ export function TransfersPanel({
   const act = useTransferAction(sid);
   const [tab, setTab] = useState<Tab | null>(null);
   const [q, setQ] = useState("");
-  const [dir, setDir] = useState("");
   const [cur, setCur] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [page, setPage] = useState(1);
-  const [size, setSize] = useState(10);
   const [approving, setApproving] = useState<CashTransferOut | null>(null);
   const [rejecting, setRejecting] = useState<CashTransferOut | null>(null);
   const [viewing, setViewing] = useState<CashTransferOut | null>(null);
@@ -76,7 +69,6 @@ export function TransfersPanel({
     return rows.filter(
       (t) =>
         inTab(t, active) &&
-        (!dir || directionOf(t) === dir) &&
         (!cur || t.currency === cur) &&
         (!from || t.created_at.slice(0, 10) >= from) &&
         (!to || t.created_at.slice(0, 10) <= to) &&
@@ -86,16 +78,16 @@ export function TransfersPanel({
             .includes(term)),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, active, q, dir, cur, from, to, readOnly]);
-  const pages = Math.max(1, Math.ceil(shown.length / size));
-  const p = Math.min(page, pages);
-  const pageRows = shown.slice((p - 1) * size, p * size);
-  const reset = <T,>(set: (v: T) => void) => (v: T) => {
-    set(v);
-    setPage(1);
-  };
+  }, [rows, active, q, cur, from, to, readOnly]);
+  const toVault = shown.filter((t) => directionOf(t) === "to_vault");
+  // Vault -> till (and any till -> till rows) go in the first section.
+  const toTill = shown.filter((t) => directionOf(t) !== "to_vault");
+  const waiting = (xs: CashTransferOut[]) => xs.some((t) => mineOf(t));
 
-  function run(t: CashTransferOut, action: "approve-custodian" | "approve-manager") {
+  function run(
+    t: CashTransferOut,
+    action: "approve-custodian" | "approve-manager",
+  ) {
     act.mutate(
       { id: t.id, action },
       {
@@ -114,7 +106,8 @@ export function TransfersPanel({
 
   function confirmReject() {
     if (!rejecting) return;
-    if (!reason.trim()) return setReasonErr("Enter a reason for rejecting this transfer");
+    if (!reason.trim())
+      return setReasonErr("Enter a reason for rejecting this transfer");
     act.mutate(
       { id: rejecting.id, action: "reject", reason: reason.trim() },
       {
@@ -136,101 +129,115 @@ export function TransfersPanel({
   };
 
   return (
-    <section className="rounded-xl border border-border bg-card shadow-xs">
-      <div className="space-y-3 border-b border-border p-4">
-        <h2 className="text-sm font-semibold text-text-strong">Cash transfers</h2>
-        <div role="tablist" aria-label="Transfer status" className="flex flex-wrap gap-1.5">
-          {TABS.map((x) => (
-            <button
-              key={x.id}
-              type="button"
-              role="tab"
-              aria-selected={active === x.id}
-              onClick={() => reset(setTab)(x.id)}
-              className={cn(
-                "rounded-full border px-3 py-1 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-bank-accent",
-                active === x.id
-                  ? "border-bank-primary bg-bank-sky-light text-bank-primary"
-                  : "border-border text-text-body hover:bg-hover",
-              )}
-            >
-              {x.label} ({counts[x.id]})
-            </button>
-          ))}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-40 flex-1 sm:max-w-xs">
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-text-muted" />
-            <Input aria-label="Search transfers" placeholder="Search transfers…" value={q}
-              onChange={(e) => reset(setQ)(e.target.value)} className="h-9 pl-8 text-sm" />
-          </div>
-          <Select aria-label="Direction" value={dir} onChange={(e) => reset(setDir)(e.target.value)} className="h-9 w-36 text-sm">
-            <option value="">All directions</option>
-            <option value="to_till">To till</option>
-            <option value="to_vault">To vault</option>
-          </Select>
-          <Select aria-label="Currency" value={cur} onChange={(e) => reset(setCur)(e.target.value)} className="h-9 w-32 text-sm">
-            <option value="">All currencies</option>
-            {currencies.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </Select>
-          <Input type="date" aria-label="From date" value={from} onChange={(e) => reset(setFrom)(e.target.value)} className="h-9 w-40 text-sm" />
-          <Input type="date" aria-label="To date" value={to} onChange={(e) => reset(setTo)(e.target.value)} className="h-9 w-40 text-sm" />
-        </div>
-      </div>
-
-      {error ? (
-        <div className="p-4"><ErrorMsg error={error} /></div>
-      ) : loading ? (
-        <div className="space-y-2 p-4">
-          {[0, 1, 2].map((i) => <Skeleton key={i} className="h-12 rounded-lg" />)}
-        </div>
-      ) : shown.length === 0 ? (
-        <p className="flex flex-col items-center gap-2 px-4 py-12 text-sm text-text-muted">
-          <Inbox className="size-6" aria-hidden />
-          {active === "mine" ? "Nothing is waiting for your approval." : "No transfers in this view."}
-        </p>
-      ) : (
-        <>
-          <div className={cn("hidden border-b border-border bg-surface px-4 py-2 text-xs font-medium text-text-muted md:grid", ROW_GRID)}>
-            {HEADS.map((h, i) => (
-              <span key={i} className={i === 2 ? "text-right" : ""}>{h}</span>
+    <div className="space-y-4">
+      <section className="rounded-xl border border-border bg-card shadow-xs">
+        <div className="space-y-3 p-4">
+          <h2 className="text-sm font-semibold text-text-strong">
+            Filter cash transfers
+          </h2>
+          <div
+            role="tablist"
+            aria-label="Transfer status"
+            className="flex flex-wrap gap-1.5"
+          >
+            {TABS.map((x) => (
+              <button
+                key={x.id}
+                type="button"
+                role="tab"
+                aria-selected={active === x.id}
+                onClick={() => setTab(x.id)}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-bank-accent",
+                  active === x.id
+                    ? "border-bank-primary bg-bank-sky-light text-bank-primary"
+                    : "border-border text-text-body hover:bg-hover",
+                )}
+              >
+                {x.label} ({counts[x.id]})
+              </button>
             ))}
           </div>
-          <ul className="max-h-[32rem] divide-y divide-border overflow-y-auto max-md:space-y-2 max-md:divide-y-0 max-md:p-3">
-            {pageRows.map((t) => (
-              <TransferRow
-                key={t.id}
-                t={t}
-                mine={mineOf(t)}
-                busy={act.isPending}
-                onApprove={() => setApproving(t)}
-                onReject={() => openReject(t)}
-                onView={() => setViewing(t)}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative min-w-40 flex-1 sm:max-w-xs">
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-text-muted" />
+              <Input
+                aria-label="Search transfers"
+                placeholder="Search transfers…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                className="h-9 pl-8 text-sm"
               />
-            ))}
-          </ul>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 text-xs text-text-muted">
-            <span>
-              Showing {(p - 1) * size + 1}–{Math.min(shown.length, p * size)} of {shown.length}
-            </span>
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2">
-                Rows
-                <Select aria-label="Rows per page" value={size}
-                  onChange={(e) => { setSize(Number(e.target.value)); setPage(1); }}
-                  className="h-8 w-[5.5rem] py-0 pr-8 pl-2 text-xs">
-                  {SIZES.map((n) => <option key={n} value={n}>{n}</option>)}
-                </Select>
-              </label>
-              <Button variant="outline" size="sm" disabled={p <= 1} onClick={() => setPage(p - 1)}>Previous</Button>
-              <span className="tabular-nums">{p} / {pages}</span>
-              <Button variant="outline" size="sm" disabled={p >= pages} onClick={() => setPage(p + 1)}>Next</Button>
             </div>
+            <Select
+              aria-label="Currency"
+              value={cur}
+              onChange={(e) => setCur(e.target.value)}
+              className="h-9 w-40 text-sm"
+            >
+              <option value="">All currencies</option>
+              {currencies.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </Select>
+            <Input
+              type="date"
+              aria-label="From date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className="h-9 w-40 text-sm"
+            />
+            <Input
+              type="date"
+              aria-label="To date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className="h-9 w-40 text-sm"
+            />
           </div>
-        </>
-      )}
+        </div>
+      </section>
+
+      {error ? <ErrorMsg error={error} /> : null}
+      {(() => {
+        const till = (
+          <TransferSection
+            key="till"
+            title="Cash to tills"
+            icon={ArrowUp}
+            tone="pending"
+            rows={toTill}
+            loading={loading}
+            empty="No cash sent to tills"
+            mineOf={mineOf}
+            busy={act.isPending}
+            onApprove={setApproving}
+            onReject={openReject}
+            onView={setViewing}
+          />
+        );
+        const vault = (
+          <TransferSection
+            key="vault"
+            title="Cash returned to vault"
+            icon={ArrowDown}
+            tone="success"
+            rows={toVault}
+            loading={loading}
+            empty="No cash returned to the vault"
+            mineOf={mineOf}
+            busy={act.isPending}
+            onApprove={setApproving}
+            onReject={openReject}
+            onView={setViewing}
+          />
+        );
+        return !waiting(toTill) && waiting(toVault)
+          ? [vault, till]
+          : [till, vault];
+      })()}
 
       <ApproveDialog
         t={approving}
@@ -257,6 +264,6 @@ export function TransfersPanel({
         onReject={() => viewing && openReject(viewing)}
         onClose={() => setViewing(null)}
       />
-    </section>
+    </div>
   );
 }
