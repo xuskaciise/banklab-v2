@@ -308,6 +308,10 @@ class TestApi:
         assert listed["count"] == 1
         assert cso.get(url(env, "/accounts?status=closed")).json()["count"] == 0
         assert cso.get(url(env, "/accounts?status=bogus")).status_code == 400
+        by_no = cso.get(url(env, "/accounts?account_no=1000001")).json()
+        assert by_no["count"] == 1 and by_no["items"][0]["id"] == body["id"]
+        assert cso.get(url(env, "/accounts?account_no=1000002")).json()["count"] == 0
+        assert cso.get(url(env, "/accounts?account_no=99999999999")).status_code == 422
         assert cso.get(url(env, f"/accounts/{body['id']}")).json()["id"] == body["id"]
         closed = j(cso, "post", url(env, f"/accounts/{body['id']}/close"))
         assert closed.status_code == 200 and closed.json()["status"] == "closed"

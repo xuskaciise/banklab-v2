@@ -26,6 +26,7 @@ from apps.audit import services as audit
 from apps.banking.cash import GL_TAG_HOLDER, holder_exists
 from apps.banking.models import BusinessDay, BusinessDayStatus, CashPosition
 from apps.lab.models import Bank, RoleAssignment, Session, SessionMember, SessionStatus
+from apps.products.models import Account
 
 from .coa import ALLOW_NEGATIVE_TAGS, DEFAULT_COA, DEFAULT_COA_NAME
 from .models import (
@@ -341,6 +342,34 @@ def _apply_cash(bank: Bank, specs: list[LineSpec], currency: str) -> None:
             row.save(update_fields=["balance", "updated_at"])
 
 
+def _apply_accounts(bank: Bank, specs: list[LineSpec], currency: str) -> None:
+    """Customer deposit accounts named on lines (`account_id`): lock by id, move
+    `ledger_balance` (liability: Cr +, Dr -), reject negatives and foreign/other-currency
+    accounts. This is the only code that writes `Account.ledger_balance`."""
+    deltas: dict[object, Decimal] = defaultdict(lambda: ZERO)
+    for s in specs:
+        if s.account_id is not None:
+            deltas[uuid.UUID(str(s.account_id))] += s.credit - s.debit
+    if not deltas:
+        return
+    rows = list(Account.objects.select_for_update().filter(pk__in=deltas).order_by("pk"))
+    if len(rows) != len(deltas):
+        raise LedgerError("foreign_account", "Customer account is not in this bank")
+    for row in rows:
+        if row.bank_id != bank.pk:
+            raise LedgerError("foreign_account", "Customer account is not in this bank")
+        if row.currency != currency:
+            raise LedgerError("mixed_currency", "Account currency differs from the entry")
+        new = row.ledger_balance + deltas[row.pk]
+        if new < 0:
+            raise _conflict(
+                "insufficient_balance", f"Insufficient balance on account {row.account_no}"
+            )
+        row.ledger_balance = new
+    for row in rows:
+        row.save(update_fields=["ledger_balance", "updated_at"])
+
+
 def _write(
     bank: Bank,
     day: BusinessDay,
@@ -355,6 +384,7 @@ def _write(
     actor_user,
     audit_action,
 ) -> JournalEntry:
+    _apply_accounts(bank, specs, currency)
     _apply_cash(bank, specs, currency)
     _apply(bank, specs, currency)
     last = JournalEntry.objects.filter(bank=bank).aggregate(m=Max("entry_no"))["m"] or 0

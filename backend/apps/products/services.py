@@ -81,9 +81,11 @@ def list_products(member: SessionMember):
     return Product.objects.filter(bank_id=member.bank_id).order_by("code")
 
 
-def list_accounts(member: SessionMember, *, customer_id=None, status=None):
+def list_accounts(member: SessionMember, *, customer_id=None, status=None, account_no=None):
     _, _, scope = customers._read_scope(member, PERM_VIEW)
     qs = _visible(member, scope)
+    if account_no is not None:
+        qs = qs.filter(account_no=account_no)
     if customer_id:
         qs = qs.filter(customer_id=customer_id)
     if status:

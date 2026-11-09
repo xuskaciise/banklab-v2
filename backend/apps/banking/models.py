@@ -295,3 +295,132 @@ class CashCountLine(NoDeleteModel):
                 fields=["cash_count", "denomination"], name="uniq_cash_count_line"
             ),
         ]
+
+
+# --------------------------------------------------------------------------- transactions (1.9)
+
+
+class TxnType(models.TextChoices):
+    CASH_DEPOSIT = "cash_deposit", "Cash deposit"
+    CASH_WITHDRAWAL = "cash_withdrawal", "Cash withdrawal"
+    TRANSFER = "transfer", "Transfer"
+    CHEQUE_WITHDRAWAL = "cheque_withdrawal", "Cheque withdrawal"  # posted from 1.10
+    REVERSAL = "reversal", "Reversal"
+
+
+class TxnStatus(models.TextChoices):
+    PENDING_APPROVAL = "pending_approval", "Pending approval"
+    POSTED = "posted", "Posted"
+    REJECTED = "rejected", "Rejected"
+    REVERSED = "reversed", "Reversed"
+
+
+class Transaction(NoDeleteModel):
+    """Customer transaction (C1, C2, C4, D1). Status changes only through the services;
+    the money itself lives in the linked journal entry."""
+
+    bank = models.ForeignKey("lab.Bank", on_delete=models.PROTECT, related_name="transactions")
+    ref_no = models.CharField(max_length=40)
+    seq = models.PositiveIntegerField()
+    type = models.CharField(max_length=20, choices=TxnType.choices)
+    status = models.CharField(max_length=16, choices=TxnStatus.choices)
+    amount = models.DecimalField(max_digits=18, decimal_places=2)
+    currency = models.CharField(max_length=3, choices=Currency.choices)
+    account = models.ForeignKey(
+        "products.Account", on_delete=models.PROTECT, related_name="transactions"
+    )
+    counter_account = models.ForeignKey(
+        "products.Account", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    teller_session = models.ForeignKey(
+        TellerSession, null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    party_name = models.CharField(max_length=200, blank=True, default="")
+    party_id_no = models.CharField(max_length=60, blank=True, default="")
+    party_phone = models.CharField(max_length=30, blank=True, default="")
+    narration = models.CharField(max_length=300, blank=True, default="")
+    business_date = models.DateField()
+    created_by = models.ForeignKey("lab.SessionMember", on_delete=models.PROTECT, related_name="+")
+    journal_entry = models.ForeignKey(
+        "ledger.JournalEntry", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    reversal_of = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.PROTECT, related_name="reversals"
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["bank", "ref_no"], name="uniq_txn_ref_no"),
+            models.CheckConstraint(condition=models.Q(amount__gt=0), name="txn_amount_gt_0"),
+            models.UniqueConstraint(
+                fields=["reversal_of"],
+                condition=models.Q(reversal_of__isnull=False),
+                name="uniq_txn_reversal_of",
+            ),
+        ]
+        indexes = [models.Index(fields=["bank", "business_date"], name="txn_bank_date_idx")]
+
+
+class LimitRule(NoDeleteModel):
+    """Largest amount a role may post alone; above it the transaction needs approval."""
+
+    bank = models.ForeignKey("lab.Bank", on_delete=models.PROTECT, related_name="limit_rules")
+    role = models.CharField(max_length=20)
+    txn_type = models.CharField(max_length=20, choices=TxnType.choices)
+    currency = models.CharField(max_length=3, choices=Currency.choices)
+    max_amount = models.DecimalField(max_digits=18, decimal_places=2)
+
+    class Meta:
+        ordering = ["role", "txn_type", "currency"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["bank", "role", "txn_type", "currency"], name="uniq_limit_rule"
+            ),
+            models.CheckConstraint(condition=models.Q(max_amount__gte=0), name="limit_max_ge_0"),
+        ]
+
+
+class ApprovalReason(models.TextChoices):
+    LIMIT = "limit", "Over limit"
+    TILL_OPEN = "till_open", "Till open"
+    TILL_CLOSE = "till_close", "Till close"
+    DUAL_CONTROL = "dual_control", "Dual control"
+    TELLER_TO_TELLER = "teller_to_teller", "Teller to teller"
+
+
+class ApprovalStatus(models.TextChoices):
+    PENDING = "pending", "Pending"
+    APPROVED = "approved", "Approved"
+    REJECTED = "rejected", "Rejected"
+
+
+class Approval(NoDeleteModel):
+    """Generic maker-checker queue entry. Only `limit` on a transaction is used so far."""
+
+    bank = models.ForeignKey("lab.Bank", on_delete=models.PROTECT, related_name="approvals")
+    subject_type = models.CharField(max_length=30)
+    subject_id = models.UUIDField()
+    reason = models.CharField(max_length=20, choices=ApprovalReason.choices)
+    requested_by = models.ForeignKey(
+        "lab.SessionMember", on_delete=models.PROTECT, related_name="+"
+    )
+    decided_by = models.ForeignKey(
+        "lab.SessionMember", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    status = models.CharField(
+        max_length=10, choices=ApprovalStatus.choices, default=ApprovalStatus.PENDING
+    )
+    decided_at = models.DateTimeField(null=True, blank=True)
+    note = models.CharField(max_length=300, blank=True, default="")
+
+    class Meta:
+        ordering = ["created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["bank", "subject_type", "subject_id", "reason"],
+                condition=models.Q(status="pending"),
+                name="uniq_pending_approval",
+            ),
+        ]
+        indexes = [models.Index(fields=["bank", "status"], name="approval_bank_status_idx")]

@@ -10,7 +10,7 @@ from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from ninja import Query, Router, Schema
+from ninja import Field, Query, Router, Schema
 from ninja.pagination import PageNumberPagination, paginate
 
 from apps.rbac.context import require_bank_permission
@@ -44,6 +44,7 @@ class AccountIn(Schema):
 class AccountFilters(Schema):
     customer_id: UUID | None = None
     status: str | None = None
+    account_no: int | None = Field(None, ge=1, le=2147483647)
 
 
 class AccountOut(Schema):
@@ -102,7 +103,10 @@ def products_list(request, session_id: UUID):
 @paginate(AccountPagination)
 def accounts_list(request, session_id: UUID, filters: Query[AccountFilters]):
     return services.list_accounts(
-        request.session_member, customer_id=filters.customer_id, status=filters.status
+        request.session_member,
+        customer_id=filters.customer_id,
+        status=filters.status,
+        account_no=filters.account_no,
     )
 
 

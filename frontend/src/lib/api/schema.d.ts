@@ -1015,6 +1015,176 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/s/{session_id}/transactions/deposit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Txn Deposit */
+        post: operations["txn_deposit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/transactions/withdrawal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Txn Withdrawal */
+        post: operations["txn_withdrawal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/transactions/transfer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Txn Transfer */
+        post: operations["txn_transfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Txn List */
+        get: operations["txn_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/transactions/{txn_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Txn Get */
+        get: operations["txn_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/transactions/{txn_id}/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Txn Reverse */
+        post: operations["txn_reverse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/transactions/{txn_id}/receipt.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Txn Receipt */
+        get: operations["txn_receipt"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Approvals List */
+        get: operations["approvals_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/approvals/{approval_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approvals Approve */
+        post: operations["approvals_approve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/approvals/{approval_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approvals Reject */
+        post: operations["approvals_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sessions/{session_id}/banks/{bank_id}/customers": {
         parameters: {
             query?: never;
@@ -2195,18 +2365,25 @@ export interface components {
         };
         /** TransferIn */
         TransferIn: {
-            /** From Type */
-            from_type: string;
-            /** From Id */
-            from_id?: string | null;
-            /** To Type */
-            to_type: string;
-            /** To Id */
-            to_id?: string | null;
-            /** Currency */
-            currency: string;
+            /**
+             * From Account Id
+             * Format: uuid
+             */
+            from_account_id: string;
+            /**
+             * To Account Id
+             * Format: uuid
+             */
+            to_account_id: string;
             /** Amount */
             amount: number | string;
+            /** Currency */
+            currency: string;
+            /**
+             * Narration
+             * @default
+             */
+            narration: string;
         };
         /** RejectIn */
         RejectIn: {
@@ -2395,6 +2572,233 @@ export interface components {
              * @default []
              */
             lines: components["schemas"]["CountLineIn"][];
+        };
+        /** TransactionOut */
+        TransactionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Ref No */
+            ref_no: string;
+            /** Type */
+            type: string;
+            /** Status */
+            status: string;
+            /** Amount */
+            amount: number | string;
+            /** Currency */
+            currency: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Account No */
+            account_no: number;
+            /** Customer Name */
+            customer_name: string;
+            /** Counter Account Id */
+            counter_account_id?: string | null;
+            /** Counter Account No */
+            counter_account_no?: number | null;
+            /** Counter Customer Name */
+            counter_customer_name?: string | null;
+            /** Teller Session Id */
+            teller_session_id?: string | null;
+            /** Party Name */
+            party_name: string;
+            /** Party Id No */
+            party_id_no: string;
+            /** Party Phone */
+            party_phone: string;
+            /** Narration */
+            narration: string;
+            /**
+             * Business Date
+             * Format: date
+             */
+            business_date: string;
+            /**
+             * Created By Id
+             * Format: uuid
+             */
+            created_by_id: string;
+            /** Created By Name */
+            created_by_name: string;
+            /** Journal Entry Id */
+            journal_entry_id?: string | null;
+            /** Journal Entry No */
+            journal_entry_no?: number | null;
+            /** Reversal Of Id */
+            reversal_of_id?: string | null;
+            /** Reversal Of Ref No */
+            reversal_of_ref_no?: string | null;
+            /** Approval Id */
+            approval_id?: string | null;
+            /** Approval Status */
+            approval_status?: string | null;
+            /** Approval Note */
+            approval_note?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** DepositIn */
+        DepositIn: {
+            /** Party Name */
+            party_name: string;
+            /** Party Id No */
+            party_id_no: string;
+            /** Party Phone */
+            party_phone: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Amount */
+            amount: number | string;
+            /** Currency */
+            currency: string;
+            /**
+             * Narration
+             * @default
+             */
+            narration: string;
+        };
+        /** WithdrawalIn */
+        WithdrawalIn: {
+            /** Party Name */
+            party_name: string;
+            /** Party Id No */
+            party_id_no: string;
+            /** Party Phone */
+            party_phone: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Amount */
+            amount: number | string;
+            /** Currency */
+            currency: string;
+            /**
+             * Narration
+             * @default
+             */
+            narration: string;
+        };
+        /** TxnFilters */
+        TxnFilters: {
+            /** Status */
+            status?: string | null;
+            /** Type */
+            type?: string | null;
+            /** Account Id */
+            account_id?: string | null;
+            /** Business Date */
+            business_date?: string | null;
+        };
+        /** PagedTransactionOut */
+        PagedTransactionOut: {
+            /** Items */
+            items: components["schemas"]["TransactionOut"][];
+            /** Count */
+            count: number;
+        };
+        /** ReverseIn */
+        ReverseIn: {
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+        };
+        /** ApprovalOut */
+        ApprovalOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reason */
+            reason: string;
+            /** Status */
+            status: string;
+            /** Subject Type */
+            subject_type: string;
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
+            /**
+             * Requested By Id
+             * Format: uuid
+             */
+            requested_by_id: string;
+            /** Requested By Name */
+            requested_by_name: string;
+            /** Decided By Id */
+            decided_by_id?: string | null;
+            /** Decided By Name */
+            decided_by_name?: string | null;
+            /** Decided At */
+            decided_at?: string | null;
+            /** Note */
+            note: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            transaction?: components["schemas"]["ApprovalTxnOut"] | null;
+        };
+        /** ApprovalTxnOut */
+        ApprovalTxnOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Ref No */
+            ref_no: string;
+            /** Type */
+            type: string;
+            /** Status */
+            status: string;
+            /** Amount */
+            amount: number | string;
+            /** Currency */
+            currency: string;
+            /** Account No */
+            account_no: number;
+            /** Customer Name */
+            customer_name: string;
+            /** Counter Account No */
+            counter_account_no?: number | null;
+            /** Party Name */
+            party_name: string;
+            /** Narration */
+            narration: string;
+            /**
+             * Business Date
+             * Format: date
+             */
+            business_date: string;
+        };
+        /** DecisionIn */
+        DecisionIn: {
+            /**
+             * Note
+             * @default
+             */
+            note: string;
         };
         /** CustomerFilters */
         CustomerFilters: {
@@ -2780,6 +3184,8 @@ export interface components {
             customer_id?: string | null;
             /** Status */
             status?: string | null;
+            /** Account No */
+            account_no?: number | null;
         };
         /** AccountOut */
         AccountOut: {
@@ -4462,6 +4868,262 @@ export interface operations {
             };
         };
     };
+    txn_deposit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepositIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionOut"];
+                };
+            };
+        };
+    };
+    txn_withdrawal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WithdrawalIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionOut"];
+                };
+            };
+        };
+    };
+    txn_transfer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionOut"];
+                };
+            };
+        };
+    };
+    txn_list: {
+        parameters: {
+            query?: {
+                status?: string | null;
+                type?: string | null;
+                account_id?: string | null;
+                business_date?: string | null;
+                page?: number;
+                page_size?: number | null;
+            };
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PagedTransactionOut"];
+                };
+            };
+        };
+    };
+    txn_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                txn_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionOut"];
+                };
+            };
+        };
+    };
+    txn_reverse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                txn_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionOut"];
+                };
+            };
+        };
+    };
+    txn_receipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                txn_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    approvals_list: {
+        parameters: {
+            query?: {
+                status?: string | null;
+            };
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalOut"][];
+                };
+            };
+        };
+    };
+    approvals_approve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                approval_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalOut"];
+                };
+            };
+        };
+    };
+    approvals_reject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                approval_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalOut"];
+                };
+            };
+        };
+    };
     customers_staff_list: {
         parameters: {
             query?: {
@@ -4929,6 +5591,7 @@ export interface operations {
             query?: {
                 customer_id?: string | null;
                 status?: string | null;
+                account_no?: number | null;
                 page?: number;
                 page_size?: number | null;
             };

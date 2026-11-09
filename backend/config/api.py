@@ -7,6 +7,7 @@ from apps.accounts.services import AccountsError
 from apps.audit.api import router as audit_router
 from apps.banking.api import router as banking_router
 from apps.banking.api import student_router as banking_student_router
+from apps.banking.txn_api import txn_router
 from apps.customers.api import router as customers_router
 from apps.customers.api import student_router as customers_student_router
 from apps.lab.api import router as lab_router
@@ -27,6 +28,7 @@ api.add_router("", ledger_router)
 api.add_router("", ledger_student_router)
 api.add_router("", banking_router)
 api.add_router("", banking_student_router)
+api.add_router("", txn_router)
 api.add_router("", customers_router)
 api.add_router("", customers_student_router)
 api.add_router("", products_student_router)

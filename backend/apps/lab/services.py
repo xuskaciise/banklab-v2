@@ -18,6 +18,7 @@ from django.utils import timezone
 from apps.accounts import services as accounts
 from apps.accounts.models import PlatformRole, User
 from apps.audit import services as audit
+from apps.banking.limits import seed_limits
 from apps.banking.models import BusinessDay
 from apps.banking.provisioning import provision_bank_cash
 from apps.ledger import services as ledger
@@ -607,6 +608,7 @@ def _create_bank(actor, session: Session, name: str, group_no, business_date) ->
         # A1: main branch + vault + opening capital; posts as the system actor, so the
         # session must already be active (open_session activates it first).
         provision_bank_cash(bank, session)
+        seed_limits(bank)
     _audit(
         actor,
         "lab.bank_created",

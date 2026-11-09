@@ -75,3 +75,11 @@ export type CashCount = Schemas["CashCountOut"];
 export type OpenRequestIn = Schemas["OpenRequestIn"];
 export type CloseCountIn = Schemas["CloseCountIn"];
 export type DenominationOut = Schemas["DenominationOut"];
+
+// Transactions 1.9
+export type TransactionOut = Schemas["TransactionOut"];
+export type PagedTransaction = Schemas["PagedTransactionOut"];
+export type ApprovalOut = Schemas["ApprovalOut"];
+export type DepositIn = Schemas["DepositIn"];
+export type WithdrawalIn = Schemas["WithdrawalIn"];
+export type TransferIn = Schemas["TransferIn"];

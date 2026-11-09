@@ -10,7 +10,10 @@ import {
   LayoutDashboard,
   Landmark,
   Layers,
+  ArrowLeftRight,
   Banknote,
+  Receipt,
+  ShieldCheck,
   Store,
   Users,
   Wallet,
@@ -98,6 +101,28 @@ export function navFor(
       href: `/s/${session.id}/accounts`,
       match: /^\/s\/[^/]+\/accounts/,
       icon: Wallet,
+    });
+  const has = (c: string) => !!session?.permissions.includes(c);
+  if (session && (has("txn.cash_deposit") || has("txn.cash_withdrawal") || has("txn.transfer")))
+    items.push({
+      label: "New transaction",
+      href: `/s/${session.id}/teller/transactions`,
+      match: /^\/s\/[^/]+\/teller\/transactions/,
+      icon: ArrowLeftRight,
+    });
+  if (session && has("report.operational"))
+    items.push({
+      label: "Transactions",
+      href: `/s/${session.id}/transactions`,
+      match: /^\/s\/[^/]+\/transactions/,
+      icon: Receipt,
+    });
+  if (session && has("approval.decide"))
+    items.push({
+      label: "Approvals",
+      href: `/s/${session.id}/approvals`,
+      match: /^\/s\/[^/]+\/approvals/,
+      icon: ShieldCheck,
     });
   return items;
 }
