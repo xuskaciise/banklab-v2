@@ -96,11 +96,12 @@ export function CustomerProfile({ sid, account }: { sid: string; account: Accoun
           )}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <StatusBadge status={account.status} />
+          <StatusBadge status={account.status} className="h-7 px-3 text-sm" />
           {c && (
             <StatusBadge
               status={c.kyc_complete ? "completed" : "pending"}
               label={c.kyc_complete ? "KYC complete" : "KYC incomplete"}
+              className="h-7 px-3 text-sm"
             />
           )}
         </div>
