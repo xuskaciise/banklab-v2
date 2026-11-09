@@ -53,7 +53,7 @@ export default function SessionControlPage() {
             />
             {readOnly && <ReadOnlyBanner />}
             <Tabs tabs={TABS({ members: members.data?.length, banks: banks.data?.length })} value={tab} onChange={setTab} />
-            {tab === "overview" && <OverviewTab session={s} />}
+            {tab === "overview" && <OverviewTab session={s} onNavigate={setTab} />}
             {tab === "members" && <MembersTab session={s} readOnly={readOnly} />}
             {tab === "banks" && <BanksTab session={s} readOnly={readOnly} />}
             {tab === "branches" && (
