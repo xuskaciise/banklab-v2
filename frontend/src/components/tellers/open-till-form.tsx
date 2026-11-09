@@ -1,23 +1,19 @@
 "use client";
 
 import { Info, Loader2, Send } from "lucide-react";
+import { formatMoney } from "@/lib/banking";
+import { Tooltip } from "@/components/ui/tooltip";
+import { AmountInput, amountValid, stripAmount } from "./amount-input";
 import type { TillAvailability } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { FormSection } from "@/components/shared/form-layout";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ErrorMsg } from "@/components/lab/common";
-import { FieldLabel } from "@/components/transactions/field-label";
 import { CURRENCIES } from "./session-bits";
 
-/** Float is optional; every filled value must be a number >= 0. */
+/** Float is optional; every filled value must be digits (USD max 2 decimals). */
 export function floatsValid(floats: Record<string, string>) {
-  return CURRENCIES.every((c) => {
-    const raw = (floats[c] ?? "").trim();
-    if (!raw) return true;
-    const n = Number(raw);
-    return Number.isFinite(n) && n >= 0;
-  });
+  return CURRENCIES.every((c) => amountValid(floats[c] ?? "", c === "USD" ? 2 : 0));
 }
 
 /** Selected-till summary shown under the combobox. */
@@ -59,7 +55,7 @@ export function TillSummary({ till }: { till: TillAvailability | undefined }) {
   );
 }
 
-/** Opening float, notice and submit. */
+/** Opening float, request summary, notice and submit. */
 export function OpenTillForm({
   till,
   floats,
@@ -74,54 +70,68 @@ export function OpenTillForm({
   pending: boolean;
 }) {
   const valid = floatsValid(floats);
+  const ready = !!till && till.available && valid;
+  const money = (c: string) => {
+    const raw = stripAmount(floats[c] ?? "").trim();
+    return raw && amountValid(raw, c === "USD" ? 2 : 0) && raw !== "."
+      ? formatMoney(raw, c)
+      : "—";
+  };
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <FormSection title="Opening Cash Float">
         {CURRENCIES.map((c) => (
-          <div key={c} className="space-y-1.5">
-            <FieldLabel htmlFor={`float-${c}`} optional>
-              {c} float
-            </FieldLabel>
-            <div className="flex h-14 items-center gap-3 rounded-lg border border-border bg-card px-3 transition-colors focus-within:border-bank-accent focus-within:ring-2 focus-within:ring-bank-accent/40 hover:border-text-muted">
-              <span className="rounded-md border border-border bg-surface px-2.5 py-1 text-sm font-semibold text-text-strong">
-                {c}
-              </span>
-              <Input
-                id={`float-${c}`}
-                inputMode="decimal"
-                placeholder="0.00"
-                value={floats[c] ?? ""}
-                aria-invalid={
-                  !!(floats[c] ?? "").trim() && !floatsValid({ [c]: floats[c] ?? "" })
-                }
-                onChange={(e) => onFloats({ ...floats, [c]: e.target.value })}
-                className="h-full flex-1 rounded-none border-0 bg-transparent px-0 text-right text-xl font-semibold tabular-nums shadow-none hover:border-0 focus-visible:ring-0"
-              />
-            </div>
-          </div>
+          <AmountInput
+            key={c}
+            currency={c}
+            decimals={c === "USD" ? 2 : 0}
+            value={floats[c] ?? ""}
+            onChange={(v) => onFloats({ ...floats, [c]: v })}
+          />
         ))}
-        {!valid && (
-          <p role="alert" className="text-sm text-fin-danger">
-            Enter a number of 0 or more.
-          </p>
-        )}
-        <p className="flex gap-2 rounded-lg bg-bank-sky-light p-3 text-sm text-bank-primary">
+        <p className="flex gap-2.5 rounded-lg border border-bank-accent/30 bg-bank-sky-light p-3 text-sm leading-relaxed text-bank-primary">
           <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
           An opening cash float is requested from the vault and requires manager
           approval before the till becomes operational.
         </p>
       </FormSection>
 
+      <FormSection title="Request summary">
+        <dl className="divide-y divide-border text-sm">
+          {[
+            ["Till", till ? `${till.code} · ${till.branch_name}` : "—"],
+            ["USD float", money("USD")],
+            ["SOS float", money("SOS")],
+          ].map(([k, v]) => (
+            <div key={k} className="flex justify-between gap-3 py-2">
+              <dt className="text-text-muted">{k}</dt>
+              <dd className="font-medium text-text-strong tabular-nums">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </FormSection>
+
       {err && <ErrorMsg error={new Error(err)} />}
-      <Button
-        type="submit"
-        size="lg"
-        className="w-full"
-        disabled={pending || !till || !till.available || !valid}
-      >
-        {pending ? <Loader2 className="animate-spin" /> : <Send />}
-        {pending ? "Sending…" : "Request to Open Till"}
-      </Button>
+      <div className="space-y-2">
+        <Tooltip content="Select a till to continue" side="top" disabled={ready || pending}>
+          <span className="block">
+            <Button
+              type="submit"
+              size="lg"
+              disabled={pending || !ready}
+              className="w-full disabled:cursor-not-allowed disabled:bg-hover disabled:text-text-muted disabled:opacity-100"
+            >
+              {pending ? <Loader2 className="animate-spin" /> : <Send />}
+              {pending ? "Sending request…" : "Request to Open Till"}
+            </Button>
+          </span>
+        </Tooltip>
+        {!ready && !pending && (
+          <p className="text-center text-xs text-text-muted">
+            {!till ? "Select a till to continue." : "Fix the float amounts to continue."}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

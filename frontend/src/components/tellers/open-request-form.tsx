@@ -6,7 +6,9 @@ import { Landmark } from "lucide-react";
 import { useTellerAction, useTillAvailability } from "@/lib/tellers";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FormSection } from "@/components/shared/form-layout";
-import { ErrorMsg, Loading } from "@/components/lab/common";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorMsg } from "@/components/lab/common";
+import { stripAmount } from "./amount-input";
 import { OpenTillForm, TillSummary } from "./open-till-form";
 import { CURRENCIES } from "./session-bits";
 import { TillSelector } from "./till-selector";
@@ -18,7 +20,14 @@ export function OpenRequestForm({ sid }: { sid: string }) {
   const [floats, setFloats] = useState<Record<string, string>>({});
   const [err, setErr] = useState<string | null>(null);
 
-  if (tills.isPending) return <Loading label="Loading tills" />;
+  if (tills.isPending)
+    return (
+      <div className="mx-auto w-full max-w-3xl space-y-4" aria-busy="true">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="h-44 w-full rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-xl" />
+      </div>
+    );
   if (tills.isError) return <ErrorMsg error={tills.error} />;
   if (!tills.data.length)
     return (
@@ -37,7 +46,7 @@ export function OpenRequestForm({ sid }: { sid: string }) {
     if (!tillId) return setErr("Choose a till");
     const lines: { currency: string; amount: number }[] = [];
     for (const c of CURRENCIES) {
-      const raw = (floats[c] ?? "").trim();
+      const raw = stripAmount(floats[c] ?? "").trim();
       if (!raw) continue;
       const n = Number(raw);
       if (!Number.isFinite(n) || n < 0)
@@ -48,7 +57,7 @@ export function OpenRequestForm({ sid }: { sid: string }) {
     act.mutate(
       { kind: "open-request", body: { till_id: tillId, floats: lines } },
       {
-        onSuccess: () => toast.success("Opening request sent to your manager"),
+        onSuccess: () => toast.success("Request sent — waiting for manager approval"),
         onError: (e) => setErr(e.message),
       },
     );
@@ -56,6 +65,12 @@ export function OpenRequestForm({ sid }: { sid: string }) {
 
   return (
     <form onSubmit={submit} noValidate className="mx-auto w-full max-w-3xl space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight text-text-strong">Open Till</h2>
+        <p className="text-sm text-text-muted">
+          Choose a free till and request an opening float from the vault.
+        </p>
+      </div>
       <FormSection title="Choose your till">
         <TillSelector tills={tills.data} value={tillId} onChange={setTillId} />
         <TillSummary till={selected} />
