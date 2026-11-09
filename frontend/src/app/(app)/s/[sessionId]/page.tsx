@@ -8,30 +8,9 @@ import {
   PageHeader,
   QueryState,
   ReadOnlyBanner,
-  Table,
-  Td,
-  Th,
 } from "@/components/lab/common";
 import { Badge } from "@/components/ui/badge";
-import { useMyTellerSession } from "@/lib/tellers";
-import { SessionStatus } from "@/components/tellers/session-bits";
-
-function TillStatus({ sid }: { sid: string }) {
-  const mine = useMyTellerSession(sid);
-  if (!mine.data) return null;
-  return (
-    <div className="flex flex-wrap items-center gap-3 text-sm">
-      <span className="text-text-muted">My till {mine.data.till_code}</span>
-      <SessionStatus status={mine.data.status} />
-      <Link
-        href={`/s/${sid}/teller/till`}
-        className="text-bank-accent hover:underline"
-      >
-        Open
-      </Link>
-    </div>
-  );
-}
+import { RoleHome } from "@/components/dashboard/role-home";
 
 export default function RoleHomePage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -71,35 +50,10 @@ export default function RoleHomePage() {
                     </span>
                   </span>
                 </div>
-                {d.permissions.some(
-                  (p) => p.code === "till.open.request" || p.code === "till.close",
-                ) && <TillStatus sid={sessionId} />}
-                <p className="text-sm text-text-muted">
-                  Banking screens for your role are coming soon. Here is what
-                  you will be allowed to do.
-                </p>
-                {d.permissions.length ? (
-                  <Table>
-                    <thead>
-                      <tr>
-                        <Th>Permission</Th>
-                        <Th>Scope</Th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {d.permissions.map((p) => (
-                        <tr key={p.code} className="hover:bg-hover">
-                          <Td className="font-mono text-xs">{p.code}</Td>
-                          <Td>
-                            {p.scope === "own" ? "Own work only" : "Whole bank"}
-                          </Td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                ) : (
-                  <Empty>Your role has no permissions in this session.</Empty>
-                )}
+                <RoleHome
+                  sid={sessionId}
+                  codes={d.permissions.map((p) => p.code)}
+                />
               </div>
             )}
             <p className="mt-6 text-sm">
