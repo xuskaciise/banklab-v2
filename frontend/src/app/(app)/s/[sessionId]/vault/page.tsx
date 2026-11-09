@@ -13,6 +13,7 @@ import {
   useVault,
 } from "@/lib/banking";
 import type { CashTransferOut, VaultOut } from "@/lib/api/types";
+import { useTellerSessions } from "@/lib/tellers";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -193,39 +194,46 @@ export default function VaultPage() {
     );
   }
 
+  const tellerSessions = useTellerSessions(
+    sessionId,
+    perms.has("till.open.approve") || perms.has("till.close.approve"),
+  );
   const branchByVault = new Map(
     vault.data?.branches.map((b) => [b.vault_id, b.branch_name]) ?? [],
+  );
+  const tillBySession = new Map(
+    (tellerSessions.data ?? []).map((ts) => [
+      ts.id,
+      `Till ${ts.till_code}${ts.teller_name ? ` · ${ts.teller_name}` : ""}`,
+    ]),
   );
   const holder = (type: string, id: string) =>
     type === "vault"
       ? `Vault${branchByVault.get(id) ? ` (${branchByVault.get(id)})` : ""}`
-      : `${type.charAt(0).toUpperCase()}${type.slice(1)} ${id.slice(0, 6)}`;
+      : type === "teller_session"
+        ? (tillBySession.get(id) ?? "Teller till")
+        : type.replace(/_/g, " ");
 
   const columns: ColumnDef<CashTransferOut>[] = [
     {
       accessorKey: "created_at",
-      header: "Requested",
-      cell: ({ getValue }) => (
-        <span className="whitespace-nowrap tabular-nums">
-          {formatDateTime(getValue<string>())}
-        </span>
-      ),
-    },
-    {
-      id: "route",
-      header: "From / to",
-      enableSorting: false,
+      header: "Transfer",
       cell: ({ row: { original: t } }) => (
-        <span>
-          {holder(t.from_type, t.from_id)} → {holder(t.to_type, t.to_id)}
-        </span>
+        <div className="min-w-0">
+          <p className="font-medium text-text-strong">
+            {holder(t.from_type, t.from_id)} → {holder(t.to_type, t.to_id)}
+          </p>
+          <p className="text-xs text-text-muted tabular-nums">
+            {formatDateTime(t.created_at)} · by {t.requested_by_name}
+          </p>
+        </div>
       ),
     },
     {
       accessorKey: "amount",
       header: () => <span className="block text-right">Amount</span>,
       cell: ({ row: { original: t } }) => (
-        <span className="block text-right font-medium text-text-strong tabular-nums">
+        <span className="block text-right font-semibold whitespace-nowrap text-text-strong tabular-nums">
           {formatMoney(t.amount, t.currency)}
         </span>
       ),
@@ -234,23 +242,21 @@ export default function VaultPage() {
       accessorKey: "status",
       header: "Status",
       cell: ({ row: { original: t } }) => (
-        <StatusBadge
-          status={t.status === "custodian_approved" ? "pending" : t.status}
-          label={STATUS_LABEL[t.status] ?? t.status}
-        />
-      ),
-    },
-    {
-      id: "people",
-      header: "Requested by / approvals",
-      enableSorting: false,
-      cell: ({ row: { original: t } }) => (
-        <span className="text-xs text-text-muted">
-          {t.requested_by_name}
-          {t.approved_by_1_name && <> · 1st: {t.approved_by_1_name}</>}
-          {t.approved_by_2_name && <> · 2nd: {t.approved_by_2_name}</>}
-          {t.status === "rejected" && t.reason && <> · {t.reason}</>}
-        </span>
+        <div className="space-y-1">
+          <StatusBadge
+            status={t.status === "custodian_approved" ? "pending" : t.status}
+            label={STATUS_LABEL[t.status] ?? t.status}
+          />
+          {(t.approved_by_1_name ||
+            t.approved_by_2_name ||
+            (t.status === "rejected" && t.reason)) && (
+            <p className="text-xs text-text-muted">
+              {t.approved_by_1_name && <>1st: {t.approved_by_1_name}</>}
+              {t.approved_by_2_name && <> · 2nd: {t.approved_by_2_name}</>}
+              {t.status === "rejected" && t.reason && <> · {t.reason}</>}
+            </p>
+          )}
+        </div>
       ),
     },
     {
@@ -270,14 +276,14 @@ export default function VaultPage() {
             perms.has("cash.vault.approve_manager"));
         if (!canCustodian && !canManager && !canReject) return null;
         return (
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
             {canCustodian && (
               <Button
                 size="sm"
                 disabled={act.isPending}
                 onClick={() => run(t, "approve-custodian")}
               >
-                Approve (custodian)
+                Approve
               </Button>
             )}
             {canManager && (
@@ -286,7 +292,7 @@ export default function VaultPage() {
                 disabled={act.isPending}
                 onClick={() => run(t, "approve-manager")}
               >
-                Approve (manager)
+                Approve
               </Button>
             )}
             {canReject && (
@@ -344,6 +350,7 @@ export default function VaultPage() {
                 searchPlaceholder="Search transfers…"
                 columnToggle={false}
                 initialSort={[{ id: "created_at", desc: true }]}
+                fit
                 emptyTitle="No cash transfers"
                 emptyDescription="Cash transfers between the vault and tills will appear here for approval."
               />

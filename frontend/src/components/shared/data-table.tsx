@@ -66,6 +66,8 @@ type Props<T> = {
   filters?: React.ReactNode;
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: (s: RowSelectionState) => void;
+  /** Let cells wrap so the table fits its container instead of scrolling sideways. */
+  fit?: boolean;
 };
 
 const PAGE_SIZES = [10, 25, 50];
@@ -87,6 +89,7 @@ export function DataTable<T>({
   filters,
   rowSelection,
   onRowSelectionChange,
+  fit = false,
 }: Props<T>) {
   const [sorting, setSorting] = useState<SortingState>(initialSort);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -204,7 +207,12 @@ export function DataTable<T>({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-max text-left text-sm text-text-body">
+        <table
+          className={cn(
+            "w-full text-left text-sm text-text-body",
+            !fit && "min-w-max",
+          )}
+        >
           <thead className="bg-surface">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
@@ -233,7 +241,10 @@ export function DataTable<T>({
                           onClick={h.column.getToggleSortingHandler()}
                           className="-mx-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 uppercase hover:bg-hover hover:text-text-strong"
                         >
-                          {flexRender(h.column.columnDef.header, h.getContext())}
+                          {flexRender(
+                            h.column.columnDef.header,
+                            h.getContext(),
+                          )}
                           {sorted === "asc" ? (
                             <ArrowUp className="size-3" />
                           ) : sorted === "desc" ? (
@@ -297,7 +308,10 @@ export function DataTable<T>({
                         cell.column.columnDef.meta?.className,
                       )}
                     >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </td>
                   ))}
                 </tr>
@@ -358,4 +372,3 @@ export function DataTable<T>({
     </div>
   );
 }
-
