@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { errorText, StatusBadge } from "@/components/lab/common";
 import { BTN_FIND, FIELD } from "./field-styles";
 import { FieldLabel } from "./field-label";
+import { CustomerIdentity } from "./customer-identity";
 
 /** Looks an active account up by number; reports the match to the parent. */
 export function AccountPicker({
@@ -116,6 +117,13 @@ export function AccountPicker({
               </dd>
             </div>
           </dl>
+          <div className="mt-3">
+            <CustomerIdentity
+              sid={sid}
+              customerId={value.customer_id}
+              mandate={value.mandate}
+            />
+          </div>
         </div>
       )}
     </div>
