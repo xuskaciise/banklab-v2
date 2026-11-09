@@ -455,10 +455,43 @@ class EodCheckOut(Schema):
     items: list[dict]
 
 
+class EodTypeTotalOut(Schema):
+    type: str
+    currency: str
+    count: int
+    amount: Decimal
+
+
+class EodTellerSessionsOut(Schema):
+    closed: int
+    total: int
+
+
+class EodVaultBalanceOut(Schema):
+    currency: str
+    amount: Decimal
+
+
+class EodSummaryOut(Schema):
+    transactions_total: int
+    reversed_count: int
+    by_type: list[EodTypeTotalOut]
+    teller_sessions: EodTellerSessionsOut
+    vault_balances: list[EodVaultBalanceOut]
+
+
+class EodClosingOut(Schema):
+    date: date
+    closed_at: datetime | None
+    closed_by_name: str
+
+
 class EodStatusOut(Schema):
     business_date: date
     can_close: bool
     checks: list[EodCheckOut]
+    summary: EodSummaryOut
+    recent_closings: list[EodClosingOut]
 
 
 class EodCloseOut(Schema):

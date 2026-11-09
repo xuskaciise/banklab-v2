@@ -18,6 +18,7 @@ from apps.ledger import services as ledger
 from apps.ledger.models import JournalLine
 from apps.rbac import services as rbac
 
+from . import eod_summary as summary
 from . import services as banking
 from . import txn_core as core
 from .models import (
@@ -134,6 +135,8 @@ def _status(bank, day) -> dict:
         "business_date": day.date,
         "checks": checks,
         "can_close": all(c["ok"] for c in checks),
+        "summary": summary.day_summary(bank, day),
+        "recent_closings": summary.recent_closings(bank),
     }
 
 

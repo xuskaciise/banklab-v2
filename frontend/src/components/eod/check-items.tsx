@@ -24,11 +24,6 @@ export function CheckItems({ check, sid }: { check: EodCheck; sid: string }) {
             <StatusBadge status={s(i.status)} />
           </li>
         ))}
-        <li className="px-3 py-2">
-          <Link href={`/s/${sid}/tills`} className="text-sm font-medium text-bank-primary hover:underline">
-            Go to tills
-          </Link>
-        </li>
       </ul>
     );
 

@@ -2704,6 +2704,18 @@ export interface components {
                 [key: string]: unknown;
             }[];
         };
+        /** EodClosingOut */
+        EodClosingOut: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Closed At */
+            closed_at: string | null;
+            /** Closed By Name */
+            closed_by_name: string;
+        };
         /** EodStatusOut */
         EodStatusOut: {
             /**
@@ -2715,6 +2727,46 @@ export interface components {
             can_close: boolean;
             /** Checks */
             checks: components["schemas"]["EodCheckOut"][];
+            summary: components["schemas"]["EodSummaryOut"];
+            /** Recent Closings */
+            recent_closings: components["schemas"]["EodClosingOut"][];
+        };
+        /** EodSummaryOut */
+        EodSummaryOut: {
+            /** Transactions Total */
+            transactions_total: number;
+            /** Reversed Count */
+            reversed_count: number;
+            /** By Type */
+            by_type: components["schemas"]["EodTypeTotalOut"][];
+            teller_sessions: components["schemas"]["EodTellerSessionsOut"];
+            /** Vault Balances */
+            vault_balances: components["schemas"]["EodVaultBalanceOut"][];
+        };
+        /** EodTellerSessionsOut */
+        EodTellerSessionsOut: {
+            /** Closed */
+            closed: number;
+            /** Total */
+            total: number;
+        };
+        /** EodTypeTotalOut */
+        EodTypeTotalOut: {
+            /** Type */
+            type: string;
+            /** Currency */
+            currency: string;
+            /** Count */
+            count: number;
+            /** Amount */
+            amount: number | string;
+        };
+        /** EodVaultBalanceOut */
+        EodVaultBalanceOut: {
+            /** Currency */
+            currency: string;
+            /** Amount */
+            amount: number | string;
         };
         /** EodCloseOut */
         EodCloseOut: {

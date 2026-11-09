@@ -28,3 +28,19 @@ export function nextDate(iso: string) {
   d.setUTCDate(d.getUTCDate() + 1);
   return d.toISOString().slice(0, 10);
 }
+
+/** Label helper: "Tue, 10 Nov 2026" from an ISO date (display only). */
+export function dateLabel(iso: string) {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+export const hhmm = (ms: number | string | null) =>
+  ms
+    ? new Date(ms).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+    : "--:--";
