@@ -20,7 +20,46 @@ export function floatsValid(floats: Record<string, string>) {
   });
 }
 
-/** Right column: selected till, opening float, notice and submit. */
+/** Selected-till summary shown under the combobox. */
+export function TillSummary({ till }: { till: TillAvailability | undefined }) {
+  return (
+    <div className="rounded-lg border border-border bg-surface p-4">
+      {till ? (
+        <dl className="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <dt className="text-xs text-text-muted">Till</dt>
+            <dd className="font-mono font-semibold text-text-strong">{till.code}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-text-muted">Status</dt>
+            <dd>
+              <StatusBadge status="open" label="Free" />
+            </dd>
+          </div>
+          <div className="col-span-2">
+            <dt className="text-xs text-text-muted">Branch</dt>
+            <dd className="text-text-strong">
+              {till.branch_name}{" "}
+              <span className="text-xs text-text-muted">{till.branch_code}</span>
+            </dd>
+          </div>
+          <div className="col-span-2">
+            <dt className="text-xs text-text-muted">Location</dt>
+            <dd className={till.branch_address ? "text-text-body" : "text-text-muted"}>
+              {till.branch_address || "No address"}
+            </dd>
+          </div>
+        </dl>
+      ) : (
+        <p className="rounded-lg bg-surface p-4 text-center text-sm text-text-muted">
+          Choose a free till from the list.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** Opening float, notice and submit. */
 export function OpenTillForm({
   till,
   floats,
@@ -36,41 +75,7 @@ export function OpenTillForm({
 }) {
   const valid = floatsValid(floats);
   return (
-    <div className="space-y-4 lg:sticky lg:top-4">
-      <FormSection title="Selected till">
-        {till ? (
-          <dl className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <dt className="text-xs text-text-muted">Till</dt>
-              <dd className="font-mono font-semibold text-text-strong">{till.code}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-text-muted">Status</dt>
-              <dd>
-                <StatusBadge status="open" label="Free" />
-              </dd>
-            </div>
-            <div className="col-span-2">
-              <dt className="text-xs text-text-muted">Branch</dt>
-              <dd className="text-text-strong">
-                {till.branch_name}{" "}
-                <span className="text-xs text-text-muted">{till.branch_code}</span>
-              </dd>
-            </div>
-            <div className="col-span-2">
-              <dt className="text-xs text-text-muted">Location</dt>
-              <dd className={till.branch_address ? "text-text-body" : "text-text-muted"}>
-                {till.branch_address || "No address"}
-              </dd>
-            </div>
-          </dl>
-        ) : (
-          <p className="rounded-lg bg-surface p-4 text-center text-sm text-text-muted">
-            Choose a free till from the list.
-          </p>
-        )}
-      </FormSection>
-
+    <div className="space-y-4">
       <FormSection title="Opening Cash Float">
         {CURRENCIES.map((c) => (
           <div key={c} className="space-y-1.5">

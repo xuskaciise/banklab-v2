@@ -1,14 +1,12 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import { Lock, Search } from "lucide-react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { Check, ChevronsUpDown, Lock, Search } from "lucide-react";
 import type { TillAvailability } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
-import { Input, Select } from "@/components/ui/input";
-import { Pagination } from "@/components/shared/pagination";
+import { FieldLabel } from "@/components/transactions/field-label";
 
-const PAGE_SIZE = 25;
-const COLS = "sm:grid-cols-[6rem_minmax(0,1fr)_minmax(0,1fr)_10rem]";
+const MAX_SHOWN = 50;
 
 function Status({ t }: { t: TillAvailability }) {
   return t.available ? (
@@ -17,16 +15,19 @@ function Status({ t }: { t: TillAvailability }) {
       Free
     </span>
   ) : (
-    <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-fin-pending-bg px-2 py-0.5 text-xs font-medium text-fin-pending">
+    <span className="inline-flex max-w-40 items-center gap-1.5 rounded-full bg-fin-pending-bg px-2 py-0.5 text-xs font-medium text-fin-pending">
       <Lock className="size-3 shrink-0" aria-hidden />
       <span className="truncate">
-        in use{t.in_use_by ? ` · ${t.in_use_by}` : ""}
+        In use{t.in_use_by ? ` · ${t.in_use_by}` : ""}
       </span>
     </span>
   );
 }
 
-/** Searchable, filterable, paged till list with radio semantics. */
+const describe = (t: TillAvailability) =>
+  `${t.code} · ${t.branch_name} ${t.branch_code} · ${t.branch_address || "No address"}`;
+
+/** Searchable till dropdown (ARIA combobox + listbox). */
 export function TillSelector({
   tills,
   value,
@@ -36,191 +37,204 @@ export function TillSelector({
   value: string;
   onChange: (id: string) => void;
 }) {
+  const uid = useId();
+  const listId = `${uid}-list`;
+  const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const [branch, setBranch] = useState("");
-  const [location, setLocation] = useState("");
-  const [status, setStatus] = useState("");
-  const [page, setPage] = useState(1);
-  const refs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [freeOnly, setFreeOnly] = useState(true);
+  const [active, setActive] = useState(0);
+  const root = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const search = useRef<HTMLInputElement>(null);
+  const selected = tills.find((t) => t.id === value);
 
-  const branches = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const t of tills) m.set(t.branch_id, `${t.branch_name} (${t.branch_code})`);
-    return Array.from(m.entries()).sort((a, b) => a[1].localeCompare(b[1]));
-  }, [tills]);
-  const locations = useMemo(
-    () =>
-      Array.from(new Set(tills.map((t) => t.branch_address).filter(Boolean))).sort(),
-    [tills],
-  );
-  const filtered = useMemo(() => {
+  const matches = useMemo(() => {
     const term = q.trim().toLowerCase();
     return tills.filter(
       (t) =>
-        (!branch || t.branch_id === branch) &&
-        (!location || t.branch_address === location) &&
-        (!status || (status === "free") === t.available) &&
+        (!freeOnly || t.available) &&
         (!term ||
           `${t.code} ${t.branch_code} ${t.branch_name} ${t.branch_address}`
             .toLowerCase()
             .includes(term)),
     );
-  }, [tills, q, branch, location, status]);
-  const rows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const reset = <T,>(set: (v: T) => void) => (v: T) => {
-    set(v);
-    setPage(1);
-  };
+  }, [tills, q, freeOnly]);
+  const shown = matches.slice(0, MAX_SHOWN);
 
-  function onKey(e: React.KeyboardEvent, i: number) {
-    const step =
-      e.key === "ArrowDown" || e.key === "ArrowRight"
-        ? 1
-        : e.key === "ArrowUp" || e.key === "ArrowLeft"
-          ? -1
-          : 0;
-    if (!step) return;
-    e.preventDefault();
-    for (let j = i + step; j >= 0 && j < rows.length; j += step) {
-      if (rows[j].available) {
-        onChange(rows[j].id);
-        refs.current[rows[j].id]?.focus();
+  useEffect(() => {
+    if (!open) return;
+    search.current?.focus();
+    const away = (e: MouseEvent) => {
+      if (!root.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", away);
+    return () => document.removeEventListener("mousedown", away);
+  }, [open]);
+
+  function show() {
+    setQ("");
+    setActive(0);
+    setOpen(true);
+  }
+  function close() {
+    setOpen(false);
+    trigger.current?.focus();
+  }
+  function pick(t: TillAvailability) {
+    if (!t.available) return;
+    onChange(t.id);
+    close();
+  }
+  function move(step: 1 | -1) {
+    for (let j = active + step; j >= 0 && j < shown.length; j += step) {
+      if (shown[j].available) {
+        setActive(j);
+        document.getElementById(`${uid}-o${j}`)?.scrollIntoView({ block: "nearest" });
         return;
       }
     }
   }
-  const tabbable = rows.find((t) => t.id === value && t.available)
-    ? value
-    : rows.find((t) => t.available)?.id;
+  function onSearchKey(e: React.KeyboardEvent) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      move(1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      move(-1);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (shown[active]) pick(shown[active]);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+    } else if (e.key === "Tab") setOpen(false);
+  }
 
   return (
-    <div className="space-y-3">
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="relative sm:col-span-2 lg:col-span-4">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-muted" />
-          <Input
-            aria-label="Search tills"
-            placeholder="Search till code, branch or address…"
-            value={q}
-            onChange={(e) => reset(setQ)(e.target.value)}
-            className="h-10 pl-9"
-          />
-        </div>
-        <Select
-          aria-label="Filter by branch"
-          value={branch}
-          onChange={(e) => reset(setBranch)(e.target.value)}
-          className="h-10 w-full lg:col-span-2"
+    <div ref={root} className="relative space-y-1.5">
+      <FieldLabel htmlFor={`${uid}-trigger`} required>
+        Till
+      </FieldLabel>
+      <button
+        ref={trigger}
+        id={`${uid}-trigger`}
+        type="button"
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={listId}
+        onClick={() => (open ? setOpen(false) : show())}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown" && !open) {
+            e.preventDefault();
+            show();
+          }
+        }}
+        className="flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-border bg-card px-3.5 text-left text-sm transition-colors outline-none hover:border-text-muted focus-visible:border-bank-accent focus-visible:ring-2 focus-visible:ring-bank-accent/40"
+      >
+        <span
+          className={cn("truncate", selected ? "text-text-strong" : "text-text-muted")}
         >
-          <option value="">All branches</option>
-          {branches.map(([id, label]) => (
-            <option key={id} value={id}>
-              {label}
-            </option>
-          ))}
-        </Select>
-        <Select
-          aria-label="Filter by location"
-          value={location}
-          onChange={(e) => reset(setLocation)(e.target.value)}
-          className="h-10 w-full"
-        >
-          <option value="">All locations</option>
-          {locations.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </Select>
-        <Select
-          aria-label="Filter by status"
-          value={status}
-          onChange={(e) => reset(setStatus)(e.target.value)}
-          className="h-10 w-full"
-        >
-          <option value="">All statuses</option>
-          <option value="free">Free</option>
-          <option value="occupied">Occupied</option>
-        </Select>
-      </div>
-      <p className="text-xs text-text-muted" aria-live="polite">
-        Showing {filtered.length} of {tills.length} tills
-      </p>
+          {selected ? describe(selected) : "Search and select a till…"}
+        </span>
+        <ChevronsUpDown className="size-4 shrink-0 text-text-muted" aria-hidden />
+      </button>
 
-      {filtered.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border bg-surface px-4 py-8 text-center text-sm text-text-muted">
-          No tills match these filters.
-        </p>
-      ) : (
-        <div className="overflow-hidden rounded-lg border border-border">
-          <div
-            className={cn(
-              "hidden gap-3 border-b border-border bg-surface px-3 py-2 text-xs font-medium tracking-wide text-text-muted uppercase sm:grid",
-              COLS,
-            )}
-          >
-            <span>Till</span>
-            <span>Branch</span>
-            <span>Location</span>
-            <span>Status</span>
-          </div>
-          <div role="radiogroup" aria-label="Till" className="max-h-[28rem] divide-y divide-border overflow-y-auto">
-            {rows.map((t, i) => {
-              const on = t.id === value;
-              return (
+      {open && (
+        <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+          <div className="space-y-2 border-b border-border p-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-muted" />
+              <input
+                ref={search}
+                role="combobox"
+                aria-label="Search tills"
+                aria-expanded
+                aria-controls={listId}
+                aria-activedescendant={shown[active] ? `${uid}-o${active}` : undefined}
+                placeholder="Search code, branch or address…"
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value);
+                  setActive(0);
+                }}
+                onKeyDown={onSearchKey}
+                className="h-10 w-full rounded-md border border-border bg-card pr-3 pl-9 text-sm text-text-strong outline-none placeholder:text-text-muted focus-visible:border-bank-accent focus-visible:ring-2 focus-visible:ring-bank-accent/40"
+              />
+            </div>
+            <div
+              role="group"
+              aria-label="Status filter"
+              className="inline-flex rounded-md border border-border bg-surface p-0.5 text-xs font-medium"
+            >
+              {[
+                [true, "Free"],
+                [false, "All"],
+              ].map(([v, label]) => (
                 <button
-                  key={t.id}
-                  ref={(el) => {
-                    refs.current[t.id] = el;
-                  }}
+                  key={String(label)}
                   type="button"
-                  role="radio"
-                  aria-checked={on}
-                  disabled={!t.available}
-                  tabIndex={t.id === tabbable ? 0 : -1}
-                  onClick={() => onChange(t.id)}
-                  onKeyDown={(e) => onKey(e, i)}
+                  aria-pressed={freeOnly === v}
+                  onClick={() => {
+                    setFreeOnly(v as boolean);
+                    setActive(0);
+                    search.current?.focus();
+                  }}
                   className={cn(
-                    "grid w-full items-center gap-x-3 gap-y-1 px-3 py-2.5 text-left text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-bank-accent disabled:cursor-not-allowed",
-                    COLS,
-                    on
-                      ? "bg-bank-sky-light"
-                      : t.available
-                        ? "bg-card hover:bg-hover"
-                        : "bg-surface",
+                    "rounded px-3 py-1 outline-none focus-visible:ring-2 focus-visible:ring-bank-accent",
+                    freeOnly === v
+                      ? "bg-bank-sky-light text-bank-primary"
+                      : "text-text-muted hover:text-text-strong",
                   )}
                 >
-                  <span
-                    className={cn(
-                      "font-mono font-semibold",
-                      t.available ? "text-text-strong" : "text-text-muted",
-                    )}
-                  >
-                    {t.code}
-                  </span>
-                  <span className="min-w-0 truncate text-text-body">
-                    {t.branch_name}{" "}
-                    <span className="text-xs text-text-muted">{t.branch_code}</span>
-                  </span>
-                  <span className="min-w-0 truncate text-text-muted">
-                    {t.branch_address || "No address"}
-                  </span>
-                  <span className="min-w-0">
-                    <Status t={t} />
-                  </span>
+                  {label as string}
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
+          <ul id={listId} role="listbox" aria-label="Tills" className="max-h-72 overflow-y-auto">
+            {shown.map((t, i) => (
+              <li
+                key={t.id}
+                id={`${uid}-o${i}`}
+                role="option"
+                aria-selected={t.id === value}
+                aria-disabled={!t.available}
+                onMouseEnter={() => t.available && setActive(i)}
+                onClick={() => pick(t)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 text-sm",
+                  t.available ? "cursor-pointer" : "cursor-not-allowed bg-surface opacity-70",
+                  i === active && t.available && "bg-bank-sky-light",
+                )}
+              >
+                <Check
+                  className={cn("size-4 shrink-0 text-bank-primary", t.id !== value && "invisible")}
+                  aria-hidden
+                />
+                <span className="w-16 shrink-0 font-mono font-semibold text-text-strong">
+                  {t.code}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-text-body">
+                  {t.branch_name}{" "}
+                  <span className="text-xs text-text-muted">{t.branch_code}</span>
+                  <span className="text-text-muted"> · {t.branch_address || "No address"}</span>
+                </span>
+                <Status t={t} />
+              </li>
+            ))}
+            {shown.length === 0 && (
+              <li className="px-3 py-6 text-center text-sm text-text-muted" role="presentation">
+                No tills match
+              </li>
+            )}
+          </ul>
+          {matches.length > MAX_SHOWN && (
+            <p className="border-t border-border bg-surface px-3 py-1.5 text-xs text-text-muted">
+              Refine your search to see more ({matches.length} matches)
+            </p>
+          )}
         </div>
-      )}
-      {filtered.length > PAGE_SIZE && (
-        <Pagination
-          page={page}
-          pageSize={PAGE_SIZE}
-          total={filtered.length}
-          onPageChange={setPage}
-        />
       )}
     </div>
   );

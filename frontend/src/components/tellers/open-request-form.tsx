@@ -7,7 +7,7 @@ import { useTellerAction, useTillAvailability } from "@/lib/tellers";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FormSection } from "@/components/shared/form-layout";
 import { ErrorMsg, Loading } from "@/components/lab/common";
-import { OpenTillForm } from "./open-till-form";
+import { OpenTillForm, TillSummary } from "./open-till-form";
 import { CURRENCIES } from "./session-bits";
 import { TillSelector } from "./till-selector";
 
@@ -55,16 +55,10 @@ export function OpenRequestForm({ sid }: { sid: string }) {
   }
 
   return (
-    <form
-      onSubmit={submit}
-      noValidate
-      className="grid gap-6 lg:grid-cols-[minmax(0,13fr)_minmax(0,7fr)] lg:items-start"
-    >
-      <FormSection
-        title="Choose your till"
-        description="Pick a free till. Occupied tills are shown but cannot be selected."
-      >
+    <form onSubmit={submit} noValidate className="mx-auto w-full max-w-3xl space-y-6">
+      <FormSection title="Choose your till">
         <TillSelector tills={tills.data} value={tillId} onChange={setTillId} />
+        <TillSummary till={selected} />
       </FormSection>
       <OpenTillForm
         till={selected}
