@@ -2,16 +2,14 @@
 
 import { useState } from "react";
 import { Loader2, Search } from "lucide-react";
-import { formatAccountNo } from "@/lib/accounts";
-import { formatMoney } from "@/lib/banking";
 import { lookupAccount } from "@/lib/transactions";
 import type { AccountOut } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { errorText, StatusBadge } from "@/components/lab/common";
+import { errorText } from "@/components/lab/common";
 import { BTN_FIND, FIELD } from "./field-styles";
 import { FieldLabel } from "./field-label";
-import { CustomerIdentity } from "./customer-identity";
+import { CustomerProfile } from "./customer-profile";
 
 /** Looks an active account up by number; reports the match to the parent. */
 export function AccountPicker({
@@ -92,40 +90,7 @@ export function AccountPicker({
           </p>
         )}
       </div>
-      {value && (
-        <div className="rounded-lg border border-border bg-surface p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate font-semibold text-text-strong">
-                {value.customer_name}
-              </p>
-              <p className="font-mono text-xs text-text-muted">
-                {formatAccountNo(value.account_no)}
-              </p>
-            </div>
-            <StatusBadge status={value.status} />
-          </div>
-          <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <dt className="text-xs text-text-muted">Product</dt>
-              <dd className="text-text-body">{value.product_name}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-text-muted">Current balance</dt>
-              <dd className="font-semibold text-text-strong tabular-nums">
-                {formatMoney(value.ledger_balance, value.currency)}
-              </dd>
-            </div>
-          </dl>
-          <div className="mt-3">
-            <CustomerIdentity
-              sid={sid}
-              customerId={value.customer_id}
-              mandate={value.mandate}
-            />
-          </div>
-        </div>
-      )}
+      {value && <CustomerProfile sid={sid} account={value} />}
     </div>
   );
 }
