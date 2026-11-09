@@ -1369,7 +1369,7 @@ export interface paths {
         put?: never;
         /**
          * Party File Upload
-         * @description kind = `photo` or `signature` (JPEG/PNG, max 2 MB).
+         * @description kind = `photo` or `signature` (JPEG/PNG, max 5 MB).
          */
         post: operations["customers_party_file_upload"];
         delete?: never;
@@ -1390,7 +1390,7 @@ export interface paths {
         put?: never;
         /**
          * Document File Upload
-         * @description ID scan (JPEG/PNG/PDF, max 2 MB).
+         * @description ID scan (JPEG/PNG/PDF, max 5 MB).
          */
         post: operations["customers_document_file_upload"];
         delete?: never;

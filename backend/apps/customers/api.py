@@ -361,7 +361,7 @@ def party_file_upload(
     kind: str,
     file: File[UploadedFile],
 ):
-    """kind = `photo` or `signature` (JPEG/PNG, max 2 MB)."""
+    """kind = `photo` or `signature` (JPEG/PNG, max 5 MB)."""
     return services.upload_party_file(request.session_member, customer_id, party_id, kind, file)
 
 
@@ -389,7 +389,7 @@ def document_file_upload(
     doc_id: UUID,
     file: File[UploadedFile],
 ):
-    """ID scan (JPEG/PNG/PDF, max 2 MB)."""
+    """ID scan (JPEG/PNG/PDF, max 5 MB)."""
     return services.upload_document_file(
         request.session_member, customer_id, party_id, doc_id, file
     )

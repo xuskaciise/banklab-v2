@@ -29,7 +29,7 @@ import {
   EditPersonDialog,
 } from "@/components/customers/customer-dialogs";
 
-const MAX_BYTES = 2 * 1024 * 1024;
+const MAX_BYTES = 5 * 1024 * 1024;
 
 function PickFile({
   label,
@@ -59,7 +59,7 @@ function PickFile({
           e.target.value = "";
           if (!f) return;
           if (maxBytes && f.size > maxBytes) {
-            toast.error("File is too large (maximum 2 MB)");
+            toast.error("File is too large (maximum 5 MB)");
             return;
           }
           onFile(f);

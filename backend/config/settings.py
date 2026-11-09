@@ -123,4 +123,4 @@ CACHES = {
 # Uploaded customer files (photos, signatures, ID documents). Never served statically:
 # they are only streamed by the customers API after a bank/visibility check.
 MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", str(BASE_DIR / "media")))
-MAX_UPLOAD_BYTES = 2 * 1024 * 1024
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024

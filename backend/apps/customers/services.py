@@ -691,7 +691,7 @@ def update_next_of_kin(member: SessionMember, customer_id, party_id, kin_id, **f
 
 def _sniff(upload, *, allow_pdf: bool) -> str:
     if upload.size > settings.MAX_UPLOAD_BYTES:
-        raise LedgerError("file_too_large", "File is larger than 2 MB", status=413)
+        raise LedgerError("file_too_large", "File is larger than 5 MB", status=413)
     head = upload.read(16)
     upload.seek(0)
     for signature, ext in IMAGE_SIGNATURES.items():
@@ -704,7 +704,7 @@ def _sniff(upload, *, allow_pdf: bool) -> str:
 
 
 def _upload_party_file(member, customer_id, party_id, kind, upload, saved) -> Customer:
-    """Store a party's photo or signature (JPEG/PNG, max 2 MB). Old files stay on disk."""
+    """Store a party's photo or signature (JPEG/PNG, max 5 MB). Old files stay on disk."""
     if kind not in ("photo", "signature"):
         raise _not_found("File")
     with transaction.atomic():
@@ -774,7 +774,7 @@ def _remove_saved(saved: list[str]) -> None:
 
 
 def upload_party_file(member: SessionMember, customer_id, party_id, kind, upload) -> Customer:
-    """Store a party's photo or signature (JPEG/PNG, max 2 MB). A rollback removes the new
+    """Store a party's photo or signature (JPEG/PNG, max 5 MB). A rollback removes the new
     file; replaced files stay on disk."""
     saved: list[str] = []
     try:
