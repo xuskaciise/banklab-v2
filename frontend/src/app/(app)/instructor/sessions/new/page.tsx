@@ -13,8 +13,7 @@ import type { TemplateOut } from "@/lib/api/types";
 import { Loader2, Plus } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { KIND_OPTS, STRUCTURE_OPTS, VIS_OPTS } from "@/components/lab/session-options";
-import { RolesField } from "@/components/lab/roles-field";
-import { Checkbox } from "@/components/shared/checkbox";
+import { RolesField, SwitchRow } from "@/components/lab/roles-field";
 import {
   FormActions,
   FormGrid,
@@ -214,14 +213,14 @@ function Wizard({ classId }: { classId: string }) {
         </FormSection>
         <FormSection title="Roles and Learning">
           <RolesField roles={roles} onToggle={toggleRole} error={errors.roles} />
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox
-              checked={ePanel}
-              disabled={exam}
-              onChange={(e) => setPanel(e.target.checked)}
-            />
-            Show the Dr/Cr learning panel after each posting
-          </label>
+          <SwitchRow
+            title="Dr/Cr learning panel"
+            description="After each posting, show students the debit and credit lines it created."
+            checked={ePanel}
+            disabled={exam}
+            note="Turned off for exams."
+            onChange={setPanel}
+          />
         </FormSection>
         <ErrorMsg error={create.error} />
         <FormActions>
