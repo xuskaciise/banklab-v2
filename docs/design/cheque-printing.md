@@ -31,10 +31,47 @@ audited and bank-scoped; permission `cheque.issue` (CSO).
 
 ## Training chequebook PDF (option A — chosen first)
 - A4, 3 leaves per page, plain paper; one leaf per cheque number in the series.
-- Each leaf: lab bank name (the session's bank, never a real bank's name or
-  logo), branch, account no, account name, cheque no, blank date / payee /
-  amount in words / amount in figures / signature, and a fake "MICR-style"
-  line `⑆cheque no⑆ branch code ⑈ account no⑈` in a normal font.
+- Leaf layout (landscape strip ~ 20 × 9 cm, light-blue background with a
+  pale line pattern; layout follows the classic Indian bank cheque format the
+  user supplied as reference — **layout only**, never another bank's name,
+  logo or codes):
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│ [logo] {Lab bank name}     {Branch name}           Valid for 3 months    │
+│                            {Branch address}        ┌─┬─┬─┬─┬─┬─┬─┬─┐   │
+│                            Branch code {code}      │D│D│M│M│Y│Y│Y│Y│   │
+│                                                    └─┴─┴─┴─┴─┴─┴─┴─┘   │
+│ PAY ____________________________________________________ OR BEARER     │
+│ AMOUNT (in words) ________________________________   ┌──────────────┐  │
+│ __________________________________________________   │ {CCY}        │  │
+│                                                      └──────────────┘  │
+│ ┌A/c No──────────────────┐                                              │
+│ │ {account number}       │  VALID FOR {CCY} {limit} & UNDER             │
+│ └────────────────────────┘                                              │
+│ {Account name}                                    ____________________ │
+│ Prefix {series prefix}                            Authorised signatory │
+│ {Product} CHEQUE — payable at all branches of {Lab bank}  Please sign above │
+│                                                                          │
+│      ⑈{cheque no}⑈   {branch code}⑆   {account no}⑈   {txn code}        │
+│      (cheque no)      (bank/branch)    (account)       (type)            │
+└──────────────────────────────────────────────────────────────────────────┘
+          diagonal watermark: TRAINING – NOT NEGOTIABLE
+```
+
+- Fields (all from the system; only the layout is fixed):
+  - Header: lab bank name + optional logo (session's bank, from setup),
+    branch name, address, branch code.
+  - Date boxes `D D M M Y Y Y Y` (8 boxes, blank — filled by the customer).
+  - "PAY ____ OR BEARER", "AMOUNT (in words)" two lines, amount-in-figures
+    box prefixed with the account currency (USD / SOS).
+  - A/c No box with the account number; account name under it.
+  - "VALID FOR {CCY} {limit} & UNDER" — optional, from product settings.
+  - Signature line "Please sign above" (blank).
+  - Bottom code line (normal font, MICR-style look):
+    `⑈cheque no⑈  branch code⑆  account no⑈  txn code` — e.g. txn code
+    `10` savings, `11` current (from product).
+  - Watermark "TRAINING – NOT NEGOTIABLE" + small "BankLab" footer.
 - Diagonal watermark on every leaf: **"TRAINING – NOT NEGOTIABLE"** plus
   "BankLab" footer, so a print can never pass as a real cheque.
 - Stub (counterfoil) on the left of each leaf for the customer's record.
