@@ -393,11 +393,14 @@ export function MembersTab({
   const banks = useBanks(session.id);
   const move = useMoveMember(session.id);
   const role = useAssignRole(session.id);
+  const visibility = useMemberVisibility(session.id);
+  const exam = session.kind === "exam";
   const [bankFilter, setBankFilter] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [selection, setSelection] = useState<RowSelectionState>({});
   const [bulkBank, setBulkBank] = useState("");
   const [bulkRole, setBulkRole] = useState("");
+  const [bulkVis, setBulkVis] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
 
   const all = members.data;
@@ -421,6 +424,14 @@ export function MembersTab({
     const jobs = selectedIds.flatMap((id) => [
       ...(bulkBank ? [move.mutateAsync({ memberId: id, bank_id: bulkBank })] : []),
       ...(bulkRole ? [role.mutateAsync({ memberId: id, role: bulkRole })] : []),
+      ...(bulkVis && !exam
+        ? [
+            visibility.mutateAsync({
+              memberId: id,
+              visibility: bulkVis === "default" ? null : bulkVis,
+            }),
+          ]
+        : []),
     ]);
     const res = await Promise.allSettled(jobs);
     const failed = res.filter((r) => r.status === "rejected").length;
@@ -430,6 +441,7 @@ export function MembersTab({
     setSelection({});
     setBulkBank("");
     setBulkRole("");
+    setBulkVis("");
   }
 
   const columns: ColumnDef<MemberOut>[] = [
@@ -597,9 +609,22 @@ export function MembersTab({
               </option>
             ))}
           </Select>
+          {!exam && (
+            <Select
+              aria-label="Bulk visibility"
+              value={bulkVis}
+              onChange={(e) => setBulkVis(e.target.value)}
+              className="h-8 w-48"
+            >
+              <option value="">Set visibility…</option>
+              <option value="all">Whole bank</option>
+              <option value="own">Own work only</option>
+              <option value="default">Session default</option>
+            </Select>
+          )}
           <Button
             size="sm"
-            disabled={bulkBusy || (!bulkBank && !bulkRole)}
+            disabled={bulkBusy || (!bulkBank && !bulkRole && !bulkVis)}
             onClick={applyBulk}
           >
             {bulkBusy ? "Applying…" : "Apply"}
