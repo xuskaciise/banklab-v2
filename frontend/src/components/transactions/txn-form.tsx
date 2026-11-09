@@ -20,7 +20,7 @@ export type { Kind };
 function chequeError(v: string): string | undefined {
   const c = v.trim();
   if (!c) return undefined;
-  if (!/^d+$/.test(c) || !(Number(c) > 0)) return "Cheque number must be a whole number";
+  if (!/^\d+$/.test(c) || !(Number(c) > 0)) return "Cheque number must be a whole number";
   return undefined;
 }
 
