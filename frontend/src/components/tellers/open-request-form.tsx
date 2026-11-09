@@ -30,7 +30,7 @@ export function OpenRequestForm({ sid }: { sid: string }) {
       <EmptyState
         icon={Landmark}
         title="No tills"
-        description="Your manager has not created a till for this bank yet."
+        description="Your instructor has not created a till for this bank yet (Branches tab)."
       />
     );
 
