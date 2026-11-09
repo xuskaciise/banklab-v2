@@ -47,4 +47,4 @@ Domain details for every item live in [CONCEPT.md](CONCEPT.md).
 - **Phase 3:** Loans; Murabaha, Musharakah, Qard Hasan
 - **Phase 4:** FX (buy/sell, cross-currency), fees, interest/profit engine, Fixed Deposit, Mudarabah Savings/Term
 - **Phase 5:** customer internet/mobile banking portal, mobile money simulation
-- **Backlog:** KYC approval, risk rating/AML, Dormant/Frozen, Wadiah, bounced/cancelled cheques
+- **Backlog:** KYC approval, risk rating/AML, Dormant/Frozen, Wadiah, bounced/cancelled cheques, cheque printing & handover (training chequebook PDF, deliver & activate — `docs/design/cheque-printing.md`)
