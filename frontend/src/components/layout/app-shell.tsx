@@ -78,6 +78,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     });
   }
 
+  // Full-bleed one-screen pages manage their own padding and height.
+  const wide = pathname.endsWith("/teller/transactions") && pathname.startsWith("/s/");
+
   const studentSession = isStudent(user)
     ? pathname.match(/^\/s\/([^/]+)/)?.[1]
     : undefined;
@@ -162,7 +165,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </DropdownMenu>
           )}
         </header>
-        <main className="mx-auto w-full max-w-7xl min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+        <main
+          className={cn(
+            "min-w-0 flex-1",
+            wide
+              ? "w-full"
+              : "mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8",
+          )}
+        >
           {children}
         </main>
       </div>

@@ -35,18 +35,25 @@ export function IdentityImage({
   customerId,
   party,
   kind,
+  compact,
 }: {
   sid: string;
   customerId: string;
   party: PartyLink;
   kind: "photo" | "signature";
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const { has, img } = useIdentityImage(sid, customerId, party, kind);
   const title = kind === "photo" ? "Photo" : "Signature";
   const alt = `${title} of ${party.full_name}`;
-  const box =
-    kind === "photo" ? "block h-48 w-36 sm:h-52 sm:w-40" : "block h-48 w-full sm:h-52";
+  const box = compact
+    ? kind === "photo"
+      ? "block h-20 w-16"
+      : "block h-20 w-full"
+    : kind === "photo"
+      ? "block h-48 w-36 sm:h-52 sm:w-40"
+      : "block h-48 w-full sm:h-52";
   const fit = kind === "photo" ? "object-cover object-top" : "object-contain p-3";
   return (
     <figure className="min-w-0 space-y-1.5">
@@ -78,7 +85,9 @@ export function IdentityImage({
               : "Loading…"}
         </div>
       )}
-      <figcaption className="text-sm text-text-muted">{title}</figcaption>
+      <figcaption className={compact ? "text-xs text-text-muted" : "text-sm text-text-muted"}>
+        {title}
+      </figcaption>
       {img.data && (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent>
@@ -106,17 +115,19 @@ export function IdentityVerification({
   customerId,
   parties,
   mandate,
+  compact,
 }: {
   sid: string;
   customerId: string;
   parties: PartyLink[];
   mandate?: string;
+  compact?: boolean;
 }) {
   const signers = parties.filter((p) => p.can_sign);
   const shown = signers.length ? signers : parties;
   if (!shown.length) return null;
   return (
-    <section className="space-y-3 border-t border-border pt-4">
+    <section className={compact ? "space-y-2" : "space-y-3 border-t border-border pt-4"}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h4 className="text-base font-semibold text-text-strong">
           Identity Verification
@@ -132,13 +143,20 @@ export function IdentityVerification({
           {shown.length > 1 && (
             <p className="text-base font-medium text-text-strong">{p.full_name}</p>
           )}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[auto_minmax(0,1fr)]">
-            <IdentityImage sid={sid} customerId={customerId} party={p} kind="photo" />
+          <div
+            className={
+              compact
+                ? "grid grid-cols-[auto_minmax(0,1fr)] gap-3"
+                : "grid grid-cols-1 gap-4 sm:grid-cols-[auto_minmax(0,1fr)]"
+            }
+          >
+            <IdentityImage sid={sid} customerId={customerId} party={p} kind="photo" compact={compact} />
             <IdentityImage
               sid={sid}
               customerId={customerId}
               party={p}
               kind="signature"
+              compact={compact}
             />
           </div>
         </div>

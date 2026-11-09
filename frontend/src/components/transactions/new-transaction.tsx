@@ -7,7 +7,7 @@ import { useMyTellerSession } from "@/lib/tellers";
 import type { TransactionOut } from "@/lib/api/types";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import { PageHeader, QueryState, ReadOnlyBanner } from "@/components/lab/common";
+import { QueryState, ReadOnlyBanner } from "@/components/lab/common";
 import { TxnForm } from "./txn-form";
 import { TypeSelector, type Kind } from "./type-selector";
 import { TxnResult } from "./txn-result";
@@ -44,8 +44,7 @@ export function NewTransaction({ sid }: { sid: string }) {
     body = <TxnResult sid={sid} txn={result} onNew={() => setResult(null)} />;
   } else {
     body = (
-      <div className="space-y-5">
-        <TypeSelector kinds={kinds} value={kind} onChange={setTab} />
+      <>
         {needsTill && till.isPending ? (
           <p className="text-sm text-text-muted">Checking your till…</p>
         ) : needsTill && till.data?.status !== "open" ? (
@@ -69,21 +68,30 @@ export function NewTransaction({ sid }: { sid: string }) {
             />
           )
         )}
-      </div>
+      </>
     );
   }
 
+  // lg+: exactly viewport height minus the 56px (h-14) topbar; columns scroll inside.
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6">
-      <PageHeader
-        title="New Transaction"
-        subtitle="Process customer financial transactions securely."
-        className="mb-0"
-      />
-      <QueryState query={me}>
-        {readOnly && <ReadOnlyBanner />}
-        {body}
-      </QueryState>
+    <div className="flex min-h-0 flex-col gap-3 p-4 lg:h-[calc(100dvh-3.5rem)] lg:overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0">
+          <h1 className="text-lg font-semibold tracking-tight text-text-strong sm:text-xl">
+            New Transaction
+          </h1>
+          <p className="text-xs text-text-muted">
+            Process customer financial transactions securely.
+          </p>
+        </div>
+        {kind && !result && <TypeSelector kinds={kinds} value={kind} onChange={setTab} />}
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-3 lg:overflow-y-auto">
+        <QueryState query={me}>
+          {readOnly && <ReadOnlyBanner />}
+          {body}
+        </QueryState>
+      </div>
     </div>
   );
 }
