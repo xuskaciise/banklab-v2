@@ -334,7 +334,7 @@ export function DataTable<T>({
                 aria-label="Rows per page"
                 value={size}
                 onChange={(e) => table.setPageSize(Number(e.target.value))}
-                className="h-7 w-16 py-0 text-xs"
+                className="h-8 w-[5.5rem] py-0 pr-8 pl-2 text-xs"
               >
                 {PAGE_SIZES.map((n) => (
                   <option key={n} value={n}>

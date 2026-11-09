@@ -82,6 +82,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const wide =
     pathname.startsWith("/s/") &&
     (pathname.endsWith("/teller/transactions") ||
+      pathname.endsWith("/vault") ||
       pathname.split("/").filter(Boolean).length === 2);
 
   const studentSession = isStudent(user)
