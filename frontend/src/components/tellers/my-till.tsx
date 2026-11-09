@@ -18,7 +18,6 @@ import {
 } from "@/components/lab/common";
 import { CloseCountForm } from "./close-count-form";
 import { OpenRequestForm } from "./open-request-form";
-import { TillStats } from "./till-stats";
 import { Balances, CountSummary, SessionStatus } from "./session-bits";
 
 function Note({ title, text }: { title: string; text: string }) {
@@ -172,7 +171,6 @@ export function MyTill({ sid }: { sid: string }) {
       />
       <QueryState query={me}>
         {readOnly && <ReadOnlyBanner />}
-        {allowed && <TillStats sid={sid} />}
         {!allowed ? (
           <EmptyState title="No access" description="Your role does not use a till." />
         ) : mine.isPending ? (
