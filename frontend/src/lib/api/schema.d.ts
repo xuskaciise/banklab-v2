@@ -2362,6 +2362,10 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+            /** From Label */
+            from_label: string;
+            /** To Label */
+            to_label: string;
         };
         /** TransferIn */
         TransferIn: {

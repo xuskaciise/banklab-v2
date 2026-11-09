@@ -36,6 +36,7 @@ from .models import (
     TellerSessionStatus,
     Till,
     TransferStatus,
+    Vault,
 )
 
 PERM_REQUEST = {
@@ -204,6 +205,24 @@ def vault_overview(bank: Bank) -> dict:
             }
         )
     return {"branches": branches, "reconciliation": ledger.cash_reconciliation(bank)}
+
+
+def holder_label(holder_type: str, holder_id) -> str:
+    """Readable name of a cash holder, e.g. "Vault · Main Branch" or "Till T001 · Amina"."""
+    if holder_type == "vault":
+        v = Vault.objects.select_related("branch").filter(pk=holder_id).first()
+        return f"Vault · {v.branch.name}" if v else "Vault"
+    if holder_type == "teller_session":
+        ts = (
+            TellerSession.objects.select_related("till", "teller_member__user")
+            .filter(pk=holder_id)
+            .first()
+        )
+        if ts is None:
+            return "Teller till"
+        user = ts.teller_member.user
+        return f"Till {ts.till.code} · {user.full_name or user.username}"
+    return holder_type.replace("_", " ").capitalize()
 
 
 def list_transfers(bank: Bank):

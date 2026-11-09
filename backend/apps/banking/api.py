@@ -125,6 +125,16 @@ class TransferOut(Schema):
     journal_entry_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
+    from_label: str
+    to_label: str
+
+    @staticmethod
+    def resolve_from_label(obj):
+        return services.holder_label(obj.from_type, obj.from_id)
+
+    @staticmethod
+    def resolve_to_label(obj):
+        return services.holder_label(obj.to_type, obj.to_id)
 
     @staticmethod
     def _name(member):

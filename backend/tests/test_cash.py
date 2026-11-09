@@ -595,6 +595,7 @@ class TestCashApi:
         assert r.json()["journal_entry_id"]
         listing = api(env.user("vault_custodian")).get(self.url(env, "cash-transfers")).json()
         assert [x["id"] for x in listing] == [tid]
+        assert listing[0]["from_label"].startswith("Vault · ") and listing[0]["to_label"].startswith("Till ")
         v = api(env.user("vault_custodian")).get(self.url(env, "vault")).json()
         usd = next(p for p in v["branches"][0]["positions"] if p["currency"] == "USD")
         assert D(usd["balance"]) == CAP_USD - D("75.50")

@@ -4,7 +4,14 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
-import { Landmark } from "lucide-react";
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Check,
+  Clock,
+  Landmark,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import { formatDateTime, useSessionMe } from "@/lib/lab";
 import {
   formatMoney,
@@ -13,7 +20,6 @@ import {
   useVault,
 } from "@/lib/banking";
 import type { CashTransferOut, VaultOut } from "@/lib/api/types";
-import { useTellerSessions } from "@/lib/tellers";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -144,6 +150,41 @@ function Positions({ vault }: { vault: VaultOut }) {
   );
 }
 
+/** Dual-control trail: custodian then manager, with who approved. */
+function ApprovalTrail({ t }: { t: CashTransferOut }) {
+  if (t.status === "rejected")
+    return t.reason ? (
+      <p className="text-xs text-fin-danger">Rejected: {t.reason}</p>
+    ) : null;
+  const steps = [
+    { label: "Custodian", by: t.approved_by_1_name },
+    { label: "Manager", by: t.approved_by_2_name },
+  ];
+  return (
+    <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+      {steps.map((st) => (
+        <li
+          key={st.label}
+          className={cn(
+            "flex items-center gap-1",
+            st.by ? "text-fin-success-dark" : "text-text-muted",
+          )}
+        >
+          {st.by ? (
+            <Check className="size-3" strokeWidth={3} aria-hidden />
+          ) : (
+            <Clock className="size-3" aria-hidden />
+          )}
+          <span>
+            {st.label}
+            {st.by && <span className="text-text-muted"> · {st.by}</span>}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function VaultPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const me = useSessionMe(sessionId);
@@ -194,46 +235,45 @@ export default function VaultPage() {
     );
   }
 
-  const tellerSessions = useTellerSessions(
-    sessionId,
-    perms.has("till.open.approve") || perms.has("till.close.approve"),
-  );
-  const branchByVault = new Map(
-    vault.data?.branches.map((b) => [b.vault_id, b.branch_name]) ?? [],
-  );
-  const tillBySession = new Map(
-    (tellerSessions.data ?? []).map((ts) => [
-      ts.id,
-      `Till ${ts.till_code}${ts.teller_name ? ` · ${ts.teller_name}` : ""}`,
-    ]),
-  );
-  const holder = (type: string, id: string) =>
-    type === "vault"
-      ? `Vault${branchByVault.get(id) ? ` (${branchByVault.get(id)})` : ""}`
-      : type === "teller_session"
-        ? (tillBySession.get(id) ?? "Teller till")
-        : type.replace(/_/g, " ");
-
   const columns: ColumnDef<CashTransferOut>[] = [
     {
       accessorKey: "created_at",
       header: "Transfer",
       cell: ({ row: { original: t } }) => (
-        <div className="min-w-0">
-          <p className="font-medium text-text-strong">
-            {holder(t.from_type, t.from_id)} → {holder(t.to_type, t.to_id)}
-          </p>
-          <p className="text-xs text-text-muted tabular-nums">
-            {formatDateTime(t.created_at)} · by {t.requested_by_name}
-          </p>
+        <div className="flex min-w-0 items-start gap-3">
+          <span
+            aria-hidden
+            className={cn(
+              "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg",
+              t.from_type === "vault"
+                ? "bg-bank-sky-light text-bank-primary"
+                : "bg-hover text-text-body",
+            )}
+          >
+            {t.from_type === "vault" ? (
+              <ArrowUpFromLine className="size-4" />
+            ) : (
+              <ArrowDownToLine className="size-4" />
+            )}
+          </span>
+          <div className="min-w-0">
+            <p className="font-medium text-text-strong">
+              {t.from_label} <span className="text-text-muted">→</span>{" "}
+              {t.to_label}
+            </p>
+            <p className="text-xs text-text-muted tabular-nums">
+              {formatDateTime(t.created_at)} · requested by{" "}
+              {t.requested_by_name}
+            </p>
+          </div>
         </div>
       ),
     },
     {
       accessorKey: "amount",
-      header: () => <span className="block text-right">Amount</span>,
+      header: "Amount",
       cell: ({ row: { original: t } }) => (
-        <span className="block text-right font-semibold whitespace-nowrap text-text-strong tabular-nums">
+        <span className="block min-w-32 font-semibold whitespace-nowrap text-text-strong tabular-nums">
           {formatMoney(t.amount, t.currency)}
         </span>
       ),
@@ -242,20 +282,12 @@ export default function VaultPage() {
       accessorKey: "status",
       header: "Status",
       cell: ({ row: { original: t } }) => (
-        <div className="space-y-1">
+        <div className="min-w-56 space-y-1.5">
           <StatusBadge
             status={t.status === "custodian_approved" ? "pending" : t.status}
             label={STATUS_LABEL[t.status] ?? t.status}
           />
-          {(t.approved_by_1_name ||
-            t.approved_by_2_name ||
-            (t.status === "rejected" && t.reason)) && (
-            <p className="text-xs text-text-muted">
-              {t.approved_by_1_name && <>1st: {t.approved_by_1_name}</>}
-              {t.approved_by_2_name && <> · 2nd: {t.approved_by_2_name}</>}
-              {t.status === "rejected" && t.reason && <> · {t.reason}</>}
-            </p>
-          )}
+          <ApprovalTrail t={t} />
         </div>
       ),
     },
