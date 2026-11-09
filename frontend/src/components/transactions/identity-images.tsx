@@ -45,9 +45,10 @@ export function IdentityImage({
   const { has, img } = useIdentityImage(sid, customerId, party, kind);
   const title = kind === "photo" ? "Photo" : "Signature";
   const alt = `${title} of ${party.full_name}`;
-  const box = kind === "photo" ? "h-32 w-24" : "h-20 w-44 sm:w-52";
+  const box = "block h-44 w-full sm:h-48";
+  const fit = kind === "photo" ? "object-cover" : "object-contain p-2";
   return (
-    <figure className="space-y-1.5">
+    <figure className="min-w-0 space-y-1.5">
       {img.data ? (
         <button
           type="button"
@@ -59,7 +60,7 @@ export function IdentityImage({
           )}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={img.data} alt={alt} className="size-full object-contain" />
+          <img src={img.data} alt={alt} className={cn("size-full", fit)} />
         </button>
       ) : (
         <div
@@ -130,7 +131,7 @@ export function IdentityVerification({
           {shown.length > 1 && (
             <p className="text-sm font-medium text-text-strong">{p.full_name}</p>
           )}
-          <div className="flex flex-wrap items-end gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <IdentityImage sid={sid} customerId={customerId} party={p} kind="photo" />
             <IdentityImage
               sid={sid}
