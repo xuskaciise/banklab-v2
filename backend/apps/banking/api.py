@@ -266,6 +266,8 @@ class TillAvailabilityOut(Schema):
     code: str
     branch_id: UUID
     branch_code: str
+    branch_name: str
+    branch_address: str = ""
     vault_id: UUID
     available: bool
     in_use_by: str | None = None

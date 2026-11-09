@@ -261,6 +261,8 @@ def list_tills_availability(member: SessionMember) -> list[dict]:
                 "code": till.code,
                 "branch_id": till.branch_id,
                 "branch_code": till.branch.code,
+                "branch_name": till.branch.name,
+                "branch_address": till.branch.address,
                 "vault_id": till.branch.vault.pk,
                 "available": ts is None,
                 "in_use_by": _name(ts.teller_member) if ts else None,

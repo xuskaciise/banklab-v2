@@ -2406,6 +2406,13 @@ export interface components {
             branch_id: string;
             /** Branch Code */
             branch_code: string;
+            /** Branch Name */
+            branch_name: string;
+            /**
+             * Branch Address
+             * @default
+             */
+            branch_address: string;
             /**
              * Vault Id
              * Format: uuid

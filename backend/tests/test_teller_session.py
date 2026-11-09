@@ -493,6 +493,7 @@ class TestIsolationAndApi:
         teller, mgr = api(env.user("teller")), api(env.user("manager"))
         tills = teller.get(f"/api/s/{sid}/tills").json()
         assert [(t["code"], t["available"]) for t in tills] == [("T1", True)]
+        assert tills[0]["branch_name"] and "branch_address" in tills[0]
         assert teller.get(f"{base}/me").json() is None
         r = j(
             teller,
