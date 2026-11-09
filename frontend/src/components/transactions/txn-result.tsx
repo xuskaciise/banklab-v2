@@ -42,6 +42,7 @@ export function ReceiptButton({ sid, id }: { sid: string; id: string }) {
 const AMOUNT_LABEL: Record<string, string> = {
   cash_deposit: "Amount deposited",
   cash_withdrawal: "Amount withdrawn",
+  cheque_withdrawal: "Amount withdrawn",
   transfer: "Amount transferred",
 };
 
@@ -148,6 +149,11 @@ export function TxnResult({
             </>
           ) : (
             <DetailRow label="Account">{acct(txn.account_no, txn.customer_name)}</DetailRow>
+          )}
+          {txn.cheque_no != null && (
+            <DetailRow label="Cheque No">
+              <span className="font-mono">{txn.cheque_no}</span>
+            </DetailRow>
           )}
           <DetailRow label="Date & time">{formatDateTime(txn.created_at)}</DetailRow>
           <DetailRow label="Teller">{txn.created_by_name}</DetailRow>

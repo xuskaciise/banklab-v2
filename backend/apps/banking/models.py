@@ -304,7 +304,7 @@ class TxnType(models.TextChoices):
     CASH_DEPOSIT = "cash_deposit", "Cash deposit"
     CASH_WITHDRAWAL = "cash_withdrawal", "Cash withdrawal"
     TRANSFER = "transfer", "Transfer"
-    CHEQUE_WITHDRAWAL = "cheque_withdrawal", "Cheque withdrawal"  # posted from 1.10
+    CHEQUE_WITHDRAWAL = "cheque_withdrawal", "Cheque withdrawal"
     REVERSAL = "reversal", "Reversal"
 
 
@@ -347,6 +347,9 @@ class Transaction(NoDeleteModel):
     reversal_of = models.ForeignKey(
         "self", null=True, blank=True, on_delete=models.PROTECT, related_name="reversals"
     )
+    cheque = models.ForeignKey(
+        "Cheque", null=True, blank=True, on_delete=models.PROTECT, related_name="withdrawals"
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -357,6 +360,12 @@ class Transaction(NoDeleteModel):
                 fields=["reversal_of"],
                 condition=models.Q(reversal_of__isnull=False),
                 name="uniq_txn_reversal_of",
+            ),
+            # a cheque backs at most one live (pending or posted) withdrawal: paid once only
+            models.UniqueConstraint(
+                fields=["cheque"],
+                condition=models.Q(cheque__isnull=False, status__in=["pending_approval", "posted"]),
+                name="uniq_txn_live_cheque",
             ),
         ]
         indexes = [models.Index(fields=["bank", "business_date"], name="txn_bank_date_idx")]
@@ -424,3 +433,56 @@ class Approval(NoDeleteModel):
             ),
         ]
         indexes = [models.Index(fields=["bank", "status"], name="approval_bank_status_idx")]
+
+
+# --------------------------------------------------------------------------- cheques
+
+
+class ChequeStatus(models.TextChoices):
+    ISSUED = "issued", "Issued"
+    PAID = "paid", "Paid"
+    STOPPED = "stopped", "Stopped"
+
+
+class Chequebook(NoDeleteModel):
+    """A book of consecutive cheque numbers issued to one account (no journal entry)."""
+
+    bank = models.ForeignKey("lab.Bank", on_delete=models.PROTECT, related_name="chequebooks")
+    account = models.ForeignKey(
+        "products.Account", on_delete=models.PROTECT, related_name="chequebooks"
+    )
+    first_no = models.PositiveIntegerField()
+    last_no = models.PositiveIntegerField()
+    leaves = models.PositiveSmallIntegerField()
+    issued_by = models.ForeignKey("lab.SessionMember", on_delete=models.PROTECT, related_name="+")
+    issued_at = models.DateTimeField()
+
+    class Meta:
+        ordering = ["-issued_at"]
+        indexes = [models.Index(fields=["bank", "account"], name="chequebook_account_idx")]
+
+
+class Cheque(NoDeleteModel):
+    """One leaf. `transaction` holds the withdrawal that reserved or paid it (cleared again
+    when that withdrawal is rejected or reversed); `Transaction.cheque` keeps the history."""
+
+    bank = models.ForeignKey("lab.Bank", on_delete=models.PROTECT, related_name="cheques")
+    chequebook = models.ForeignKey(Chequebook, on_delete=models.PROTECT, related_name="cheques")
+    number = models.PositiveIntegerField()
+    status = models.CharField(
+        max_length=8, choices=ChequeStatus.choices, default=ChequeStatus.ISSUED
+    )
+    transaction = models.OneToOneField(
+        "Transaction", null=True, blank=True, on_delete=models.PROTECT, related_name="paid_cheque"
+    )
+    stopped_by = models.ForeignKey(
+        "lab.SessionMember", null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    stopped_at = models.DateTimeField(null=True, blank=True)
+    stop_reason = models.CharField(max_length=200, blank=True, default="")
+
+    class Meta:
+        ordering = ["number"]
+        constraints = [
+            models.UniqueConstraint(fields=["bank", "number"], name="uniq_cheque_no_per_bank"),
+        ]

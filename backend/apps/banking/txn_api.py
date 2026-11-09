@@ -55,6 +55,10 @@ class TransferIn(Schema):
     narration: str = ""
 
 
+class ChequeWithdrawalIn(DepositIn):
+    cheque_no: int
+
+
 class ReverseIn(Schema):
     reason: str = ""
 
@@ -95,6 +99,8 @@ class TransactionOut(Schema):
     journal_entry_no: int | None = None
     reversal_of_id: UUID | None = None
     reversal_of_ref_no: str | None = None
+    cheque_id: UUID | None = None
+    cheque_no: int | None = None
     approval_id: UUID | None = None
     approval_status: str | None = None
     approval_note: str | None = None
@@ -123,6 +129,10 @@ class TransactionOut(Schema):
     @staticmethod
     def resolve_journal_entry_no(obj):
         return obj.journal_entry.entry_no if obj.journal_entry_id else None
+
+    @staticmethod
+    def resolve_cheque_no(obj):
+        return obj.cheque.number if obj.cheque_id else None
 
     @staticmethod
     def resolve_reversal_of_ref_no(obj):
@@ -169,6 +179,7 @@ class ApprovalTxnOut(Schema):
     party_name: str
     narration: str
     business_date: date
+    cheque_no: int | None = None
 
     @staticmethod
     def resolve_account_no(obj):
@@ -177,6 +188,10 @@ class ApprovalTxnOut(Schema):
     @staticmethod
     def resolve_customer_name(obj):
         return obj.account.customer.display_name
+
+    @staticmethod
+    def resolve_cheque_no(obj):
+        return obj.cheque.number if obj.cheque_id else None
 
     @staticmethod
     def resolve_counter_account_no(obj):
@@ -225,6 +240,14 @@ def txn_deposit(request, session_id: UUID, payload: DepositIn):
 @require_bank_permission("txn.cash_withdrawal")
 def txn_withdrawal(request, session_id: UUID, payload: WithdrawalIn):
     return transactions.withdraw(request.session_member, **payload.dict())
+
+
+@txn_router.post(
+    _T + "/cheque-withdrawal", response=TransactionOut, operation_id="txn_cheque_withdrawal"
+)
+@require_bank_permission("txn.cheque_withdrawal")
+def txn_cheque_withdrawal(request, session_id: UUID, payload: ChequeWithdrawalIn):
+    return transactions.cheque_withdraw(request.session_member, **payload.dict())
 
 
 @txn_router.post(_T + "/transfer", response=TransactionOut, operation_id="txn_transfer")

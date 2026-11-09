@@ -82,4 +82,7 @@ export type PagedTransaction = Schemas["PagedTransactionOut"];
 export type ApprovalOut = Schemas["ApprovalOut"];
 export type DepositIn = Schemas["DepositIn"];
 export type WithdrawalIn = Schemas["WithdrawalIn"];
+export type ChequeWithdrawalIn = Schemas["ChequeWithdrawalIn"];
+export type ChequebookOut = Schemas["ChequebookOut"];
+export type ChequeOut = Schemas["ChequeOut"];
 export type TransferIn = Schemas["TransferIn"];

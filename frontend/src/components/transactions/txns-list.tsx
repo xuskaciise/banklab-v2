@@ -123,7 +123,7 @@ export function TxnsList({
           }}
         >
           <option value="">All types</option>
-          {["cash_deposit", "cash_withdrawal", "transfer", "reversal"].map((t) => (
+          {["cash_deposit", "cash_withdrawal", "cheque_withdrawal", "transfer", "reversal"].map((t) => (
             <option key={t} value={t}>
               {TYPE_LABEL[t]}
             </option>
@@ -175,7 +175,14 @@ export function TxnsList({
               {list.data.items.map((t) => (
                 <tr key={t.id} className="hover:bg-hover">
                   <Td className="font-mono text-xs">{t.ref_no}</Td>
-                  <Td>{TYPE_LABEL[t.type] ?? t.type}</Td>
+                  <Td>
+                    {TYPE_LABEL[t.type] ?? t.type}
+                    {t.cheque_no != null && (
+                      <span className="ml-1 font-mono text-xs text-text-muted">
+                        #{t.cheque_no}
+                      </span>
+                    )}
+                  </Td>
                   <Td>
                     <span className="font-mono text-xs">
                       {formatAccountNo(t.account_no)}

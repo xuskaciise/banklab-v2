@@ -58,6 +58,7 @@ class AccountOut(Schema):
     product_code: str
     product_name: str
     product_kind: str
+    product_allows_cheques: bool
     currency: str
     status: str
     mandate: str
@@ -82,6 +83,10 @@ class AccountOut(Schema):
     @staticmethod
     def resolve_product_name(obj):
         return obj.product.name
+
+    @staticmethod
+    def resolve_product_allows_cheques(obj):
+        return obj.product.allows_cheques
 
     @staticmethod
     def resolve_product_kind(obj):

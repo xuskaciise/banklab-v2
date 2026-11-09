@@ -15,6 +15,7 @@ import { TxnResult } from "./txn-result";
 const PERM: Record<Kind, string> = {
   deposit: "txn.cash_deposit",
   withdrawal: "txn.cash_withdrawal",
+  cheque_withdrawal: "txn.cheque_withdrawal",
   transfer: "txn.transfer",
 };
 

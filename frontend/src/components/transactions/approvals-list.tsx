@@ -119,7 +119,14 @@ export function ApprovalsList({ sid, readOnly }: { sid: string; readOnly: boolea
             return (
               <tr key={a.id} className="hover:bg-hover">
                 <Td className="font-medium text-text-strong">{a.requested_by_name}</Td>
-                <Td>{t ? (TYPE_LABEL[t.type] ?? t.type) : a.reason}</Td>
+                <Td>
+                  {t ? (TYPE_LABEL[t.type] ?? t.type) : a.reason}
+                  {t?.cheque_no != null && (
+                    <span className="ml-1 font-mono text-xs text-text-muted">
+                      #{t.cheque_no}
+                    </span>
+                  )}
+                </Td>
                 <Td>
                   {t && (
                     <>

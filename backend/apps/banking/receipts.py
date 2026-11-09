@@ -34,6 +34,7 @@ SOFT = colors.HexColor("#F1F5F9")  # surface
 TYPE_LABEL = {
     TxnType.CASH_DEPOSIT: "Cash Deposit",
     TxnType.CASH_WITHDRAWAL: "Cash Withdrawal",
+    TxnType.CHEQUE_WITHDRAWAL: "Cheque Withdrawal",
     TxnType.TRANSFER: "Transfer",
     TxnType.REVERSAL: "Reversal",
 }
@@ -199,6 +200,8 @@ def _sections(txn, branch):
         details.append(("Branch", f"{branch.name} ({branch.code})"))
     if txn.reversal_of_id:
         details.append(("Reverses", txn.reversal_of.ref_no))
+    if txn.cheque_id:
+        details.append(("Cheque number", str(txn.cheque.number)))
     if txn.narration:
         details.append(("Narration", txn.narration))
     details.append(("Served by", title_case(teller.full_name or teller.username)))

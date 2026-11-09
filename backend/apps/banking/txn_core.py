@@ -30,10 +30,12 @@ from .models import (
     TxnType,
 )
 
-CASH_TYPES = (TxnType.CASH_DEPOSIT, TxnType.CASH_WITHDRAWAL)
+CASH_TYPES = (TxnType.CASH_DEPOSIT, TxnType.CASH_WITHDRAWAL, TxnType.CHEQUE_WITHDRAWAL)
+WITHDRAWALS = (TxnType.CASH_WITHDRAWAL, TxnType.CHEQUE_WITHDRAWAL)
 PERM = {
     TxnType.CASH_DEPOSIT: "txn.cash_deposit",
     TxnType.CASH_WITHDRAWAL: "txn.cash_withdrawal",
+    TxnType.CHEQUE_WITHDRAWAL: "txn.cheque_withdrawal",
     TxnType.TRANSFER: "txn.transfer",
 }
 PERM_REVERSE = "txn.reverse"
@@ -42,6 +44,7 @@ PERM_DECIDE = "approval.decide"
 LABEL = {
     TxnType.CASH_DEPOSIT: "Cash deposit",
     TxnType.CASH_WITHDRAWAL: "Cash withdrawal",
+    TxnType.CHEQUE_WITHDRAWAL: "Cheque withdrawal",
     TxnType.TRANSFER: "Transfer",
     TxnType.REVERSAL: "Reversal",
 }
@@ -105,9 +108,9 @@ def check_account(acc: Account | None, currency: str, what: str = "Account") -> 
 
 def precheck(txn_type, acc, counter, amount: Decimal, currency: str, ts) -> None:
     """Friendly balance checks; the posting service enforces the same rules again."""
-    if txn_type in (TxnType.CASH_WITHDRAWAL, TxnType.TRANSFER) and acc.ledger_balance < amount:
+    if txn_type in (*WITHDRAWALS, TxnType.TRANSFER) and acc.ledger_balance < amount:
         raise _conflict("insufficient_balance", f"Insufficient balance on account {acc.account_no}")
-    if txn_type == TxnType.CASH_WITHDRAWAL:
+    if txn_type in WITHDRAWALS:
         till = CashPosition.objects.filter(
             bank_id=acc.bank_id,
             holder_type=HolderType.TELLER_SESSION,
@@ -150,6 +153,9 @@ def post(txn: Transaction, bank, acc, counter, ts, actor_member) -> None:
     txn.journal_entry = entry
     txn.status = TxnStatus.POSTED
     txn.save(update_fields=["journal_entry", "status", "updated_at"])
+    from . import cheques
+
+    cheques.mark_paid(txn)
 
 
 def new_txn(bank, day, **fields) -> Transaction:
@@ -178,7 +184,12 @@ def audit_txn(member, role, action, session, txn, *, before=None, after=None) ->
         before=before,
         after=after
         if after is not None
-        else {"ref_no": txn.ref_no, "status": txn.status, "amount": str(txn.amount)},
+        else {
+            "ref_no": txn.ref_no,
+            "status": txn.status,
+            "amount": str(txn.amount),
+            **({"cheque_no": txn.cheque.number} if txn.cheque_id else {}),
+        },
         session_id=session.pk,
         bank_id=txn.bank_id,
         institution_id=session.lab_class.institution_id,

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const TYPE_TONE: Record<string, string> = {
   cash_deposit: "bg-fin-success-bg text-fin-success-dark",
   cash_withdrawal: "bg-fin-pending-bg text-fin-pending",
+  cheque_withdrawal: "bg-fin-pending-bg text-fin-pending",
   transfer: "bg-bank-sky-light text-bank-primary",
 };
 

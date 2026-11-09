@@ -1,10 +1,15 @@
 "use client";
 
 import { useRef } from "react";
-import { ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine } from "lucide-react";
+import {
+  ArrowDownToLine,
+  ArrowLeftRight,
+  ArrowUpFromLine,
+  BookOpenCheck,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type Kind = "deposit" | "withdrawal" | "transfer";
+export type Kind = "deposit" | "withdrawal" | "cheque_withdrawal" | "transfer";
 
 export const KIND_META: Record<
   Kind,
@@ -19,6 +24,11 @@ export const KIND_META: Record<
     label: "Cash Withdrawal",
     hint: "Withdraw funds from an account.",
     icon: ArrowUpFromLine,
+  },
+  cheque_withdrawal: {
+    label: "Cheque Withdrawal",
+    hint: "Pay out cash against a cheque.",
+    icon: BookOpenCheck,
   },
   transfer: {
     label: "Account Transfer",

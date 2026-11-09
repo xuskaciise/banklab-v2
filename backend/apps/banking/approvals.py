@@ -10,6 +10,7 @@ from django.utils import timezone
 from apps.customers import services as customers
 from apps.rbac import services as rbac
 
+from . import cheques
 from . import txn_core as core
 from .models import (
     Approval,
@@ -38,9 +39,9 @@ def list_approvals(member, status: str | None = ApprovalStatus.PENDING):
     rows = list(qs.order_by("created_at"))
     txns = {
         t.pk: t
-        for t in Transaction.objects.select_related("account__customer", "counter_account").filter(
-            bank_id=member.bank_id, pk__in=[a.subject_id for a in rows]
-        )
+        for t in Transaction.objects.select_related(
+            "account__customer", "counter_account", "cheque"
+        ).filter(bank_id=member.bank_id, pk__in=[a.subject_id for a in rows])
     }
     for a in rows:
         a.transaction = txns.get(a.subject_id)
@@ -119,6 +120,7 @@ def reject(member, approval_id, note: str) -> Approval:
         note = customers._text(note, "Reason", 300)
         txn.status = TxnStatus.REJECTED
         txn.save(update_fields=["status", "updated_at"])
+        cheques.release(txn)
         _close(approval, member, ApprovalStatus.REJECTED, note)
         core.audit_txn(
             member,

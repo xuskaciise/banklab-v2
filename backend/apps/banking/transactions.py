@@ -16,7 +16,7 @@ from apps.ledger import services as ledger
 from apps.ledger.services import LedgerError
 from apps.rbac import services as rbac
 
-from . import limits
+from . import cheques, limits
 from . import txn_core as core
 from .models import (
     Approval,
@@ -26,7 +26,12 @@ from .models import (
     TxnType,
 )
 
-REVERSIBLE = (TxnType.CASH_DEPOSIT, TxnType.CASH_WITHDRAWAL, TxnType.TRANSFER)
+REVERSIBLE = (
+    TxnType.CASH_DEPOSIT,
+    TxnType.CASH_WITHDRAWAL,
+    TxnType.CHEQUE_WITHDRAWAL,
+    TxnType.TRANSFER,
+)
 
 
 def _amount(value) -> Decimal:
@@ -44,7 +49,18 @@ def _party(name, id_no, phone) -> dict:
     }
 
 
-def _create(member, txn_type, *, account_id, counter_id=None, amount, currency, narration, party):
+def _create(
+    member,
+    txn_type,
+    *,
+    account_id,
+    counter_id=None,
+    amount,
+    currency,
+    narration,
+    party,
+    cheque_no=None,
+):
     """Common path of C1/C2/C4: validate, then post now or park for approval."""
     with transaction.atomic():
         session, role = core.require_perm(member, core.PERM[txn_type])
@@ -68,6 +84,9 @@ def _create(member, txn_type, *, account_id, counter_id=None, amount, currency, 
         if counter_id is not None:
             counter = core.check_account(accounts.get(counter_id), currency, "Destination account")
         core.precheck(txn_type, acc, counter, amount, currency, ts)
+        cheque = None
+        if txn_type == TxnType.CHEQUE_WITHDRAWAL:
+            cheque = cheques.reserve(bank.pk, acc, cheque_no)
         pending = limits.needs_approval(bank, role, txn_type, currency, amount)
         txn = core.new_txn(
             bank,
@@ -81,9 +100,12 @@ def _create(member, txn_type, *, account_id, counter_id=None, amount, currency, 
             teller_session=ts,
             narration=narration,
             created_by=member,
+            cheque=cheque,
             **party,
         )
         if pending:
+            if cheque:
+                cheques.attach(cheque, txn)
             Approval.objects.create(
                 bank=bank,
                 subject_type="transaction",
@@ -123,6 +145,30 @@ def withdraw(
         currency=currency,
         narration=narration,
         party=_party(party_name, party_id_no, party_phone),
+    )
+
+
+def cheque_withdraw(
+    member,
+    *,
+    account_id,
+    cheque_no,
+    amount,
+    currency,
+    party_name,
+    party_id_no,
+    party_phone,
+    narration="",
+):
+    return _create(
+        member,
+        TxnType.CHEQUE_WITHDRAWAL,
+        account_id=account_id,
+        amount=amount,
+        currency=currency,
+        narration=narration,
+        party=_party(party_name, party_id_no, party_phone),
+        cheque_no=cheque_no,
     )
 
 
@@ -205,6 +251,7 @@ def reverse(member, txn_id, reason: str = "") -> Transaction:
         )
         txn.status = TxnStatus.REVERSED
         txn.save(update_fields=["status", "updated_at"])
+        cheques.release(txn)
         core.audit_txn(
             member,
             role,
@@ -233,6 +280,7 @@ def detail_qs():
         "created_by__user",
         "journal_entry",
         "reversal_of",
+        "cheque",
         "teller_session__teller_member__user",
         "bank",
     )

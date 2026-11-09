@@ -1049,6 +1049,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/s/{session_id}/transactions/cheque-withdrawal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Txn Cheque Withdrawal */
+        post: operations["txn_cheque_withdrawal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/s/{session_id}/transactions/transfer": {
         parameters: {
             query?: never;
@@ -1179,6 +1196,58 @@ export interface paths {
         put?: never;
         /** Approvals Reject */
         post: operations["approvals_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/accounts/{account_id}/chequebooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Chequebooks List */
+        get: operations["chequebooks_list"];
+        put?: never;
+        /** Chequebooks Issue */
+        post: operations["chequebooks_issue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/accounts/{account_id}/cheques": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cheques List */
+        get: operations["cheques_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/cheques/{cheque_id}/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cheques Stop */
+        post: operations["cheques_stop"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2646,6 +2715,10 @@ export interface components {
             reversal_of_id?: string | null;
             /** Reversal Of Ref No */
             reversal_of_ref_no?: string | null;
+            /** Cheque Id */
+            cheque_id?: string | null;
+            /** Cheque No */
+            cheque_no?: number | null;
             /** Approval Id */
             approval_id?: string | null;
             /** Approval Status */
@@ -2703,6 +2776,31 @@ export interface components {
              * @default
              */
             narration: string;
+        };
+        /** ChequeWithdrawalIn */
+        ChequeWithdrawalIn: {
+            /** Party Name */
+            party_name: string;
+            /** Party Id No */
+            party_id_no: string;
+            /** Party Phone */
+            party_phone: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Amount */
+            amount: number | string;
+            /** Currency */
+            currency: string;
+            /**
+             * Narration
+             * @default
+             */
+            narration: string;
+            /** Cheque No */
+            cheque_no: number;
         };
         /** TxnFilters */
         TxnFilters: {
@@ -2802,6 +2900,8 @@ export interface components {
              * Format: date
              */
             business_date: string;
+            /** Cheque No */
+            cheque_no?: number | null;
         };
         /** DecisionIn */
         DecisionIn: {
@@ -2810,6 +2910,75 @@ export interface components {
              * @default
              */
             note: string;
+        };
+        /** ChequebookOut */
+        ChequebookOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** First No */
+            first_no: number;
+            /** Last No */
+            last_no: number;
+            /** Leaves */
+            leaves: number;
+            /**
+             * Issued By Id
+             * Format: uuid
+             */
+            issued_by_id: string;
+            /** Issued By Name */
+            issued_by_name: string;
+            /**
+             * Issued At
+             * Format: date-time
+             */
+            issued_at: string;
+        };
+        /** IssueIn */
+        IssueIn: {
+            /** Leaves */
+            leaves: number;
+        };
+        /** ChequeOut */
+        ChequeOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Chequebook Id
+             * Format: uuid
+             */
+            chequebook_id: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Number */
+            number: number;
+            /** Status */
+            status: string;
+            /** Transaction Id */
+            transaction_id?: string | null;
+            /** Stopped At */
+            stopped_at?: string | null;
+            /** Stop Reason */
+            stop_reason: string;
+        };
+        /** StopIn */
+        StopIn: {
+            /** Reason */
+            reason: string;
         };
         /** CustomerFilters */
         CustomerFilters: {
@@ -3232,6 +3401,8 @@ export interface components {
             product_name: string;
             /** Product Kind */
             product_kind: string;
+            /** Product Allows Cheques */
+            product_allows_cheques: boolean;
             /** Currency */
             currency: string;
             /** Status */
@@ -4931,6 +5102,32 @@ export interface operations {
             };
         };
     };
+    txn_cheque_withdrawal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChequeWithdrawalIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionOut"];
+                };
+            };
+        };
+    };
     txn_transfer: {
         parameters: {
             query?: never;
@@ -5131,6 +5328,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApprovalOut"];
+                };
+            };
+        };
+    };
+    chequebooks_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequebookOut"][];
+                };
+            };
+        };
+    };
+    chequebooks_issue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequebookOut"];
+                };
+            };
+        };
+    };
+    cheques_list: {
+        parameters: {
+            query?: {
+                status?: string | null;
+            };
+            header?: never;
+            path: {
+                session_id: string;
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeOut"][];
+                };
+            };
+        };
+    };
+    cheques_stop: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                cheque_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StopIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChequeOut"];
                 };
             };
         };

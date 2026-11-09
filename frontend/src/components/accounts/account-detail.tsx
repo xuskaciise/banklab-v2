@@ -15,6 +15,7 @@ import { formatDateTime } from "@/lib/lab";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ErrorMsg, QueryState } from "@/components/lab/common";
+import { AccountCheques } from "./account-cheques";
 import { CustomerProfile } from "@/components/transactions/customer-profile";
 
 function closeErrorFor(e: unknown): Error {
@@ -35,10 +36,14 @@ export function AccountDetailView({
   sessionId,
   id,
   canClose,
+  canIssueChequebook = false,
+  canStopCheque = false,
 }: {
   sessionId: string;
   id: string;
   canClose: boolean;
+  canIssueChequebook?: boolean;
+  canStopCheque?: boolean;
 }) {
   const q = useAccount(sessionId, id);
   const close = useCloseAccount(sessionId, id);
@@ -91,6 +96,15 @@ export function AccountDetailView({
             )}
           </div>
           <CustomerProfile sid={sessionId} account={q.data} />
+
+          {q.data.product_allows_cheques && (
+            <AccountCheques
+              sid={sessionId}
+              account={q.data}
+              canIssue={canIssueChequebook}
+              canStop={canStopCheque}
+            />
+          )}
 
           <ErrorMsg error={closeError} />
 

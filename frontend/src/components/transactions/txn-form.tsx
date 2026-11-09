@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useCustomer } from "@/lib/customers";
 import { useCreateTxn } from "@/lib/transactions";
 import type { AccountOut, TransactionOut } from "@/lib/api/types";
-import { Textarea } from "@/components/ui/input";
+import { Input, Textarea } from "@/components/ui/input";
 import { AccountPicker } from "./account-picker";
 import { AmountField } from "./amount-field";
 import { FieldLabel } from "./field-label";
@@ -15,6 +15,14 @@ import { TxnSummary } from "./txn-summary";
 import type { Kind } from "./type-selector";
 
 export type { Kind };
+
+/** Cheque numbers are whole numbers (digits only). */
+function chequeError(v: string): string | undefined {
+  const c = v.trim();
+  if (!c) return undefined;
+  if (!/^d+$/.test(c) || !(Number(c) > 0)) return "Cheque number must be a whole number";
+  return undefined;
+}
 
 const COL = "min-h-0 space-y-3 lg:overflow-y-auto lg:pr-1";
 
@@ -44,6 +52,7 @@ export function TxnForm({
   const [from, setFrom] = useState<AccountOut | null>(null);
   const [to, setTo] = useState<AccountOut | null>(null);
   const [amount, setAmount] = useState("");
+  const [chequeNo, setChequeNo] = useState("");
   const [party, setParty] = useState<Party>({ name: "", idNo: "", phone: "" });
   const [same, setSame] = useState(false);
   const [narration, setNarration] = useState("");
@@ -89,16 +98,24 @@ export function TxnForm({
     errs.to = "Find the destination account first";
   let amtErr = amountError(amount);
   if (!amtErr && attempted && !amount.trim()) amtErr = "Enter an amount greater than zero";
+  const isCheque = kind === "cheque_withdrawal";
+  let chequeErr = chequeError(chequeNo);
+  if (!chequeErr && attempted && isCheque && !chequeNo.trim())
+    chequeErr = "Cheque number is required";
+  const noCheques = isCheque && !!from && !from.product_allows_cheques;
+  if (noCheques) errs.from = "This account's product does not allow cheques";
+  const chequeOk = !isCheque || (!!chequeNo.trim() && !chequeErr && !noCheques);
   const amountValid = !!amount.trim() && !amtErr;
   const partyOk = !cash || (party.name.trim() && party.idNo.trim() && party.phone.trim());
   const valid =
-    !!from && (kind !== "transfer" || !!to) && !errs.to && amountValid && !!partyOk;
+    !!from && (kind !== "transfer" || !!to) && !errs.to && amountValid && !!partyOk && chequeOk;
   const noAccount = !from || (kind === "transfer" && !to);
 
   function reset() {
     setFrom(null);
     setTo(null);
     setAmount("");
+    setChequeNo("");
     setParty({ name: "", idNo: "", phone: "" });
     setSame(false);
     setNarration("");
@@ -126,17 +143,17 @@ export function TxnForm({
         { onSuccess: onDone },
       );
     } else {
+      const body = {
+        ...common,
+        account_id: from.id,
+        party_name: party.name.trim(),
+        party_id_no: party.idNo.trim(),
+        party_phone: party.phone.trim(),
+      };
       create.mutate(
-        {
-          kind,
-          body: {
-            ...common,
-            account_id: from.id,
-            party_name: party.name.trim(),
-            party_id_no: party.idNo.trim(),
-            party_phone: party.phone.trim(),
-          },
-        },
+        kind === "cheque_withdrawal"
+          ? { kind, body: { ...body, cheque_no: Number(chequeNo.trim()) } }
+          : { kind, body },
         { onSuccess: onDone },
       );
     }
@@ -191,6 +208,30 @@ export function TxnForm({
           </Panel>
         )}
         <Panel title="Transaction">
+          {isCheque && (
+            <div className="space-y-1">
+              <FieldLabel htmlFor="txn-cheque-no" required>
+                Cheque Number
+              </FieldLabel>
+              <Input
+                id="txn-cheque-no"
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="e.g. 1001"
+                value={chequeNo}
+                disabled={noAccount}
+                aria-invalid={!!chequeErr}
+                onChange={(e) => setChequeNo(e.target.value)}
+                onBlur={() => setTouched((t) => ({ ...t, cheque: true }))}
+                className="font-mono"
+              />
+              {(attempted || touched.cheque || chequeNo.trim()) && chequeErr && (
+                <p role="alert" className="text-xs text-fin-danger">
+                  {chequeErr}
+                </p>
+              )}
+            </div>
+          )}
           <AmountField
             value={amount}
             onChange={setAmount}
@@ -236,6 +277,7 @@ export function TxnForm({
         to={to}
         amount={amount}
         amountValid={amountValid}
+        chequeNo={chequeNo}
         dateLabel={dateLabel}
         actions={actions}
       />

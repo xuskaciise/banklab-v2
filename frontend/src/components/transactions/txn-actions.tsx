@@ -1,6 +1,12 @@
 "use client";
 
-import { ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine, Loader2 } from "lucide-react";
+import {
+  ArrowDownToLine,
+  ArrowLeftRight,
+  ArrowUpFromLine,
+  BookOpenCheck,
+  Loader2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ErrorMsg } from "@/components/lab/common";
 import type { Kind } from "./type-selector";
@@ -8,6 +14,7 @@ import type { Kind } from "./type-selector";
 const SUBMIT: Record<Kind, { label: string; icon: typeof ArrowDownToLine }> = {
   deposit: { label: "Submit Deposit", icon: ArrowDownToLine },
   withdrawal: { label: "Submit Withdrawal", icon: ArrowUpFromLine },
+  cheque_withdrawal: { label: "Submit Cheque Withdrawal", icon: BookOpenCheck },
   transfer: { label: "Submit Transfer", icon: ArrowLeftRight },
 };
 
@@ -32,7 +39,7 @@ export function TxnActions({
       <ErrorMsg error={error} />
       {!valid && (
         <p className="text-xs text-text-muted">
-          Find the account{kind === "transfer" ? "s" : ""}, enter an amount
+          Find the account{kind === "transfer" ? "s" : ""}, enter {kind === "cheque_withdrawal" ? "the cheque number, " : ""}an amount
           {cash ? " and the party details" : ""} to continue.
         </p>
       )}

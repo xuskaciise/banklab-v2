@@ -2,8 +2,10 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiBlob, apiFetch } from "@/lib/api/client";
+import { chequeErrorFor } from "@/lib/cheques";
 import type {
   AccountOut,
+  ChequeWithdrawalIn,
   ApprovalOut,
   DepositIn,
   PagedAccount,
@@ -48,6 +50,7 @@ export async function lookupAccount(
 export type NewTxn =
   | { kind: "deposit"; body: DepositIn }
   | { kind: "withdrawal"; body: WithdrawalIn }
+  | { kind: "cheque_withdrawal"; body: ChequeWithdrawalIn }
   | { kind: "transfer"; body: TransferIn };
 
 function useRefresh(sid: string) {
@@ -63,9 +66,11 @@ export function useCreateTxn(sid: string) {
   const refresh = useRefresh(sid);
   return useMutation({
     mutationFn: (t: NewTxn) =>
-      apiFetch<TransactionOut>(`${base(sid)}/${t.kind}`, {
-        method: "POST",
-        json: t.body,
+      apiFetch<TransactionOut>(
+        `${base(sid)}/${t.kind === "cheque_withdrawal" ? "cheque-withdrawal" : t.kind}`,
+        { method: "POST", json: t.body },
+      ).catch((e) => {
+        throw chequeErrorFor(e);
       }),
     onSuccess: refresh,
   });

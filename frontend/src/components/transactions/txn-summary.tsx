@@ -25,6 +25,7 @@ export function TxnSummary({
   to,
   amount,
   amountValid,
+  chequeNo,
   dateLabel,
   actions,
 }: {
@@ -33,13 +34,14 @@ export function TxnSummary({
   to: AccountOut | null;
   amount: string;
   amountValid: boolean;
+  chequeNo?: string;
   dateLabel: string;
   actions: React.ReactNode;
 }) {
   const tone =
     kind === "deposit"
       ? "text-fin-success"
-      : kind === "withdrawal"
+      : kind === "withdrawal" || kind === "cheque_withdrawal"
         ? "text-fin-danger"
         : "text-text-strong";
   return (
@@ -84,6 +86,11 @@ export function TxnSummary({
                     <span className="font-mono">{formatAccountNo(from.account_no)}</span>
                   </Row>
                 </>
+              )}
+              {kind === "cheque_withdrawal" && (
+                <Row label="Cheque No">
+                  <span className="font-mono">{chequeNo?.trim() || "--"}</span>
+                </Row>
               )}
               <Row label="Currency">{from.currency}</Row>
               <Row label="Amount">
