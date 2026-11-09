@@ -1,6 +1,6 @@
 "use client";
 
-import { Info, Loader2, Send } from "lucide-react";
+import { Info, Landmark, Loader2, Send } from "lucide-react";
 import { formatMoney } from "@/lib/banking";
 import { Tooltip } from "@/components/ui/tooltip";
 import { AmountInput, amountValid, stripAmount } from "./amount-input";
@@ -18,50 +18,53 @@ export function floatsValid(floats: Record<string, string>) {
   );
 }
 
-/** Selected-till summary shown under the combobox. */
+/** Compact one-line summary of the selected till, shown under the combobox. */
 export function TillSummary({ till }: { till: TillAvailability | undefined }) {
+  if (!till)
+    return (
+      <p className="flex items-center gap-2 text-sm text-text-muted">
+        <Landmark className="size-4" aria-hidden />
+        Choose a free till from the list.
+      </p>
+    );
+  const item = "min-w-0 space-y-0.5";
+  const label =
+    "text-[11px] font-medium tracking-wide text-text-muted uppercase";
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
-      {till ? (
-        <dl className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <dt className="text-xs text-text-muted">Till</dt>
-            <dd className="font-mono font-semibold text-text-strong">
-              {till.code}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-text-muted">Status</dt>
-            <dd>
-              <StatusBadge status="open" label="Free" />
-            </dd>
-          </div>
-          <div className="col-span-2">
-            <dt className="text-xs text-text-muted">Branch</dt>
-            <dd className="text-text-strong">
-              {till.branch_name}{" "}
-              <span className="text-xs text-text-muted">
-                {till.branch_code}
-              </span>
-            </dd>
-          </div>
-          <div className="col-span-2">
-            <dt className="text-xs text-text-muted">Location</dt>
-            <dd
-              className={
-                till.branch_address ? "text-text-body" : "text-text-muted"
-              }
-            >
-              {till.branch_address || "No address"}
-            </dd>
-          </div>
-        </dl>
-      ) : (
-        <p className="rounded-lg bg-surface p-4 text-center text-sm text-text-muted">
-          Choose a free till from the list.
-        </p>
-      )}
-    </div>
+    <dl className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-lg border border-border bg-surface px-4 py-3 text-sm">
+      <span
+        aria-hidden
+        className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-bank-sky-light text-bank-primary"
+      >
+        <Landmark className="size-4" />
+      </span>
+      <div className={item}>
+        <dt className={label}>Till</dt>
+        <dd className="flex items-center gap-2">
+          <span className="font-mono font-semibold text-text-strong">
+            {till.code}
+          </span>
+          <StatusBadge status="open" label="Free" />
+        </dd>
+      </div>
+      <div className={item}>
+        <dt className={label}>Branch</dt>
+        <dd className="truncate text-text-strong">
+          {till.branch_name}{" "}
+          <span className="text-xs text-text-muted">{till.branch_code}</span>
+        </dd>
+      </div>
+      <div className={item}>
+        <dt className={label}>Location</dt>
+        <dd
+          className={
+            till.branch_address ? "truncate text-text-body" : "text-text-muted"
+          }
+        >
+          {till.branch_address || "No address"}
+        </dd>
+      </div>
+    </dl>
   );
 }
 
