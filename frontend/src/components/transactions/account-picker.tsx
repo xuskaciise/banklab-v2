@@ -9,6 +9,8 @@ import type { AccountOut } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { errorText, StatusBadge } from "@/components/lab/common";
+import { BTN_FIND, FIELD } from "./field-styles";
+import { FieldLabel } from "./field-label";
 
 /** Looks an active account up by number; reports the match to the parent. */
 export function AccountPicker({
@@ -46,16 +48,17 @@ export function AccountPicker({
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
-        <label htmlFor={id} className="text-sm font-medium text-text-strong">
+        <FieldLabel htmlFor={id} required>
           {label}
-        </label>
-        <div className="flex gap-2">
+        </FieldLabel>
+        <div className="flex items-stretch gap-2">
           <Input
             id={id}
             inputMode="numeric"
             placeholder="Enter account number"
             value={no}
             aria-invalid={!!err}
+            className={FIELD}
             onChange={(e) => {
               setNo(e.target.value);
               if (value) onChange(null);
@@ -69,10 +72,10 @@ export function AccountPicker({
           />
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             disabled={busy}
             onClick={find}
-            className="shrink-0 focus-visible:ring-bank-accent"
+            className={BTN_FIND}
           >
             {busy ? (
               <Loader2 className="size-4 animate-spin" aria-hidden />

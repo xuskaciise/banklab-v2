@@ -19,18 +19,22 @@ export function AmountField({
     <Card>
       <CardHeader>
         <CardTitle>
-          <label htmlFor="txn-amount">Transaction Amount</label>
+          <label htmlFor="txn-amount">
+            Transaction Amount
+            <span aria-hidden className="ml-0.5 text-fin-danger">*</span>
+            <span className="sr-only"> (required)</span>
+          </label>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-1.5">
         <div
           className={cn(
-            "flex items-center gap-3 rounded-lg border bg-card px-4 transition-colors",
+            "flex h-16 items-center gap-3 rounded-lg border bg-card px-3 transition-colors hover:border-text-muted",
             "focus-within:border-bank-accent focus-within:ring-2 focus-within:ring-bank-accent/40",
             error ? "border-fin-danger" : "border-border",
           )}
         >
-          <span className="min-w-10 text-sm font-semibold text-text-muted">
+          <span className="rounded-md border border-border bg-surface px-2.5 py-1 text-sm font-semibold text-text-strong">
             {currency ?? "--"}
           </span>
           <input
@@ -41,7 +45,7 @@ export function AmountField({
             value={value}
             aria-invalid={!!error}
             onChange={(e) => onChange(e.target.value)}
-            className="h-14 w-full bg-transparent text-right text-2xl font-semibold text-text-strong tabular-nums outline-none placeholder:text-text-muted/60"
+            className="h-full min-w-0 flex-1 bg-transparent text-right text-[26px] sm:text-[28px] font-semibold text-text-strong tabular-nums outline-none placeholder:text-text-muted/60"
           />
         </div>
         {error ? (

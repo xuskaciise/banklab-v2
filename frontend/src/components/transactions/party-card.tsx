@@ -2,6 +2,8 @@
 
 import { CreditCard, Phone, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { FieldLabel } from "./field-label";
+import { FIELD } from "./field-styles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export type Party = { name: string; idNo: string; phone: string };
@@ -20,15 +22,15 @@ function Field({
 } & React.ComponentProps<"input">) {
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-text-strong">
+      <FieldLabel htmlFor={id} required>
         {label}
-      </label>
+      </FieldLabel>
       <div className="relative">
         <Icon
-          className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-text-muted"
+          className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-muted"
           aria-hidden
         />
-        <Input id={id} aria-invalid={!!error} className="pl-8" {...props} />
+        <Input id={id} aria-invalid={!!error} className={`${FIELD} pl-9`} {...props} />
       </div>
       {error && (
         <p role="alert" className="text-sm text-fin-danger">
@@ -45,11 +47,13 @@ export function PartyCard({
   value,
   onChange,
   errs,
+  onBlurField,
 }: {
   title: string;
   value: Party;
   onChange: (p: Party) => void;
   errs: Record<string, string>;
+  onBlurField: (f: string) => void;
 }) {
   return (
     <Card>
@@ -64,6 +68,7 @@ export function PartyCard({
           placeholder="Enter full name"
           value={value.name}
           error={errs.name}
+          onBlur={() => onBlurField("name")}
           onChange={(e) => onChange({ ...value, name: e.target.value })}
         />
         <div className="grid gap-4 sm:grid-cols-2">
@@ -74,6 +79,7 @@ export function PartyCard({
             placeholder="Enter ID number"
             value={value.idNo}
             error={errs.idNo}
+            onBlur={() => onBlurField("idNo")}
             onChange={(e) => onChange({ ...value, idNo: e.target.value })}
           />
           <Field
@@ -84,6 +90,7 @@ export function PartyCard({
             placeholder="Enter phone number"
             value={value.phone}
             error={errs.phone}
+            onBlur={() => onBlurField("phone")}
             onChange={(e) => onChange({ ...value, phone: e.target.value })}
           />
         </div>
