@@ -36,7 +36,7 @@ Domain details for every item live in [CONCEPT.md](CONCEPT.md).
 | 1.9 | Transactions: cash deposit, cash withdrawal, transfer (same currency), depositor name/ID/phone, teller limits + supervisor approval, reversal, PDF receipt | 1.7, 1.8 | [x] |
 | 1.10 | Cheques: chequebook issue (series), paid once, stop payment | 1.9 | [x] |
 | 1.11 | End-of-Day by Manager: all tellers closed → close day → next business date | 1.9 | [x] |
-| 1.12 | Reports: statement, teller cash, branch daily, transaction journal, TB, BS, IS, GL ledger — PDF + Excel | 1.11 | [ ] |
+| 1.12 | Reports: statement, teller cash, branch daily, transaction journal, TB, BS, IS, GL ledger — PDF + Excel | 1.11 | [x] |
 | 1.13 | Dashboards (instructor, manager, teller) + Dr/Cr learning panel toggle | 1.12 | [ ] |
 | 1.14 | Exam sessions: timer, tasks, per-student seed data, auto-check, scores, results export | 1.13 | [ ] |
 | 1.15 | Hardening: load test (100–200 students), security review, deploy to VPS | 1.14 | [ ] |

@@ -12,7 +12,8 @@ import {
 import { ApiError } from "@/lib/api/client";
 import { formatCif } from "@/lib/customers";
 import { formatDateTime } from "@/lib/lab";
-import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { ErrorMsg, QueryState } from "@/components/lab/common";
 import { AccountCheques } from "./account-cheques";
@@ -38,12 +39,14 @@ export function AccountDetailView({
   canClose,
   canIssueChequebook = false,
   canStopCheque = false,
+  canStatement = false,
 }: {
   sessionId: string;
   id: string;
   canClose: boolean;
   canIssueChequebook?: boolean;
   canStopCheque?: boolean;
+  canStatement?: boolean;
 }) {
   const q = useAccount(sessionId, id);
   const close = useCloseAccount(sessionId, id);
@@ -83,6 +86,14 @@ export function AccountDetailView({
                 Open customer file (CIF {formatCif(q.data.cif_no)})
               </Link>
             </div>
+            {canStatement && (
+              <Link
+                href={`/s/${sessionId}/accounts/${id}/statement`}
+                className={buttonVariants({ variant: "outline" })}
+              >
+                <FileText /> Statement
+              </Link>
+            )}
             {canClose && q.data.status === "active" && (
               <Button
                 variant="destructive"

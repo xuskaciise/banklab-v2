@@ -14,6 +14,7 @@ import {
   Banknote,
   CalendarCheck,
   Receipt,
+  FileBarChart,
   ShieldCheck,
   Store,
   Users,
@@ -131,6 +132,16 @@ export function navFor(
       href: `/s/${session.id}/eod`,
       match: /^\/s\/[^/]+\/eod/,
       icon: CalendarCheck,
+    });
+  if (
+    session &&
+    ["report.operational", "report.financial", "gl.view", "account.statement"].some(has)
+  )
+    items.push({
+      label: "Reports",
+      href: `/s/${session.id}/reports`,
+      match: /^\/s\/[^/]+\/(reports|gl)/,
+      icon: FileBarChart,
     });
   return items;
 }

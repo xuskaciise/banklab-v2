@@ -183,3 +183,8 @@ def close_account(member: SessionMember, account_id) -> Account:
             after=_account_dict(account),
         )
         return _with_related(Account.objects).get(pk=account.pk)
+
+
+def visible_accounts(member: SessionMember, scope: str):
+    """Accounts the member may read in `scope` ("all" | "own"); for report services."""
+    return _visible(member, scope)

@@ -19,6 +19,8 @@ from apps.ledger.api import student_router as ledger_student_router
 from apps.ledger.services import LedgerError
 from apps.products.api import student_router as products_student_router
 from apps.rbac.services import RbacError
+from apps.reports.api import router as reports_router
+from apps.reports.api import student_router as reports_student_router
 
 api = NinjaAPI(title="BankLab API", version="0.1.0", auth=ActiveSessionAuth())
 api.add_router("/auth", auth_router)
@@ -34,6 +36,8 @@ api.add_router("", cheque_router)
 api.add_router("", customers_router)
 api.add_router("", customers_student_router)
 api.add_router("", products_student_router)
+api.add_router("", reports_router)
+api.add_router("", reports_student_router)
 
 
 @api.exception_handler(AccountsError)

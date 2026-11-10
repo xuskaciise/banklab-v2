@@ -37,6 +37,7 @@ export default function AccountDetailPage() {
             id={id}
             canClose={perms.has("account.close") && !readOnly}
             canIssueChequebook={perms.has("chequebook.issue") && !readOnly}
+            canStatement={perms.has("account.statement")}
             canStopCheque={perms.has("cheque.stop") && !readOnly}
           />
         )}

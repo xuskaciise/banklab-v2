@@ -11,6 +11,18 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 
+from apps.reports.pdf import (
+    DANGER,
+    LINE,
+    MUTED,
+    NAVY,
+    PRIMARY,
+    SOFT,
+    SUCCESS,
+    draw_header,
+    draw_watermark,
+)
+
 from . import txn_core as core
 from .models import Transaction, TxnStatus, TxnType
 from .receipt_text import (  # noqa: F401  (re-exported for callers and tests)
@@ -21,15 +33,6 @@ from .receipt_text import (  # noqa: F401  (re-exported for callers and tests)
     number_to_words,
     title_case,
 )
-
-# Colours from docs/design/theme.md (PDF cannot read the web CSS tokens).
-PRIMARY = colors.HexColor("#1E3A8A")  # bank-primary
-NAVY = colors.HexColor("#0F2942")  # bank-navy
-SUCCESS = colors.HexColor("#047857")  # fin-success-dark
-DANGER = colors.HexColor("#B91C1C")  # fin-danger
-MUTED = colors.HexColor("#64748B")  # text-muted
-LINE = colors.HexColor("#E2E8F0")  # border
-SOFT = colors.HexColor("#F1F5F9")  # surface
 
 TYPE_LABEL = {
     TxnType.CASH_DEPOSIT: "Cash Deposit",
@@ -47,39 +50,11 @@ def _acct(account) -> str:
 
 
 def _watermark(pdf):
-    pdf.saveState()
-    pdf.setFillColor(colors.Color(0.5, 0.5, 0.5, alpha=0.08))
-    pdf.setFont("Helvetica-Bold", 110)
-    pdf.translate(W / 2, H / 2)
-    pdf.rotate(35)
-    pdf.drawCentredString(0, -30, "TRAINING")
-    pdf.restoreState()
+    draw_watermark(pdf, W, H)
 
 
 def _header(pdf, txn, branch):
-    y = H - 22 * mm
-    pdf.setFillColor(PRIMARY)  # logo placeholder: rounded square with initials
-    pdf.roundRect(L, y - 4 * mm, 14 * mm, 14 * mm, 3 * mm, fill=1, stroke=0)
-    pdf.setFillColor(colors.white)
-    pdf.setFont("Helvetica-Bold", 13)
-    initials = "".join(w[0] for w in txn.bank.name.split()[:2]).upper()
-    pdf.drawCentredString(L + 7 * mm, y + 0.5 * mm, initials)
-    pdf.setFillColor(NAVY)
-    pdf.setFont("Helvetica-Bold", 18)
-    pdf.drawString(L + 18 * mm, y + 3 * mm, txn.bank.name)
-    pdf.setFont("Helvetica", 9)
-    pdf.setFillColor(MUTED)
-    pdf.drawString(L + 18 * mm, y - 2.5 * mm, "Training bank - not a real bank")
-    pdf.setFont("Helvetica-Bold", 10)
-    pdf.setFillColor(NAVY)
-    if branch:
-        pdf.drawRightString(R, y + 3 * mm, f"{branch.name} ({branch.code})")
-        pdf.setFont("Helvetica", 9)
-        pdf.setFillColor(MUTED)
-        pdf.drawRightString(R, y - 2.5 * mm, branch.address or "No address on file")
-    pdf.setFillColor(PRIMARY)
-    pdf.rect(L, y - 9 * mm, R - L, 1.6 * mm, fill=1, stroke=0)
-    return y - 20 * mm
+    return draw_header(pdf, txn.bank.name, branch, W, H, L, R)
 
 
 def _title(pdf, txn, y):
