@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Search } from "lucide-react";
+import { useCurrencies } from "@/lib/platform";
 import { MANDATES, kycMissingFrom, useOpenAccount, useProducts } from "@/lib/accounts";
 import { formatCif, typeLabel, useCustomer, useCustomers } from "@/lib/customers";
 import type { AccountOut, KycItem } from "@/lib/api/types";
@@ -81,6 +82,9 @@ export function OpenAccountDialog({
     !!customerId,
   );
   const products = useProducts(sessionId);
+  const currencies = useCurrencies();
+  // Only products in an enabled currency can open new accounts.
+  const openable = products.data?.filter((p) => currencies.includes(p.currency));
   const open = useOpenAccount(sessionId);
 
   const c = customerId ? customer.data : undefined;
@@ -214,7 +218,7 @@ export function OpenAccountDialog({
                 <option value="">
                   {products.isPending ? "Loading products…" : "Choose a product"}
                 </option>
-                {products.data?.map((p) => (
+                {openable?.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name} ({p.currency})
                   </option>

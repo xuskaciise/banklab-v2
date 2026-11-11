@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useSessionMe } from "@/lib/lab";
+import { useCurrencies } from "@/lib/platform";
 import { buttonVariants } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -79,12 +80,17 @@ export function CurrencyField({
   onChange: (v: string) => void;
   allowAll?: boolean;
 }) {
+  // Keep the current value selectable so an old SOS report stays readable.
+  const currencies = useCurrencies([value]);
   return (
     <Labeled label="Currency">
       <Select value={value} onChange={(e) => onChange(e.target.value)} className="w-36">
         {allowAll && <option value="">All</option>}
-        <option value="USD">USD</option>
-        <option value="SOS">SOS</option>
+        {currencies.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
       </Select>
     </Labeled>
   );

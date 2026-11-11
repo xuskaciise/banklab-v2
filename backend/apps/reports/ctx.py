@@ -8,6 +8,7 @@ from django.db.models import Sum
 from django.utils import timezone
 
 from apps.banking.models import Branch, BusinessDay, BusinessDayStatus
+from apps.core.platform import enabled_currencies
 from apps.ledger.models import JournalLine
 from apps.ledger.services import CURRENCIES, LedgerError
 
@@ -103,3 +104,21 @@ def gl_nets(bank, *, date_from=None, date_to=None, currency=None) -> dict:
 def side_amount(net: Decimal, debit_normal: bool) -> Decimal:
     """Balance in the account's normal side."""
     return net if debit_normal else -net
+
+
+def report_currencies(bank, currency=None, date_to=None) -> list[str]:
+    """Currencies a report lists. An explicit `currency` is always honoured. When SOS is off
+    platform-wide, SOS is dropped unless the bank has SOS activity (any journal line other than the
+    provisioned opening capital), so history stays readable."""
+    if currency:
+        return [check_currency(currency)]
+    out = sorted(CURRENCIES)
+    if "SOS" in out and "SOS" not in enabled_currencies():
+        qs = JournalLine.objects.filter(entry__bank=bank, currency="SOS").exclude(
+            entry__source_type="opening_capital"
+        )
+        if date_to:
+            qs = qs.filter(entry__business_date__lte=date_to)
+        if not qs.exists():
+            out.remove("SOS")
+    return out

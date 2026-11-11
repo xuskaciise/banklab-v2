@@ -21,7 +21,8 @@ import {
   Td,
   Th,
 } from "@/components/lab/common";
-import { CountSummary, CURRENCIES, SessionStatus } from "./session-bits";
+import { nonZeroCurrencies, useCurrencies } from "@/lib/platform";
+import { CountSummary, SessionStatus } from "./session-bits";
 
 type Reject = { s: TellerSession; kind: "reject-open" | "reject-close" };
 
@@ -32,6 +33,9 @@ export function TillsOverview({ sid }: { sid: string }) {
   const canClose = perms.has("till.close.approve");
   const allowed = canOpen || canClose;
   const list = useTellerSessions(sid, allowed);
+  const currencies = useCurrencies(
+    (list.data ?? []).flatMap((s) => nonZeroCurrencies(s.balances)),
+  );
   const act = useTellerAction(sid);
   const readOnly = !!me.data?.read_only;
   const [reject, setReject] = useState<Reject | null>(null);
@@ -131,7 +135,7 @@ export function TillsOverview({ sid }: { sid: string }) {
                       <SessionStatus status={s.status} />
                     </Td>
                     <Td className="tabular-nums">
-                      {CURRENCIES.map((c) => (
+                      {currencies.map((c) => (
                         <span key={c} className="block">
                           {formatMoney(
                             s.balances.find((b) => b.currency === c)?.balance ?? "0",

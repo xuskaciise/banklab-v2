@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Landmark } from "lucide-react";
+import { useCurrencies } from "@/lib/platform";
 import { useTellerAction, useTillAvailability } from "@/lib/tellers";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FormSection } from "@/components/shared/form-layout";
@@ -10,10 +11,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorMsg } from "@/components/lab/common";
 import { stripAmount } from "./amount-input";
 import { OpenTillForm, TillSummary } from "./open-till-form";
-import { CURRENCIES } from "./session-bits";
 import { TillSelector } from "./till-selector";
 
 export function OpenRequestForm({ sid }: { sid: string }) {
+  const currencies = useCurrencies();
   const tills = useTillAvailability(sid);
   const act = useTellerAction(sid);
   const [tillId, setTillId] = useState("");
@@ -45,7 +46,7 @@ export function OpenRequestForm({ sid }: { sid: string }) {
     if (act.isPending) return;
     if (!tillId) return setErr("Choose a till");
     const lines: { currency: string; amount: number }[] = [];
-    for (const c of CURRENCIES) {
+    for (const c of currencies) {
       const raw = stripAmount(floats[c] ?? "").trim();
       if (!raw) continue;
       const n = Number(raw);

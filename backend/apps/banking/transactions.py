@@ -11,6 +11,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.utils import timezone
 
+from apps.core import platform
 from apps.customers import services as customers
 from apps.ledger import services as ledger
 from apps.ledger.services import LedgerError
@@ -68,6 +69,7 @@ def _create(
         narration = customers._text(narration, "Narration", 300, required=False)
         if currency not in ledger.CURRENCIES:
             raise core.bad("invalid_currency", "Currency must be USD or SOS")
+        platform.require_currency_enabled(currency)
         if counter_id is not None and counter_id == account_id:
             raise core.bad("same_account", "Choose two different accounts")
         day = core.open_day(member.bank_id)

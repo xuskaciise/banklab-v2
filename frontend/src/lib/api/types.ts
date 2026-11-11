@@ -91,3 +91,7 @@ export type TransferIn = Schemas["TransferIn"];
 export type EodStatus = Schemas["EodStatusOut"];
 export type EodCheck = Schemas["EodCheckOut"];
 export type EodClose = Schemas["EodCloseOut"];
+
+// Platform settings (1.12a)
+export type PlatformSettings = Schemas["PlatformSettingsOut"];
+export type PlatformSettingsIn = Schemas["PlatformSettingsIn"];

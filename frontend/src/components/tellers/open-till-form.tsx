@@ -2,6 +2,7 @@
 
 import { Info, Landmark, Loader2, Send } from "lucide-react";
 import { formatMoney } from "@/lib/banking";
+import { useCurrencies } from "@/lib/platform";
 import { Tooltip } from "@/components/ui/tooltip";
 import { AmountInput, amountValid, stripAmount } from "./amount-input";
 import type { TillAvailability } from "@/lib/api/types";
@@ -9,11 +10,10 @@ import { Button } from "@/components/ui/button";
 import { FormSection } from "@/components/shared/form-layout";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ErrorMsg } from "@/components/lab/common";
-import { CURRENCIES } from "./session-bits";
 
 /** Float is optional; every filled value must be digits (USD max 2 decimals). */
-export function floatsValid(floats: Record<string, string>) {
-  return CURRENCIES.every((c) =>
+export function floatsValid(floats: Record<string, string>, currencies: string[]) {
+  return currencies.every((c) =>
     amountValid(floats[c] ?? "", c === "USD" ? 2 : 0),
   );
 }
@@ -82,7 +82,8 @@ export function OpenTillForm({
   err: string | null;
   pending: boolean;
 }) {
-  const valid = floatsValid(floats);
+  const currencies = useCurrencies();
+  const valid = floatsValid(floats, currencies);
   const ready = !!till && till.available && valid;
   const money = (c: string) => {
     const raw = stripAmount(floats[c] ?? "").trim();
@@ -94,7 +95,7 @@ export function OpenTillForm({
     <>
       <FormSection title="Opening Cash Float">
         <div className="grid gap-4 sm:grid-cols-2">
-          {CURRENCIES.map((c) => (
+          {currencies.map((c) => (
             <AmountInput
               key={c}
               currency={c}
@@ -116,8 +117,7 @@ export function OpenTillForm({
           <dl className="divide-y divide-border text-sm">
             {[
               ["Till", till ? `${till.code} · ${till.branch_name}` : "—"],
-              ["USD float", money("USD")],
-              ["SOS float", money("SOS")],
+              ...currencies.map((c) => [`${c} float`, money(c)]),
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between gap-3 py-2">
                 <dt className="text-text-muted">{k}</dt>

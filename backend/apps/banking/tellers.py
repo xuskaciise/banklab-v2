@@ -25,6 +25,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.audit import services as audit
+from apps.core import platform
 from apps.lab.models import SessionMember
 from apps.ledger import services as ledger
 from apps.ledger.models import GLAccount
@@ -292,6 +293,7 @@ def request_open(member: SessionMember, till_id, floats=None) -> TellerSession:
             currency, amount = item["currency"], item["amount"]
             if currency not in ledger.CURRENCIES:
                 raise LedgerError("invalid_currency", "Currency must be USD or SOS")
+            platform.require_currency_enabled(currency)
             if currency in seen:
                 raise LedgerError("duplicate_currency", "One opening float per currency")
             seen.add(currency)

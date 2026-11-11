@@ -15,6 +15,7 @@ from django.db import IntegrityError, transaction
 
 from apps.accounts.models import User
 from apps.audit import services as audit
+from apps.core import platform
 from apps.lab import services as lab
 from apps.lab.models import Bank, RoleAssignment, Session, SessionMember, SessionStatus
 from apps.ledger import services as ledger
@@ -371,6 +372,7 @@ def request_vault_transfer(
             )
         if currency not in ledger.CURRENCIES:
             raise LedgerError("invalid_currency", "Currency must be USD or SOS")
+        platform.require_currency_enabled(currency)
         value = ledger._check_amount(amount, "Amount")
         if value <= 0:
             raise LedgerError("invalid_amount", "Amount must be greater than zero")

@@ -9,6 +9,7 @@ from apps.banking.api import router as banking_router
 from apps.banking.api import student_router as banking_student_router
 from apps.banking.cheque_api import cheque_router
 from apps.banking.txn_api import txn_router
+from apps.core.api import router as platform_router
 from apps.customers.api import router as customers_router
 from apps.customers.api import student_router as customers_student_router
 from apps.lab.api import router as lab_router
@@ -25,6 +26,7 @@ from apps.reports.api import student_router as reports_student_router
 api = NinjaAPI(title="BankLab API", version="0.1.0", auth=ActiveSessionAuth())
 api.add_router("/auth", auth_router)
 api.add_router("/audit", audit_router)
+api.add_router("", platform_router)
 api.add_router("", lab_router)
 api.add_router("", student_router)
 api.add_router("", ledger_router)

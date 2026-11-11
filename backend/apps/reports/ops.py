@@ -16,9 +16,8 @@ from apps.banking.models import (
     Vault,
 )
 from apps.ledger.models import JournalLine
-from apps.ledger.services import CURRENCIES
 
-from .ctx import Ctx, bad, check_currency, current_date, new_report, person
+from .ctx import Ctx, bad, check_currency, current_date, new_report, person, report_currencies
 from .doc import ZERO, Column, Report, Section
 
 TYPES = (
@@ -117,6 +116,7 @@ def branch_daily(ctx: Ctx, business_date: date | None = None) -> Report:
     if ctx.own_only:
         sessions = sessions.filter(teller_member=ctx.member)
     sessions = list(sessions.select_related("till", "teller_member__user").order_by("till__code"))
+    cur_list = report_currencies(ctx.bank, None, day)
     cash = _cash_as_of(ctx.bank, HolderType.TELLER_SESSION, [s.pk for s in sessions], day)
     rows = [
         {
@@ -127,7 +127,7 @@ def branch_daily(ctx: Ctx, business_date: date | None = None) -> Report:
             "cash": cash[(s.pk, cur)],
         }
         for s in sessions
-        for cur in sorted(CURRENCIES)
+        for cur in cur_list
     ]
     cols = [
         Column("teller", "Teller", weight=3),
@@ -147,7 +147,7 @@ def branch_daily(ctx: Ctx, business_date: date | None = None) -> Report:
                 "cash": cash[(v.pk, cur)],
             }
             for v in vaults
-            for cur in sorted(CURRENCIES)
+            for cur in cur_list
         ]
         cols = [
             Column("branch", "Branch", weight=4),

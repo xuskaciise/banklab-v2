@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { formatMoney, useVault } from "@/lib/banking";
 import { STATUS_LABEL, useMyTellerSession } from "@/lib/tellers";
+import { nonZeroCurrencies, useCurrencies } from "@/lib/platform";
 import { useTransactions } from "@/lib/transactions";
 import { StatCard } from "@/components/shared/stat-card";
 import type { usePending } from "./use-pending";
@@ -36,9 +37,14 @@ const amber = (n: number, v: React.ReactNode) =>
 
 function VaultKpis({ sid }: { sid: string }) {
   const v = useVault(sid);
+  const currencies = useCurrencies(
+    nonZeroCurrencies(
+      (v.data?.reconciliation ?? []).map((r) => ({ currency: r.currency, balance: r.vault_total })),
+    ),
+  );
   return (
     <>
-      {["USD", "SOS"].map((c) => {
+      {currencies.map((c) => {
         const r = v.data?.reconciliation.find((x) => x.currency === c);
         return (
           <StatCard
@@ -60,9 +66,10 @@ function TellerKpis({ sid, showTxn }: { sid: string; showTxn: boolean }) {
   const mine = useMyTellerSession(sid);
   const txns = useTransactions(sid, {}, showTxn);
   const t = mine.data;
+  const currencies = useCurrencies(nonZeroCurrencies(t?.balances ?? []));
   return (
     <>
-      {["USD", "SOS"].map((c) => {
+      {currencies.map((c) => {
         const b = t?.balances.find((x) => x.currency === c);
         return (
           <StatCard

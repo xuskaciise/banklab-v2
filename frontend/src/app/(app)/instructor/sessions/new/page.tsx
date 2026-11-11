@@ -9,6 +9,7 @@ import {
   useCreateSession,
   useTemplates,
 } from "@/lib/lab";
+import { useSosEnabled } from "@/lib/platform";
 import type { TemplateOut } from "@/lib/api/types";
 import { Loader2, Plus } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import {
 } from "@/components/lab/common";
 
 function Wizard({ classId }: { classId: string }) {
+  const sosOn = useSosEnabled();
   const router = useRouter();
   const templates = useTemplates(classId);
   const create = useCreateSession();
@@ -84,7 +86,7 @@ function Wizard({ classId }: { classId: string }) {
       /^\d{1,16}(\.\d{1,2})?$/.test(v.trim()) && Number(v) > 0
         ? undefined
         : "Enter a positive amount with at most 2 decimals";
-    const all = { ...next, capUsd: amount(capUsd), capSos: amount(capSos) };
+    const all = { ...next, capUsd: amount(capUsd), capSos: sosOn ? amount(capSos) : undefined };
     setErrors(all);
     if (all.name || all.roles || all.capUsd || all.capSos) return;
     create.mutate(
@@ -127,7 +129,7 @@ function Wizard({ classId }: { classId: string }) {
               { label: "Visibility", value: label(VIS_OPTS, eVisibility) },
               { label: "Roles", value: `${roles.length} allowed` },
               { label: "Capital (USD)", value: capUsd.trim() || "--" },
-              { label: "Capital (SOS)", value: capSos.trim() || "--" },
+              ...(sosOn ? [{ label: "Capital (SOS)", value: capSos.trim() || "--" }] : []),
             ]}
           />
         </div>
@@ -202,13 +204,15 @@ function Wizard({ classId }: { classId: string }) {
                 onChange={(e) => setCapUsd(e.target.value)}
               />
             </Labeled>
-            <Labeled label="Opening capital (SOS)" required error={errors.capSos}>
-              <TextInput
-                inputMode="decimal"
-                value={capSos}
-                onChange={(e) => setCapSos(e.target.value)}
-              />
-            </Labeled>
+            {sosOn && (
+              <Labeled label="Opening capital (SOS)" required error={errors.capSos}>
+                <TextInput
+                  inputMode="decimal"
+                  value={capSos}
+                  onChange={(e) => setCapSos(e.target.value)}
+                />
+              </Labeled>
+            )}
           </FormGrid>
         </FormSection>
         <FormSection title="Roles and Learning">

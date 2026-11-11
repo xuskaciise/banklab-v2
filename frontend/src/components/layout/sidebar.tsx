@@ -19,6 +19,7 @@ import {
   Store,
   Users,
   Wallet,
+  Settings2,
 } from "lucide-react";
 import type { Me } from "@/lib/api/types";
 import { isStudent } from "@/lib/auth";
@@ -48,6 +49,12 @@ const STAFF_NAV: NavItem[] = [
     icon: GraduationCap,
   },
 ];
+const ADMIN_NAV: NavItem = {
+  label: "Platform settings",
+  href: "/instructor/platform",
+  match: /^\/instructor\/platform/,
+  icon: Settings2,
+};
 const STUDENT_NAV: NavItem[] = [
   {
     label: "My sessions",
@@ -61,6 +68,7 @@ export function navFor(
   user: Me | null | undefined,
   session?: { id: string; permissions: string[] },
 ): NavItem[] {
+  if (user?.platform_role === "admin") return [...STAFF_NAV, ADMIN_NAV];
   if (!isStudent(user)) return STAFF_NAV;
   const items = [...STUDENT_NAV];
   if (session?.permissions.includes("vault.view"))

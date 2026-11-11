@@ -157,6 +157,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Settings */
+        get: operations["platform_settings_get"];
+        /** Put Settings */
+        put: operations["platform_settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/classes": {
         parameters: {
             query?: never;
@@ -2511,6 +2529,18 @@ export interface components {
             /** Count */
             count: number;
         };
+        /** PlatformSettingsOut */
+        PlatformSettingsOut: {
+            /** Sos Enabled */
+            sos_enabled: boolean;
+            /** Currencies */
+            currencies: string[];
+        };
+        /** PlatformSettingsIn */
+        PlatformSettingsIn: {
+            /** Sos Enabled */
+            sos_enabled: boolean;
+        };
         /** ClassOut */
         ClassOut: {
             /**
@@ -4714,6 +4744,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PagedAuditOut"];
+                };
+            };
+        };
+    };
+    platform_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformSettingsOut"];
+                };
+            };
+        };
+    };
+    platform_settings_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlatformSettingsIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformSettingsOut"];
                 };
             };
         };

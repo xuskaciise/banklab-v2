@@ -4,16 +4,24 @@ from datetime import date
 from decimal import Decimal
 
 from apps.ledger.models import AccountType, GLAccount
-from apps.ledger.services import CURRENCIES
 
-from .ctx import Ctx, check_currency, current_date, date_range, gl_nets, new_report, side_amount
+from .ctx import (
+    Ctx,
+    check_currency,
+    current_date,
+    date_range,
+    gl_nets,
+    new_report,
+    report_currencies,
+    side_amount,
+)
 from .doc import ZERO, Column, Report, Section
 
 ACCOUNT_COLS = [Column("code", "Code", weight=1), Column("name", "Account", weight=4)]
 
 
-def _currencies(currency) -> list[str]:
-    return [check_currency(currency)] if currency else sorted(CURRENCIES)
+def _currencies(ctx, currency, date_to=None) -> list[str]:
+    return report_currencies(ctx.bank, currency, date_to)
 
 
 def _postable(ctx: Ctx):
@@ -25,7 +33,7 @@ def trial_balance(ctx: Ctx, as_of: date | None = None, currency: str | None = No
     nets = gl_nets(ctx.bank, date_to=as_of, currency=check_currency(currency))
     accounts = _postable(ctx)
     report = new_report(ctx, "trial-balance", "Trial Balance", f"As of {as_of:%d %b %Y}")
-    for cur in _currencies(currency):
+    for cur in _currencies(ctx, currency, as_of):
         rows, total_dr, total_cr = [], ZERO, ZERO
         for acc in accounts:
             net = nets.get((acc.pk, cur), ZERO)
@@ -64,7 +72,7 @@ def balance_sheet(ctx: Ctx, as_of: date | None = None, currency: str | None = No
     by_type = {t: [a for a in accounts if a.type == t] for t in AccountType.values}
     report = new_report(ctx, "balance-sheet", "Balance Sheet", f"As of {as_of:%d %b %Y}")
     cols = [*ACCOUNT_COLS, Column("amount", "Amount", "money")]
-    for cur in _currencies(currency):
+    for cur in _currencies(ctx, currency, as_of):
         rows: list[dict] = []
         assets = _group(rows, "ASSETS", by_type["asset"], nets, cur, "Total assets")
         liabilities = _group(
@@ -102,7 +110,7 @@ def income_statement(
         ctx, "income-statement", "Income Statement", f"{start:%d %b %Y} to {end:%d %b %Y}"
     )
     cols = [*ACCOUNT_COLS, Column("amount", "Amount", "money")]
-    for cur in _currencies(currency):
+    for cur in _currencies(ctx, currency, end):
         rows: list[dict] = []
         income = _group(
             rows, "INCOME", [a for a in accounts if a.type == AccountType.INCOME], nets, cur,

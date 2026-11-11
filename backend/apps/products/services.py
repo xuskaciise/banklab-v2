@@ -12,6 +12,7 @@ from django.db.models import Max, Q
 from django.utils import timezone
 
 from apps.audit import services as audit
+from apps.core import platform
 from apps.customers import services as customers
 from apps.lab.models import Bank, SessionMember
 from apps.ledger.services import LedgerError
@@ -131,6 +132,7 @@ def open_account(member: SessionMember, *, customer_id, product_id, mandate=Mand
         product = Product.objects.filter(pk=product_id, bank_id=member.bank_id).first()
         if product is None:
             raise _not_found("Product")
+        platform.require_currency_enabled(product.currency)
         missing = customers.kyc_missing(customer)
         if missing:
             raise _bad(

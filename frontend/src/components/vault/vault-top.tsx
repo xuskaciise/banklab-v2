@@ -3,6 +3,7 @@
 import { AlertTriangle, CheckCircle2, Landmark, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/banking";
+import { nonZeroCurrencies, useCurrencies } from "@/lib/platform";
 import type { VaultOut } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,6 +67,9 @@ const TINT: Record<string, string> = {
 
 /** Vault cash per branch and currency; amounts are server positions. */
 export function VaultCash({ vault, loading }: { vault?: VaultOut; loading: boolean }) {
+  const currencies = useCurrencies(
+    (vault?.branches ?? []).flatMap((b) => nonZeroCurrencies(b.positions)),
+  );
   if (loading)
     return (
       <div className="grid gap-3 sm:grid-cols-2">
@@ -77,7 +81,7 @@ export function VaultCash({ vault, loading }: { vault?: VaultOut; loading: boole
     <div className="space-y-3">
       {vault?.branches.map((b) => (
         <div key={b.branch_id} className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
-          {["USD", "SOS"].map((c) => {
+          {currencies.map((c) => {
             const pos = b.positions.find((p) => p.currency === c);
             const full = formatMoney(pos?.balance ?? "0", c);
             return (

@@ -13,7 +13,8 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ErrorMsg, Loading } from "@/components/lab/common";
-import { CURRENCIES, Difference } from "./session-bits";
+import { nonZeroCurrencies, useCurrencies } from "@/lib/platform";
+import { Difference } from "./session-bits";
 
 /** Denomination count. Live totals are a display aid; the server recomputes. */
 export function CloseCountForm({
@@ -25,6 +26,7 @@ export function CloseCountForm({
   s: TellerSession;
   onDone: () => void;
 }) {
+  const currencies = useCurrencies(nonZeroCurrencies(s.balances));
   const denoms = useDenominations();
   const act = useTellerAction(sid);
   const [qty, setQty] = useState<Record<number, string>>({});
@@ -46,7 +48,7 @@ export function CloseCountForm({
         kind: "close-count",
         id: s.id,
         body: {
-          counts: CURRENCIES.map((c) => ({
+          counts: currencies.map((c) => ({
             currency: c,
             lines: (denoms.data ?? [])
               .filter((d) => d.currency === c && q(d.id) > 0)
@@ -67,7 +69,7 @@ export function CloseCountForm({
   return (
     <form onSubmit={submit} className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-2">
-        {CURRENCIES.map((c) => {
+        {currencies.map((c) => {
           const rows = (denoms.data ?? []).filter((d) => d.currency === c);
           const counted = rows.reduce(
             (a, d) => a + Number(d.value) * q(d.id),

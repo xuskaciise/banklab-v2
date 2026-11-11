@@ -5,6 +5,7 @@ import pytest
 from django.core.cache import cache
 from django.db import DatabaseError, connection, transaction
 from django.test import Client
+from django.utils import timezone
 from ninja.errors import HttpError
 
 from apps.accounts import services as acc
@@ -318,7 +319,7 @@ class TestAuditApi:
         by_actor = client.get("/api/audit", {"actor": "boss"}).json()
         assert by_actor["count"] >= 1
         assert all(r["actor_username"] == "boss" for r in by_actor["items"])
-        day = AuditLog.objects.first().at.date().isoformat()
+        day = timezone.localtime(AuditLog.objects.first().at).date().isoformat()
         assert client.get("/api/audit", {"date_from": day, "date_to": day}).json()["count"] == 2
         assert client.get("/api/audit", {"date_from": "2999-01-01"}).json()["count"] == 0
 

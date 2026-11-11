@@ -1,11 +1,10 @@
 "use client";
 
 import { formatMoney } from "@/lib/banking";
+import { nonZeroCurrencies, useCurrencies } from "@/lib/platform";
 import { STATUS_LABEL } from "@/lib/tellers";
 import type { CashCount, TellerSession } from "@/lib/api/types";
 import { StatusBadge } from "@/components/shared/status-badge";
-
-export const CURRENCIES = ["USD", "SOS"] as const;
 
 export function SessionStatus({ status }: { status: string }) {
   const tone =
@@ -44,9 +43,10 @@ export function Difference({
 }
 
 export function Balances({ s }: { s: TellerSession }) {
+  const currencies = useCurrencies(nonZeroCurrencies(s.balances));
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      {CURRENCIES.map((c) => {
+      {currencies.map((c) => {
         const b = s.balances.find((x) => x.currency === c);
         return (
           <div

@@ -12,6 +12,7 @@ import {
   useSessionTransition,
 } from "@/lib/lab";
 import { formatMoney } from "@/lib/banking";
+import { useSosEnabled } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/shared/data-table";
@@ -106,6 +107,8 @@ const dayColumns: ColumnDef<BusinessDayOut>[] = [
 ];
 
 export function SettingsTab({ session }: { session: SessionOut }) {
+  const sosOn = useSosEnabled();
+  const showSos = sosOn || Number(session.opening_capital_sos) !== 0;
   const t = useSessionTransition(session.id);
   const days = useBusinessDays(session.id);
   const [groups, setGroups] = useState("2");
@@ -164,11 +167,13 @@ export function SettingsTab({ session }: { session: SessionOut }) {
               {formatMoney(session.opening_capital_usd, "USD")}
             </span>
           </Tile>
-          <Tile label="Opening capital (SOS)">
-            <span className="tabular-nums">
-              {formatMoney(session.opening_capital_sos, "SOS")}
-            </span>
-          </Tile>
+          {showSos && (
+            <Tile label="Opening capital (SOS)">
+              <span className="tabular-nums">
+                {formatMoney(session.opening_capital_sos, "SOS")}
+              </span>
+            </Tile>
+          )}
           <div className="col-span-2">
             <Tile label="Allowed roles">
               <span className="font-normal text-text-body">
