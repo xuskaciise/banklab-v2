@@ -37,68 +37,88 @@ export const KIND_META: Record<
   },
 };
 
-/** Compact segmented radio-group of transaction types; arrow keys move. */
+export const ALL_KINDS = Object.keys(KIND_META) as Kind[];
+
+const NOT_ALLOWED_HINT =
+  "Not allowed for your current role. Switch role from the account menu (cash needs the Teller role).";
+
+/**
+ * Segmented radio-group of all transaction types. Types the current role
+ * cannot post stay visible but disabled, so students see why they are missing.
+ * Arrow keys move between the allowed types.
+ */
 export function TypeSelector({
-  kinds,
+  allowed,
   value,
   onChange,
 }: {
-  kinds: Kind[];
+  allowed: Kind[];
   value: Kind;
   onChange: (k: Kind) => void;
 }) {
   const refs = useRef<Record<string, HTMLButtonElement | null>>({});
 
-  function onKey(e: React.KeyboardEvent, i: number) {
+  function onKey(e: React.KeyboardEvent) {
     const step =
       e.key === "ArrowRight" || e.key === "ArrowDown"
         ? 1
         : e.key === "ArrowLeft" || e.key === "ArrowUp"
           ? -1
           : 0;
-    if (!step) return;
+    if (!step || allowed.length === 0) return;
     e.preventDefault();
-    const next = kinds[(i + step + kinds.length) % kinds.length];
+    const i = allowed.indexOf(value);
+    const next = allowed[(i + step + allowed.length) % allowed.length];
     onChange(next);
     refs.current[next]?.focus();
   }
 
   return (
-    <div
-      role="radiogroup"
-      aria-label="Transaction type"
-      className="inline-flex rounded-lg border border-border bg-surface p-0.5"
-    >
-      {kinds.map((k, i) => {
-        const { label, hint, icon: Icon } = KIND_META[k];
-        const active = k === value;
-        return (
-          <button
-            key={k}
-            ref={(el) => {
-              refs.current[k] = el;
-            }}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            tabIndex={active ? 0 : -1}
-            title={hint}
-            onClick={() => onChange(k)}
-            onKeyDown={(e) => onKey(e, i)}
-            className={cn(
-              "flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors outline-none",
-              "focus-visible:ring-2 focus-visible:ring-bank-accent",
-              active
-                ? "bg-bank-sky-light text-bank-primary shadow-xs ring-1 ring-bank-primary"
-                : "text-text-body hover:bg-hover",
-            )}
-          >
-            <Icon className="size-4" aria-hidden />
-            <span className="hidden sm:inline">{label}</span>
-            <span className="sr-only sm:hidden">{label}</span>
-          </button>
-        );
-      })}
+    <div className="flex flex-col gap-1">
+      <span id="txn-type-label" className="text-xs font-medium text-text-muted">
+        Transaction type
+      </span>
+      <div
+        role="radiogroup"
+        aria-labelledby="txn-type-label"
+        className="inline-flex flex-wrap gap-0.5 rounded-lg border border-border bg-surface p-0.5"
+      >
+        {ALL_KINDS.map((k) => {
+          const { label, hint, icon: Icon } = KIND_META[k];
+          const enabled = allowed.includes(k);
+          const active = enabled && k === value;
+          return (
+            <button
+              key={k}
+              ref={(el) => {
+                refs.current[k] = el;
+              }}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              aria-disabled={!enabled}
+              disabled={!enabled}
+              tabIndex={active ? 0 : -1}
+              title={enabled ? hint : NOT_ALLOWED_HINT}
+              onClick={() => enabled && onChange(k)}
+              onKeyDown={onKey}
+              className={cn(
+                "flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors outline-none",
+                "focus-visible:ring-2 focus-visible:ring-bank-accent",
+                active
+                  ? "bg-bank-primary text-white shadow-xs"
+                  : enabled
+                    ? "text-text-body hover:bg-hover"
+                    : "cursor-not-allowed text-text-muted opacity-50",
+              )}
+            >
+              <Icon className="size-4" aria-hidden />
+              <span className="hidden sm:inline">{label}</span>
+              <span className="sr-only sm:hidden">{label}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

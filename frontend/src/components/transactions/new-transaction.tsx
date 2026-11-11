@@ -89,7 +89,7 @@ export function NewTransaction({ sid }: { sid: string }) {
             Process customer financial transactions securely.
           </p>
         </div>
-        {kind && <TypeSelector kinds={kinds} value={kind} onChange={setTab} />}
+        {kind && <TypeSelector allowed={kinds} value={kind} onChange={setTab} />}
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-3 lg:overflow-y-auto">
         <QueryState query={me}>
