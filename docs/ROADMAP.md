@@ -39,7 +39,8 @@ Domain details for every item live in [CONCEPT.md](CONCEPT.md).
 | 1.12 | Reports: statement, teller cash, branch daily, transaction journal, TB, BS, IS, GL ledger — PDF + Excel | 1.11 | [x] |
 | 1.12a | SOS currency on/off (platform setting by Admin): server rejects new SOS accounts, transactions, cash moves and limit edits when off; history and reports stay readable; UI hides SOS | 1.12 | [x] |
 | 1.12b | Admin console: manage instructors (create, deactivate, reset password), institution settings (name, logo), CoA and session templates; admin-only nav (see `docs/design/permissions.md`) | 1.12a | [ ] |
-| 1.13 | Dashboards (instructor, manager, teller) + Dr/Cr learning panel toggle | 1.12b | [ ] |
+| 1.12c | Customer service upgrades (university request 2026-11-11): individual owner gets mother's name + parent/guardian phone (editable, audited); customer search by ID document number; account search by customer name, phone or ID number (not only account no) | 1.12b | [ ] |
+| 1.13 | Dashboards (instructor, manager, teller) + Dr/Cr learning panel toggle | 1.12c | [ ] |
 | 1.14 | Exam sessions: timer, tasks, per-student seed data, auto-check, scores, results export | 1.13 | [ ] |
 | 1.15 | Hardening: load test (100–200 students), security review, deploy to VPS | 1.14 | [ ] |
 
