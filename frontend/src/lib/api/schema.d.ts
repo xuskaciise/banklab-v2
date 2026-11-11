@@ -1738,7 +1738,8 @@ export interface paths {
         put?: never;
         /**
          * Party File Upload
-         * @description kind = `photo` or `signature` (JPEG/PNG, max 5 MB).
+         * @description kind = `photo` or `signature` (JPEG/PNG, max 5 MB). Optional form field `source`:
+         *     signature -> upload|drawn, photo -> upload|camera (else 400 invalid_source).
          */
         post: operations["customers_party_file_upload"];
         delete?: never;
@@ -4602,6 +4603,10 @@ export interface components {
             has_photo: boolean;
             /** Has Signature */
             has_signature: boolean;
+            /** Photo Source */
+            photo_source: string;
+            /** Signature Source */
+            signature_source: string;
             /** Identity Documents */
             identity_documents: components["schemas"]["DocumentOut"][];
             /** Next Of Kin */
@@ -7950,6 +7955,11 @@ export interface operations {
                      * Format: binary
                      */
                     file: string;
+                    /**
+                     * Source
+                     * @default upload
+                     */
+                    source?: string;
                 };
             };
         };

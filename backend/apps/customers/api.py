@@ -13,7 +13,7 @@ from datetime import date, datetime
 from uuid import UUID
 
 from django.http import FileResponse
-from ninja import File, Query, Router, Schema, UploadedFile
+from ninja import File, Form, Query, Router, Schema, UploadedFile
 from ninja.pagination import PageNumberPagination, paginate
 
 from apps.rbac.context import require_bank_permission
@@ -151,6 +151,8 @@ class PartyLinkOut(Schema):
     guardian_phone: str
     has_photo: bool
     has_signature: bool
+    photo_source: str
+    signature_source: str
     identity_documents: list[DocumentOut]
     next_of_kin: list[KinOut]
 
@@ -185,6 +187,14 @@ class PartyLinkOut(Schema):
     @staticmethod
     def resolve_has_signature(obj):
         return bool(obj.party.signature)
+
+    @staticmethod
+    def resolve_photo_source(obj):
+        return obj.party.photo_source
+
+    @staticmethod
+    def resolve_signature_source(obj):
+        return obj.party.signature_source
 
     @staticmethod
     def resolve_identity_documents(obj):
@@ -376,9 +386,13 @@ def party_file_upload(
     party_id: UUID,
     kind: str,
     file: File[UploadedFile],
+    source: Form[str] = "upload",
 ):
-    """kind = `photo` or `signature` (JPEG/PNG, max 5 MB)."""
-    return services.upload_party_file(request.session_member, customer_id, party_id, kind, file)
+    """kind = `photo` or `signature` (JPEG/PNG, max 5 MB). Optional form field `source`:
+    signature -> upload|drawn, photo -> upload|camera (else 400 invalid_source)."""
+    return services.upload_party_file(
+        request.session_member, customer_id, party_id, kind, file, source
+    )
 
 
 @student_router.get(

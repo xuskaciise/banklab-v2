@@ -72,6 +72,10 @@ class Customer(NoDeleteModel):
         indexes = [models.Index(fields=["bank", "display_name"], name="customer_name_idx")]
 
 
+PHOTO_SOURCES = [("upload", "Upload"), ("camera", "Camera")]
+SIGNATURE_SOURCES = [("upload", "Upload"), ("drawn", "Drawn")]
+
+
 class Party(NoDeleteModel):
     bank = models.ForeignKey("lab.Bank", on_delete=models.PROTECT, related_name="parties")
     full_name = models.CharField(max_length=200)
@@ -82,6 +86,10 @@ class Party(NoDeleteModel):
     guardian_phone = models.CharField(max_length=30, blank=True, default="")
     photo = models.FileField(upload_to=photo_path, null=True, blank=True)
     signature = models.FileField(upload_to=signature_path, null=True, blank=True)
+    photo_source = models.CharField(max_length=10, blank=True, default="", choices=PHOTO_SOURCES)
+    signature_source = models.CharField(
+        max_length=10, blank=True, default="", choices=SIGNATURE_SOURCES
+    )
 
     class Meta:
         verbose_name_plural = "parties"

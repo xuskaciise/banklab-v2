@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { FileText, ImageIcon, Pencil, Plus, Upload } from "lucide-react";
+import { Camera, FileText, ImageIcon, Pencil, PenLine, Plus, Upload } from "lucide-react";
 import {
   docLabel,
   formatCif,
@@ -20,6 +20,8 @@ import type { DocumentOut, PartyLink } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { CustomerAccounts } from "@/components/accounts/customer-accounts";
+import { SignaturePadDialog } from "@/components/customers/signature-pad-dialog";
+import { CameraCaptureDialog } from "@/components/customers/camera-capture-dialog";
 import { QueryState, errorText } from "@/components/lab/common";
 import {
   AddDocumentDialog,
@@ -101,6 +103,23 @@ function Thumb({
     customerId,
   );
   const title = kind === "photo" ? "Photo" : "Signature";
+  const [dlg, setDlg] = useState(false);
+  const src = kind === "photo" ? party.photo_source : party.signature_source;
+  const srcLabel =
+    src === "drawn" ? "Drawn" : src === "camera" ? "Camera" : "Uploaded";
+  function send(file: File, source: string) {
+    up.mutate(
+      { path: `parties/${party.party_id}/${kind}`, file, source },
+      {
+        onSuccess: () => {
+          setVer((v) => v + 1);
+          setDlg(false);
+          toast.success(`${title} saved`);
+        },
+        onError: (e) => toast.error(errorText(e)),
+      },
+    );
+  }
   return (
     <div className="space-y-2">
       <p className="text-xs font-medium tracking-wide text-text-muted uppercase">
@@ -121,24 +140,42 @@ function Thumb({
           </span>
         )}
       </div>
+      {has && <StatusBadge status="active" label={srcLabel} />}
       {canEdit && (
+        <div className="flex flex-wrap gap-2">
         <PickFile
           label={has ? `Replace ${kind}` : `Upload ${kind}`}
           accept="image/jpeg,image/png"
           maxBytes={MAX_BYTES}
           pending={up.isPending}
-          onFile={(file) =>
-            up.mutate(
-              { path: `parties/${party.party_id}/${kind}`, file },
-              {
-                onSuccess: () => {
-                  setVer((v) => v + 1);
-                  toast.success(`${title} saved`);
-                },
-                onError: (e) => toast.error(errorText(e)),
-              },
-            )
-          }
+          onFile={(file) => send(file, "upload")}
+        />
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={up.isPending}
+          onClick={() => setDlg(true)}
+        >
+          {kind === "signature" ? <PenLine /> : <Camera />}
+          {kind === "signature" ? "Draw signature" : "Take photo"}
+        </Button>
+        </div>
+      )}
+      {canEdit && dlg && kind === "signature" && (
+        <SignaturePadDialog
+          open
+          onOpenChange={setDlg}
+          pending={up.isPending}
+          onSave={(f) => send(f, "drawn")}
+        />
+      )}
+      {canEdit && dlg && kind === "photo" && (
+        <CameraCaptureDialog
+          open
+          onOpenChange={setDlg}
+          pending={up.isPending}
+          onUse={(f) => send(f, "camera")}
         />
       )}
     </div>

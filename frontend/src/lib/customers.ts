@@ -166,9 +166,10 @@ export const useUploadFile = (sid: string, cid: string) =>
   useStudentMutation(
     sid,
     cid,
-    (v: { path: string; file: File }) => {
+    (v: { path: string; file: File; source?: string }) => {
       const form = new FormData();
       form.append("file", v.file);
+      if (v.source) form.append("source", v.source);
       return apiFetch(`/api/s/${sid}/customers/${cid}/${v.path}`, {
         method: "POST",
         form,

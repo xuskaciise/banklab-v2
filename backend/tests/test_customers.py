@@ -670,6 +670,69 @@ class TestFiles:
         )
         assert Party.objects.get(pk=pid).photo.name == ""
 
+    def test_source_drawn_camera_and_default(self, env):
+        c, pid = self.setup_customer(env)
+        client = api(env.user("cso"))
+        base = env.url(f"/{c.pk}/parties/{pid}")
+        r = client.post(f"{base}/photo", {"file": SimpleUploadedFile("a.png", PNG)})
+        assert r.status_code == 200
+        assert r.json()["parties"][0]["photo_source"] == "upload"
+        assert r.json()["parties"][0]["signature_source"] == ""
+        r = client.post(
+            f"{base}/signature", {"file": SimpleUploadedFile("s.png", PNG), "source": "drawn"}
+        )
+        assert r.status_code == 200 and r.json()["parties"][0]["signature_source"] == "drawn"
+        r = client.post(
+            f"{base}/photo", {"file": SimpleUploadedFile("p.jpg", JPG), "source": "camera"}
+        )
+        assert r.status_code == 200 and r.json()["parties"][0]["photo_source"] == "camera"
+        p = Party.objects.get(pk=pid)
+        assert (p.photo_source, p.signature_source) == ("camera", "drawn")
+        for action, src in (
+            ("customer.party_signature_uploaded", "drawn"),
+            ("customer.party_photo_uploaded", "camera"),
+        ):
+            assert (
+                AuditLog.objects.filter(action=action).latest("at").after["source"] == src
+            )
+
+    def test_invalid_source_saves_nothing(self, env, settings):
+        c, pid = self.setup_customer(env)
+        client = api(env.user("cso"))
+        base = env.url(f"/{c.pk}/parties/{pid}")
+        for kind, src in (("photo", "drawn"), ("signature", "camera"), ("photo", "junk")):
+            r = client.post(
+                f"{base}/{kind}", {"file": SimpleUploadedFile("a.png", PNG), "source": src}
+            )
+            assert r.status_code == 400, (kind, src)
+            assert r.json()["code"] == "invalid_source"
+        p = Party.objects.get(pk=pid)
+        assert not p.photo and not p.signature
+        assert (p.photo_source, p.signature_source) == ("", "")
+        assert not [f for f in settings.MEDIA_ROOT.rglob("*") if f.is_file()]
+        assert (
+            not AuditLog.objects.filter(action__startswith="customer.party_")
+            .filter(action__endswith="_uploaded")
+            .exists()
+        )
+
+    def test_source_upload_isolation(self, world):
+        env = Env(world, "a", structure="per_group", default_visibility="all")
+        bank2 = Bank.objects.get(session=env.session, group_no=2)
+        cso2 = add_person(world, env.session, bank2, "cso2c", "cso")
+        c1 = make(env, "cso")
+        pid = c1.links.get().party_id
+        other = Env(world, "z", default_visibility="all")
+        body = {"file": SimpleUploadedFile("a.png", PNG), "source": "drawn"}
+        r = api(cso2[0]).post(env.url(f"/{c1.pk}/parties/{pid}/signature"), body)
+        assert r.status_code == 404
+        body = {"file": SimpleUploadedFile("a.png", PNG), "source": "drawn"}
+        r = api(cso2[0]).post(
+            f"/api/s/{other.session.pk}/customers/{c1.pk}/parties/{pid}/signature", body
+        )
+        assert r.status_code == 403
+        assert Party.objects.get(pk=pid).signature_source == ""
+
     def test_permissions_and_visibility(self, world):
         env = Env(world, default_visibility="own")
         c = make(env, "cso")

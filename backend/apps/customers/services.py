@@ -320,6 +320,8 @@ def _party_dict(p: Party) -> dict:
         "guardian_phone": p.guardian_phone,
         "has_photo": bool(p.photo),
         "has_signature": bool(p.signature),
+        "photo_source": p.photo_source,
+        "signature_source": p.signature_source,
     }
 
 
@@ -732,10 +734,20 @@ def _sniff(upload, *, allow_pdf: bool) -> str:
     raise LedgerError("invalid_file_type", f"File must be {allowed}", status=415)
 
 
-def _upload_party_file(member, customer_id, party_id, kind, upload, saved) -> Customer:
+ALLOWED_SOURCES = {"signature": ("upload", "drawn"), "photo": ("upload", "camera")}
+
+
+def _upload_party_file(
+    member, customer_id, party_id, kind, upload, saved, source="upload"
+) -> Customer:
     """Store a party's photo or signature (JPEG/PNG, max 5 MB). Old files stay on disk."""
     if kind not in ("photo", "signature"):
         raise _not_found("File")
+    if source not in ALLOWED_SOURCES[kind]:
+        raise _bad(
+            f"source for {kind} must be one of: {', '.join(ALLOWED_SOURCES[kind])}",
+            "invalid_source",
+        )
     with transaction.atomic():
         session, role, scope = _write_ctx(member, PERM_UPDATE)
         customer = _locked_customer(member, scope, customer_id)
@@ -745,14 +757,15 @@ def _upload_party_file(member, customer_id, party_id, kind, upload, saved) -> Cu
         party = Party.objects.select_for_update(of=("self",)).get(pk=party_id)
         getattr(party, kind).save(f"{kind}.{ext}", upload, save=False)
         saved.append(getattr(party, kind).name)
-        party.save(update_fields=[kind, "updated_at"])
+        setattr(party, f"{kind}_source", source)
+        party.save(update_fields=[kind, f"{kind}_source", "updated_at"])
         _audit(
             member,
             role,
             f"customer.party_{kind}_uploaded",
             session,
             customer,
-            after={"party_id": str(party_id), "size": upload.size, "type": ext},
+            after={"party_id": str(party_id), "size": upload.size, "type": ext, "source": source},
         )
         return _reload(member, scope, customer.pk)
 
@@ -802,12 +815,14 @@ def _remove_saved(saved: list[str]) -> None:
         default_storage.delete(name)
 
 
-def upload_party_file(member: SessionMember, customer_id, party_id, kind, upload) -> Customer:
+def upload_party_file(
+    member: SessionMember, customer_id, party_id, kind, upload, source="upload"
+) -> Customer:
     """Store a party's photo or signature (JPEG/PNG, max 5 MB). A rollback removes the new
     file; replaced files stay on disk."""
     saved: list[str] = []
     try:
-        return _upload_party_file(member, customer_id, party_id, kind, upload, saved)
+        return _upload_party_file(member, customer_id, party_id, kind, upload, saved, source)
     except BaseException:
         _remove_saved(saved)
         raise
