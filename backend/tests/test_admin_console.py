@@ -411,3 +411,55 @@ class TestSessionTemplates:
             {**TPL, "coa_template_id": str(foreign_coa.pk)},
         )
         assert r.status_code == 404
+
+
+@pytest.mark.django_db
+class TestReassignClass:
+    def url(self, w):
+        return f"/api/admin/classes/{w['ca'].pk}/instructor"
+
+    def test_admin_reassigns_and_access_moves(self, world, adm):  # noqa: F811
+        w = world
+        r = j(adm, "put", self.url(w), {"instructor_id": str(w["ib"].pk)})
+        assert r.status_code == 200, r.content
+        assert r.json()["instructor_id"] == str(w["ib"].pk)
+        assert r.json()["instructor_name"]
+        row = AuditLog.objects.get(action="admin.class_instructor_changed")
+        assert row.actor_id == w["admin"].pk and row.entity_id == str(w["ca"].pk)
+        assert row.before["instructor_id"] == str(w["ia"].pk)
+        assert row.after["instructor_id"] == str(w["ib"].pk)
+        assert api(w["ia"]).get(f"/api/classes/{w['ca'].pk}").status_code in (403, 404)
+        assert api(w["ib"]).get(f"/api/classes/{w['ca'].pk}").status_code == 200
+
+    def test_non_admin_forbidden(self, world):  # noqa: F811
+        w = world
+        body = {"instructor_id": str(w["ib"].pk)}
+        assert j(api(w["ia"]), "put", self.url(w), body).status_code == 403
+        assert j(api(w["studs"][0]), "put", self.url(w), body).status_code == 403
+
+    def test_cross_institution_404(self, world, adm):  # noqa: F811
+        w = world
+        oadm, inst = other_inst_admin()
+        oi = acc.create_user("oins", "O Ins", PHONE, PlatformRole.INSTRUCTOR, institution=inst)
+        assert j(api(oadm), "put", self.url(w), {"instructor_id": str(oi.pk)}).status_code == 404
+        assert j(adm, "put", self.url(w), {"instructor_id": str(oi.pk)}).status_code == 404
+
+    def test_invalid_targets_rejected(self, world, adm):  # noqa: F811
+        w = world
+        w["ib"].is_active = False
+        w["ib"].save(update_fields=["is_active"])
+        assert j(adm, "put", self.url(w), {"instructor_id": str(w["ib"].pk)}).status_code == 400
+        stud = {"instructor_id": str(w["studs"][0].pk)}
+        assert j(adm, "put", self.url(w), stud).status_code in (400, 404)
+        same = {"instructor_id": str(w["ia"].pk)}
+        assert j(adm, "put", self.url(w), same).status_code == 400
+        assert not AuditLog.objects.filter(action="admin.class_instructor_changed").exists()
+
+    def test_create_class_validates_instructor(self, world):  # noqa: F811
+        w = world
+        w["ib"].is_active = False
+        w["ib"].save(update_fields=["is_active"])
+        with pytest.raises(lab.ValidationFailed):
+            lab.create_class(w["admin"], "N", "N1", instructor_id=w["ib"].pk)
+        with pytest.raises(lab.ValidationFailed):
+            lab.create_class(w["admin"], "N", "N2", instructor_id=w["studs"][0].pk)

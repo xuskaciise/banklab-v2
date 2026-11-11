@@ -10,7 +10,7 @@ from apps.accounts.models import Institution, PlatformRole, User
 from apps.accounts.services import AccountsError
 from apps.audit import services as audit
 from apps.lab import services as lab
-from apps.lab.models import Session, SessionTemplate
+from apps.lab.models import Class, Session, SessionTemplate
 from apps.ledger import services as ledger
 from apps.ledger.coa import DEFAULT_COA_NAME
 from apps.ledger.models import AccountType, CoaTemplate, CoaTemplateLine
@@ -130,6 +130,43 @@ def reset_instructor_password(actor: User, user_id, request=None) -> None:
     target = _get_instructor(actor, user_id)
     accounts.reset_password(actor, target)
     _audit(actor, "auth.password_reset", ("user", target.pk), request=request)
+
+
+@transaction.atomic
+def set_class_instructor(actor: User, class_id, instructor_id, request=None) -> Class:
+    """Reassign a class to another active instructor of the same institution."""
+    require_admin(actor)
+    lab_class = (
+        Class.objects.select_related("instructor")
+        .select_for_update(of=("self",))
+        .filter(pk=class_id, institution_id=actor.institution_id)
+        .first()
+    )
+    if lab_class is None:
+        raise NotFound("Class not found")
+    target = User.objects.filter(
+        pk=instructor_id,
+        institution_id=actor.institution_id,
+        platform_role=PlatformRole.INSTRUCTOR,
+    ).first()
+    if target is None:
+        raise NotFound("Instructor not found")
+    if not target.is_active:
+        raise ConsoleError("Instructor is deactivated")
+    if target.pk == lab_class.instructor_id:
+        raise ConsoleError("Class already belongs to this instructor")
+    before = {"instructor_id": str(lab_class.instructor_id)}
+    lab_class.instructor = target
+    lab_class.save(update_fields=["instructor"])
+    _audit(
+        actor,
+        "admin.class_instructor_changed",
+        ("class", lab_class.pk),
+        before=before,
+        after={"instructor_id": str(target.pk)},
+        request=request,
+    )
+    return lab_class
 
 
 # --------------------------------------------------------------------------- institution

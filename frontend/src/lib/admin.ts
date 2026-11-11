@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiBlob, apiFetch } from "@/lib/api/client";
 import { ME_KEY } from "@/lib/auth";
 import type {
+  ClassOut,
   CoaLineIn,
   CoaLineOut,
   CoaLinePatch,
@@ -23,9 +24,10 @@ const COA = ["admin", "coa"] as const;
 const SESSION_TPL = ["admin", "session-templates"] as const;
 
 // ---- instructors ----
-export const useInstructors = () =>
+export const useInstructors = (enabled = true) =>
   useQuery({
     queryKey: INSTRUCTORS,
+    enabled,
     queryFn: () => apiFetch<InstructorOut[]>(`${A}/instructors`),
   });
 
@@ -47,6 +49,21 @@ export function useSetInstructorActive() {
         json: { is_active: v.is_active },
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: INSTRUCTORS }),
+  });
+}
+
+export function useSetClassInstructor(classId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (instructor_id: string) =>
+      apiFetch<ClassOut>(`${A}/classes/${classId}/instructor`, {
+        method: "PUT",
+        json: { instructor_id },
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["class", classId] });
+      qc.invalidateQueries({ queryKey: ["classes"] });
+    },
   });
 }
 

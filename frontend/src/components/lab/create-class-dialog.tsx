@@ -14,7 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ErrorMsg, Labeled, TextInput } from "./common";
+import { useMe } from "@/lib/auth";
+import { useInstructors } from "@/lib/admin";
+import { ErrorMsg, Labeled, Select, TextInput } from "./common";
 
 /** "New class" button + dialog with client validation and server errors. */
 export function CreateClassDialog({
@@ -28,7 +30,16 @@ export function CreateClassDialog({
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
-  const [errors, setErrors] = useState<{ name?: string; code?: string }>({});
+  const [instructorId, setInstructorId] = useState("");
+  const [errors, setErrors] = useState<{
+    name?: string;
+    code?: string;
+    instructor?: string;
+  }>({});
+  const { data: me } = useMe();
+  const isAdmin = me?.platform_role === "admin";
+  const instructors = useInstructors(isAdmin);
+  const activeInstructors = (instructors.data ?? []).filter((i) => i.is_active);
 
   function onOpenChange(v: boolean) {
     setOpen(v);
@@ -43,16 +54,22 @@ export function CreateClassDialog({
     const next = {
       name: name.trim() ? undefined : "Enter a class name",
       code: code.trim() ? undefined : "Enter a class code",
+      instructor: isAdmin && !instructorId ? "Select an instructor" : undefined,
     };
     setErrors(next);
-    if (next.name || next.code) return;
+    if (next.name || next.code || next.instructor) return;
     create.mutate(
-      { name: name.trim(), code: code.trim() },
+      {
+        name: name.trim(),
+        code: code.trim(),
+        ...(isAdmin ? { instructor_id: instructorId } : {}),
+      },
       {
         onSuccess: (c) => {
           toast.success(`Class "${c.name}" created`);
           setName("");
           setCode("");
+          setInstructorId("");
           onOpenChange(false);
         },
       },
@@ -84,6 +101,24 @@ export function CreateClassDialog({
               <Labeled label="Code" error={errors.code} hint="For example BNK-101">
                 <TextInput value={code} onChange={(e) => setCode(e.target.value)} />
               </Labeled>
+              {isAdmin && (
+                <Labeled label="Instructor" error={errors.instructor} required>
+                  <Select
+                    className="w-full"
+                    value={instructorId}
+                    onChange={(e) => setInstructorId(e.target.value)}
+                  >
+                    <option value="">
+                      {instructors.isLoading ? "Loading…" : "Select instructor"}
+                    </option>
+                    {activeInstructors.map((i) => (
+                      <option key={i.id} value={i.id}>
+                        {i.full_name}
+                      </option>
+                    ))}
+                  </Select>
+                </Labeled>
+              )}
               <ErrorMsg error={create.error} />
             </DialogBody>
             <DialogFooter>

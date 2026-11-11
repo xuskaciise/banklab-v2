@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Plus, Upload } from "lucide-react";
 import { useClass, useClassSessions, useStudents } from "@/lib/lab";
+import { useMe } from "@/lib/auth";
+import { ChangeInstructorDialog } from "@/components/lab/change-instructor-dialog";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { QueryState, Tabs } from "@/components/lab/common";
@@ -17,6 +19,8 @@ import {
 export default function ClassDetailPage() {
   const { id } = useParams<{ id: string }>();
   const cls = useClass(id);
+  const { data: me } = useMe();
+  const isAdmin = me?.platform_role === "admin";
   const students = useStudents(id);
   const sessions = useClassSessions(id);
   const [tab, setTab] = useState("students");
@@ -47,6 +51,7 @@ export default function ClassDetailPage() {
               }
               actions={
                 <>
+                  {isAdmin && <ChangeInstructorDialog cls={cls.data} />}
                   <Link href={`/instructor/classes/${id}/import`}>
                     <Button variant="outline">
                       <Upload /> Import CSV

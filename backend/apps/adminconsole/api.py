@@ -8,6 +8,8 @@ from django.http import FileResponse
 from ninja import File, Router, Schema, UploadedFile
 from ninja.errors import HttpError
 
+from apps.lab.api import ClassOut
+
 from . import services
 
 router = Router(tags=["admin"])
@@ -31,6 +33,10 @@ class InstructorOut(Schema):
 
 class ActiveIn(Schema):
     is_active: bool
+
+
+class ClassInstructorIn(Schema):
+    instructor_id: UUID
 
 
 class InstitutionNameIn(Schema):
@@ -179,6 +185,17 @@ def instructors_set_active(request, user_id: UUID, payload: ActiveIn):
 def instructors_reset_password(request, user_id: UUID):
     services.reset_instructor_password(_admin(request), user_id, request=request)
     return 204, None
+
+
+@router.put(
+    "/classes/{class_id}/instructor",
+    response=ClassOut,
+    operation_id="admin_class_set_instructor",
+)
+def class_set_instructor(request, class_id: UUID, payload: ClassInstructorIn):
+    return services.set_class_instructor(
+        _admin(request), class_id, payload.instructor_id, request=request
+    )
 
 
 # ----------------------------------------------------------------------- institution

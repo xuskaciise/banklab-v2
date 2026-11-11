@@ -209,6 +209,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/classes/{class_id}/instructor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Class Set Instructor */
+        put: operations["admin_class_set_instructor"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/institution": {
         parameters: {
             query?: never;
@@ -2796,6 +2813,33 @@ export interface components {
             /** Is Active */
             is_active: boolean;
         };
+        /** ClassOut */
+        ClassOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Code */
+            code: string;
+            /**
+             * Instructor Id
+             * Format: uuid
+             */
+            instructor_id: string;
+            /** Instructor Name */
+            instructor_name: string;
+        };
+        /** ClassInstructorIn */
+        ClassInstructorIn: {
+            /**
+             * Instructor Id
+             * Format: uuid
+             */
+            instructor_id: string;
+        };
         /** InstitutionOut */
         InstitutionOut: {
             /**
@@ -2976,25 +3020,6 @@ export interface components {
         PlatformSettingsIn: {
             /** Sos Enabled */
             sos_enabled: boolean;
-        };
-        /** ClassOut */
-        ClassOut: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Name */
-            name: string;
-            /** Code */
-            code: string;
-            /**
-             * Instructor Id
-             * Format: uuid
-             */
-            instructor_id: string;
-            /** Instructor Name */
-            instructor_name: string;
         };
         /** ClassIn */
         ClassIn: {
@@ -5271,6 +5296,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    admin_class_set_instructor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                class_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClassInstructorIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassOut"];
+                };
             };
         };
     };
