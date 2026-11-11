@@ -471,6 +471,19 @@ def list_templates(actor: User, class_id=None):
     return qs
 
 
+def _coa_template_or_none(actor: User, coa_template_id):
+    if coa_template_id is None:
+        return None
+    from apps.ledger.models import CoaTemplate  # local import: ledger depends on lab
+
+    found = CoaTemplate.objects.filter(
+        pk=coa_template_id, institution_id=actor.institution_id
+    ).first()
+    if found is None:
+        raise NotFound("CoA template not found")
+    return found
+
+
 @transaction.atomic
 def create_template(
     actor: User,
@@ -485,6 +498,7 @@ def create_template(
     class_id=None,
     opening_capital_usd=DEFAULT_CAPITAL_USD,
     opening_capital_sos=DEFAULT_CAPITAL_SOS,
+    coa_template_id=None,
 ) -> SessionTemplate:
     _require_staff(actor)
     lab_class = None
@@ -498,9 +512,11 @@ def create_template(
     kind, structure, visibility, panel = _normalize_settings(
         kind, structure, default_visibility, learning_panel
     )
+    coa_template = _coa_template_or_none(actor, coa_template_id)
     template = SessionTemplate.objects.create(
         institution_id=actor.institution_id,
         lab_class=lab_class,
+        coa_template=coa_template,
         name=name,
         kind=kind,
         structure=structure,

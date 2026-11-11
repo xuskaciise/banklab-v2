@@ -16,6 +16,7 @@ def get_default_institution() -> "Institution":
 class Institution(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200, unique=True)
+    logo = models.FileField(upload_to="institution_logos/", blank=True, default="")
 
     def __str__(self) -> str:
         return self.name

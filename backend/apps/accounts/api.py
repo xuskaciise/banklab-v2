@@ -50,6 +50,16 @@ class MeOut(Schema):
     full_name: str
     platform_role: str
     must_change_password: bool
+    institution_name: str
+    logo_url: str | None = None
+
+    @staticmethod
+    def resolve_institution_name(obj):
+        return obj.institution.name
+
+    @staticmethod
+    def resolve_logo_url(obj):
+        return "/api/institution/logo" if obj.institution.logo else None
 
 
 class LoginOut(Schema):

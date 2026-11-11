@@ -157,6 +157,237 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/instructors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Instructors List */
+        get: operations["admin_instructors_list"];
+        put?: never;
+        /** Instructors Create */
+        post: operations["admin_instructors_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/instructors/{user_id}/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Instructors Set Active */
+        put: operations["admin_instructors_set_active"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/instructors/{user_id}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Instructors Reset Password */
+        post: operations["admin_instructors_reset_password"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/institution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Institution Get */
+        get: operations["admin_institution_get"];
+        /** Institution Put */
+        put: operations["admin_institution_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/institution/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Institution Logo Put
+         * @description PNG or JPG, max 1 MB.
+         */
+        post: operations["admin_institution_logo_put"];
+        /** Institution Logo Delete */
+        delete: operations["admin_institution_logo_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/coa-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Coa List */
+        get: operations["admin_coa_list"];
+        put?: never;
+        /** Coa Create */
+        post: operations["admin_coa_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/coa-templates/{template_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Coa Detail */
+        get: operations["admin_coa_detail"];
+        put?: never;
+        post?: never;
+        /** Coa Delete */
+        delete: operations["admin_coa_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/coa-templates/{template_id}/lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Coa Line Add */
+        post: operations["admin_coa_line_add"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/coa-templates/{template_id}/lines/{line_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Coa Line Update */
+        patch: operations["admin_coa_line_update"];
+        trace?: never;
+    };
+    "/api/admin/session-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Session Templates List */
+        get: operations["admin_session_templates_list"];
+        put?: never;
+        /** Session Templates Create */
+        post: operations["admin_session_templates_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/session-templates/{template_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Session Templates Update */
+        put: operations["admin_session_templates_update"];
+        post?: never;
+        /** Session Templates Delete */
+        delete: operations["admin_session_templates_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/institution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Institution Public Get */
+        get: operations["institution_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/institution/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Institution Logo */
+        get: operations["institution_logo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/settings": {
         parameters: {
             query?: never;
@@ -2440,6 +2671,10 @@ export interface components {
             platform_role: string;
             /** Must Change Password */
             must_change_password: boolean;
+            /** Institution Name */
+            institution_name: string;
+            /** Logo Url */
+            logo_url?: string | null;
         };
         /** StaffLoginIn */
         StaffLoginIn: {
@@ -2528,6 +2763,207 @@ export interface components {
             items: components["schemas"]["AuditOut"][];
             /** Count */
             count: number;
+        };
+        /** InstructorOut */
+        InstructorOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Username */
+            username: string;
+            /** Full Name */
+            full_name: string;
+            /** Phone */
+            phone: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Must Change Password */
+            must_change_password: boolean;
+        };
+        /** InstructorIn */
+        InstructorIn: {
+            /** Username */
+            username: string;
+            /** Full Name */
+            full_name: string;
+            /** Phone */
+            phone: string;
+        };
+        /** ActiveIn */
+        ActiveIn: {
+            /** Is Active */
+            is_active: boolean;
+        };
+        /** InstitutionOut */
+        InstitutionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Has Logo */
+            has_logo: boolean;
+            /** Logo Url */
+            logo_url?: string | null;
+        };
+        /** InstitutionNameIn */
+        InstitutionNameIn: {
+            /** Name */
+            name: string;
+        };
+        /** CoaTemplateRow */
+        CoaTemplateRow: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Is Default */
+            is_default: boolean;
+            /** Line Count */
+            line_count: number;
+            /** Session Template Count */
+            session_template_count: number;
+        };
+        /** CoaLineOut */
+        CoaLineOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
+            /** Parent Code */
+            parent_code: string;
+            /** Postable */
+            postable: boolean;
+            /** System Tag */
+            system_tag: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Allow Negative */
+            allow_negative: boolean;
+        };
+        /** CoaTemplateDetail */
+        CoaTemplateDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Is Default */
+            is_default: boolean;
+            /** Lines */
+            lines: components["schemas"]["CoaLineOut"][];
+        };
+        /** CoaTemplateIn */
+        CoaTemplateIn: {
+            /** Name */
+            name: string;
+            /** Copy From Id */
+            copy_from_id?: string | null;
+        };
+        /** CoaLineIn */
+        CoaLineIn: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Type */
+            type: string;
+            /**
+             * Parent Code
+             * @default
+             */
+            parent_code: string;
+            /**
+             * Postable
+             * @default false
+             */
+            postable: boolean;
+        };
+        /** CoaLinePatch */
+        CoaLinePatch: {
+            /** Name */
+            name?: string | null;
+            /** Is Active */
+            is_active?: boolean | null;
+        };
+        /** SessionTemplateOut */
+        SessionTemplateOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Structure */
+            structure: string;
+            /** Allowed Roles */
+            allowed_roles: string[];
+            /** Default Visibility */
+            default_visibility: string;
+            /** Learning Panel */
+            learning_panel: boolean;
+            /** Seed Profile */
+            seed_profile: string;
+            /** Opening Capital Usd */
+            opening_capital_usd: number | string;
+            /** Opening Capital Sos */
+            opening_capital_sos: number | string;
+            /** Coa Template Id */
+            coa_template_id?: string | null;
+        };
+        /** SessionTemplateIn */
+        SessionTemplateIn: {
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Structure */
+            structure: string;
+            /** Allowed Roles */
+            allowed_roles: string[];
+            /** Default Visibility */
+            default_visibility: string;
+            /**
+             * Learning Panel
+             * @default true
+             */
+            learning_panel: boolean;
+            /**
+             * Seed Profile
+             * @default
+             */
+            seed_profile: string;
+            /**
+             * Opening Capital Usd
+             * @default 1000000.00
+             */
+            opening_capital_usd: number | string;
+            /**
+             * Opening Capital Sos
+             * @default 5000000000.00
+             */
+            opening_capital_sos: number | string;
+            /** Coa Template Id */
+            coa_template_id?: string | null;
         };
         /** PlatformSettingsOut */
         PlatformSettingsOut: {
@@ -4745,6 +5181,457 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PagedAuditOut"];
                 };
+            };
+        };
+    };
+    admin_instructors_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstructorOut"][];
+                };
+            };
+        };
+    };
+    admin_instructors_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstructorIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstructorOut"];
+                };
+            };
+        };
+    };
+    admin_instructors_set_active: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActiveIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstructorOut"];
+                };
+            };
+        };
+    };
+    admin_instructors_reset_password: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    admin_institution_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionOut"];
+                };
+            };
+        };
+    };
+    admin_institution_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstitutionNameIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionOut"];
+                };
+            };
+        };
+    };
+    admin_institution_logo_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * File
+                     * Format: binary
+                     */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionOut"];
+                };
+            };
+        };
+    };
+    admin_institution_logo_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionOut"];
+                };
+            };
+        };
+    };
+    admin_coa_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoaTemplateRow"][];
+                };
+            };
+        };
+    };
+    admin_coa_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CoaTemplateIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoaTemplateDetail"];
+                };
+            };
+        };
+    };
+    admin_coa_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoaTemplateDetail"];
+                };
+            };
+        };
+    };
+    admin_coa_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    admin_coa_line_add: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CoaLineIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoaLineOut"];
+                };
+            };
+        };
+    };
+    admin_coa_line_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+                line_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CoaLinePatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoaLineOut"];
+                };
+            };
+        };
+    };
+    admin_session_templates_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionTemplateOut"][];
+                };
+            };
+        };
+    };
+    admin_session_templates_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SessionTemplateIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionTemplateOut"];
+                };
+            };
+        };
+    };
+    admin_session_templates_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SessionTemplateIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionTemplateOut"];
+                };
+            };
+        };
+    };
+    admin_session_templates_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    institution_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionOut"];
+                };
+            };
+        };
+    };
+    institution_logo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

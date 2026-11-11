@@ -95,3 +95,15 @@ export type EodClose = Schemas["EodCloseOut"];
 // Platform settings (1.12a)
 export type PlatformSettings = Schemas["PlatformSettingsOut"];
 export type PlatformSettingsIn = Schemas["PlatformSettingsIn"];
+
+// Admin console (1.12b)
+export type InstructorOut = Schemas["InstructorOut"];
+export type InstructorIn = Schemas["InstructorIn"];
+export type InstitutionOut = Schemas["InstitutionOut"];
+export type CoaTemplateRow = Schemas["CoaTemplateRow"];
+export type CoaTemplateDetail = Schemas["CoaTemplateDetail"];
+export type CoaLineOut = Schemas["CoaLineOut"];
+export type CoaLineIn = Schemas["CoaLineIn"];
+export type CoaLinePatch = Schemas["CoaLinePatch"];
+export type SessionTemplateOut = Schemas["SessionTemplateOut"];
+export type SessionTemplateIn = Schemas["SessionTemplateIn"];

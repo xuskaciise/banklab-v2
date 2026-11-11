@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -20,10 +21,15 @@ import {
   Users,
   Wallet,
   Settings2,
+  UserCog,
+  Building2,
+  ListTree,
+  LayoutTemplate,
 } from "lucide-react";
 import type { Me } from "@/lib/api/types";
 import { isStudent } from "@/lib/auth";
 import { useSessionMe } from "@/lib/lab";
+import { useLogoSrc } from "@/lib/admin";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +38,7 @@ type NavItem = {
   href: string;
   match: RegExp;
   icon: React.ComponentType<{ className?: string }>;
+  section?: string;
 };
 
 // Only pages that exist today. Add an entry when its page ships.
@@ -49,12 +56,13 @@ const STAFF_NAV: NavItem[] = [
     icon: GraduationCap,
   },
 ];
-const ADMIN_NAV: NavItem = {
-  label: "Platform settings",
-  href: "/instructor/platform",
-  match: /^\/instructor\/platform/,
-  icon: Settings2,
-};
+const ADMIN_NAV: NavItem[] = [
+  { label: "Instructors", href: "/admin/instructors", match: new RegExp("^/admin/instructors"), icon: UserCog },
+  { label: "Institution", href: "/admin/institution", match: new RegExp("^/admin/institution"), icon: Building2 },
+  { label: "CoA templates", href: "/admin/coa-templates", match: new RegExp("^/admin/coa-templates"), icon: ListTree },
+  { label: "Session templates", href: "/admin/session-templates", match: new RegExp("^/admin/session-templates"), icon: LayoutTemplate },
+  { label: "Platform settings", href: "/admin/platform", match: new RegExp("^/admin/platform"), icon: Settings2 },
+].map((i) => ({ ...i, section: "Admin" }));
 const STUDENT_NAV: NavItem[] = [
   {
     label: "My sessions",
@@ -68,7 +76,7 @@ export function navFor(
   user: Me | null | undefined,
   session?: { id: string; permissions: string[] },
 ): NavItem[] {
-  if (user?.platform_role === "admin") return [...STAFF_NAV, ADMIN_NAV];
+  if (user?.platform_role === "admin") return [...STAFF_NAV, ...ADMIN_NAV];
   if (!isStudent(user)) return STAFF_NAV;
   const items = [...STUDENT_NAV];
   if (session?.permissions.includes("vault.view"))
@@ -179,6 +187,7 @@ export function SidebarContent({
   const pathname = usePathname();
   const sessionId = pathname.match(/^\/s\/([^/]+)/)?.[1];
   const sessionMe = useSessionMe(sessionId ?? "");
+  const logoSrc = useLogoSrc(user?.logo_url);
   const nav = navFor(
     user,
     sessionId && sessionMe.data
@@ -197,22 +206,27 @@ export function SidebarContent({
         )}
       >
         <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm">
-          <Image
-            src="/logo.png"
-            alt="SIU logo"
-            width={36}
-            height={36}
-            className="size-9 object-contain"
-            priority
-          />
+          {logoSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoSrc} alt="Institution logo" className="size-9 object-contain" />
+          ) : (
+            <Image
+              src="/logo.png"
+              alt="SIU logo"
+              width={36}
+              height={36}
+              className="size-9 object-contain"
+              priority
+            />
+          )}
         </span>
         {!collapsed && (
           <div className="min-w-0 leading-tight">
             <p className="truncate text-sm font-semibold tracking-tight text-white">
-              BankLab
+              {user?.institution_name || "BankLab"}
             </p>
             <p className="truncate text-[11px] text-sidebar-foreground/60">
-              Training bank
+              BankLab training bank
             </p>
           </div>
         )}
@@ -224,11 +238,21 @@ export function SidebarContent({
             Menu
           </p>
         )}
-        {nav.map((item) => {
+        {nav.map((item, idx) => {
+          const heading = item.section && item.section !== nav[idx - 1]?.section;
           const active = item.match.test(pathname);
           const Icon = item.icon;
           return (
-            <Tooltip key={item.href} content={item.label} disabled={!collapsed}>
+            <Fragment key={item.href}>
+              {heading &&
+                (collapsed ? (
+                  <hr className="my-2 border-sidebar-border" />
+                ) : (
+                  <p className="px-2 pt-3 pb-1 text-[11px] font-medium tracking-wider text-sidebar-foreground/50 uppercase">
+                    {item.section}
+                  </p>
+                ))}
+            <Tooltip content={item.label} disabled={!collapsed}>
               <Link
                 href={item.href}
                 onClick={onNavigate}
@@ -257,6 +281,7 @@ export function SidebarContent({
                 {!collapsed && <span className="truncate">{item.label}</span>}
               </Link>
             </Tooltip>
+            </Fragment>
           );
         })}
       </nav>

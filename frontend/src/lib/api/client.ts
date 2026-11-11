@@ -119,10 +119,10 @@ export function getHealth() {
 }
 
 /** Fetches a binary file with the session cookie and returns a blob. */
-export async function apiBlob(path: string): Promise<Blob> {
+export async function apiBlob(path: string, init?: RequestInit): Promise<Blob> {
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, { credentials: "include" });
+    res = await fetch(`${API_URL}${path}`, { ...init, credentials: "include" });
   } catch {
     throw new ApiError("API unreachable");
   }
