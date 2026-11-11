@@ -40,7 +40,7 @@ export const KIND_META: Record<
 export const ALL_KINDS = Object.keys(KIND_META) as Kind[];
 
 const NOT_ALLOWED_HINT =
-  "Not allowed for your current role. Switch role from the account menu (cash needs the Teller role).";
+  "Not allowed for your current role. Cash transactions need the Teller role; ask your instructor to assign it.";
 
 /**
  * Segmented radio-group of all transaction types. Types the current role
