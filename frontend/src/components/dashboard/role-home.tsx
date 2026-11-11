@@ -2,7 +2,14 @@
 
 import { Check } from "lucide-react";
 import { abilities, LIMIT_NOTE } from "@/lib/role-guide";
+import { useSessionDashboard } from "@/lib/dashboard";
+import { ErrorMsg } from "@/components/lab/common";
 import { KpiCards } from "./kpi-cards";
+import {
+  DashboardSkeleton,
+  ManagerDashboardBlock,
+  TellerDashboardBlock,
+} from "./role-dashboards";
 import { PendingPreview } from "./pending-preview";
 import { QuickActions } from "./quick-actions";
 import { RecentActivity } from "./recent-activity";
@@ -32,6 +39,9 @@ function Permissions({ codes, note }: { codes: string[]; note: boolean }) {
 export function RoleHome({ sid, codes }: { sid: string; codes: string[] }) {
   const has = (c: string) => codes.includes(c);
   const pending = usePending(sid, has);
+  const dash = useSessionDashboard(sid);
+  const teller = dash.data?.teller ?? null;
+  const manager = dash.data?.manager ?? null;
   const makes = has("txn.cash_deposit") || has("txn.transfer");
   const counts: Record<string, number> = {
     Approvals: pending.limitCount,
@@ -45,7 +55,23 @@ export function RoleHome({ sid, codes }: { sid: string; codes: string[] }) {
       : `/s/${sid}/tills`;
   return (
     <div className="min-w-0 space-y-4">
-      <KpiCards sid={sid} has={has} pending={pending} />
+      {dash.isPending ? (
+        <DashboardSkeleton />
+      ) : dash.isError ? (
+        <ErrorMsg error={dash.error} />
+      ) : (
+        <>
+          {teller && <TellerDashboardBlock sid={sid} d={teller} />}
+          {manager && <ManagerDashboardBlock sid={sid} d={manager} />}
+        </>
+      )}
+      <KpiCards
+        sid={sid}
+        has={has}
+        pending={pending}
+        skipTeller={!!teller}
+        skipManager={!!manager}
+      />
       <QuickActions sid={sid} has={has} counts={counts} />
       <div className="grid items-start gap-4 lg:grid-cols-2">
         {pending.show && (

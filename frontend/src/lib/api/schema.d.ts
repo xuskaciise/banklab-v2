@@ -596,6 +596,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Staff Dashboard */
+        get: operations["lab_dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/learning-panel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sessions Learning Panel */
+        post: operations["lab_sessions_learning_panel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sessions/{session_id}/open": {
         parameters: {
             query?: never;
@@ -1496,6 +1530,40 @@ export interface paths {
         put?: never;
         /** Approvals Reject */
         post: operations["approvals_reject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dashboard Get */
+        get: operations["dashboard_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/transactions/{txn_id}/learning": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Txn Learning */
+        get: operations["txn_learning"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3242,6 +3310,82 @@ export interface components {
             /** Opening Capital Sos */
             opening_capital_sos?: number | string | null;
         };
+        /** DashboardCountsOut */
+        DashboardCountsOut: {
+            /** Classes */
+            classes: number;
+            /** Active Sessions */
+            active_sessions: number;
+            /** Students */
+            students: number;
+        };
+        /** DashboardEventOut */
+        DashboardEventOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Actor Name */
+            actor_name?: string | null;
+            /** Action */
+            action: string;
+            /** Bank Name */
+            bank_name?: string | null;
+            /** Session Id */
+            session_id?: string | null;
+            /** Session Name */
+            session_name?: string | null;
+        };
+        /** DashboardSessionOut */
+        DashboardSessionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Class Id
+             * Format: uuid
+             */
+            class_id: string;
+            /** Class Name */
+            class_name: string;
+            /** Kind */
+            kind: string;
+            /** Learning Panel */
+            learning_panel: boolean;
+            /** Opened At */
+            opened_at?: string | null;
+            /** Banks Count */
+            banks_count: number;
+            /** Members Count */
+            members_count: number;
+            /** Today Transactions */
+            today_transactions: number;
+            /** Pending Approvals */
+            pending_approvals: number;
+        };
+        /** StaffDashboardOut */
+        StaffDashboardOut: {
+            counts: components["schemas"]["DashboardCountsOut"];
+            /** Sessions */
+            sessions: components["schemas"]["DashboardSessionOut"][];
+            /** Recent Activity */
+            recent_activity: components["schemas"]["DashboardEventOut"][];
+        };
+        /** LearningPanelIn */
+        LearningPanelIn: {
+            /** Enabled */
+            enabled: boolean;
+        };
         /** OpenSessionIn */
         OpenSessionIn: {
             /** Group Count */
@@ -4355,6 +4499,142 @@ export interface components {
              * @default
              */
             note: string;
+        };
+        /** AmountOut */
+        AmountOut: {
+            /** Currency */
+            currency: string;
+            /** Amount */
+            amount: number | string;
+        };
+        /** BranchCashOut */
+        BranchCashOut: {
+            /** Currency */
+            currency: string;
+            /** Vault */
+            vault: number | string;
+            /** Tills */
+            tills: number | string;
+            /** Total */
+            total: number | string;
+        };
+        /** BusinessDayBriefOut */
+        BusinessDayBriefOut: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /** Status */
+            status: string;
+        };
+        /** DashboardOut */
+        DashboardOut: {
+            /** Role */
+            role: string;
+            /** Business Date */
+            business_date?: string | null;
+            teller?: components["schemas"]["TellerDashboardOut"] | null;
+            manager?: components["schemas"]["ManagerDashboardOut"] | null;
+        };
+        /** ManagerDashboardOut */
+        ManagerDashboardOut: {
+            business_day?: components["schemas"]["BusinessDayBriefOut"] | null;
+            /** Cash */
+            cash?: components["schemas"]["BranchCashOut"][] | null;
+            /** Open Tills */
+            open_tills?: number | null;
+            /** Closing Tills */
+            closing_tills?: number | null;
+            /** Pending Approvals */
+            pending_approvals: components["schemas"]["PendingApprovalCountOut"][];
+        };
+        /** PendingApprovalCountOut */
+        PendingApprovalCountOut: {
+            /** Type */
+            type: string;
+            /** Count */
+            count: number;
+        };
+        /** TellerDashboardOut */
+        TellerDashboardOut: {
+            teller_session?: components["schemas"]["TellerSessionBriefOut"] | null;
+            /** Till Status */
+            till_status: string;
+            /** Till Cash */
+            till_cash: components["schemas"]["AmountOut"][];
+            today: components["schemas"]["TellerTodayOut"];
+            /** Pending Approvals */
+            pending_approvals: number;
+        };
+        /** TellerSessionBriefOut */
+        TellerSessionBriefOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Till Code */
+            till_code: string;
+            /**
+             * Business Date
+             * Format: date
+             */
+            business_date: string;
+            /** Opened At */
+            opened_at?: string | null;
+        };
+        /** TellerTodayOut */
+        TellerTodayOut: {
+            /** Count */
+            count: number;
+            /** Pending Count */
+            pending_count: number;
+            /** Total In */
+            total_in: components["schemas"]["AmountOut"][];
+            /** Total Out */
+            total_out: components["schemas"]["AmountOut"][];
+        };
+        /** LearningLineOut */
+        LearningLineOut: {
+            /** Gl Code */
+            gl_code: string;
+            /** Gl Name */
+            gl_name: string;
+            /** Debit */
+            debit: number | string;
+            /** Credit */
+            credit: number | string;
+            /** Currency */
+            currency: string;
+        };
+        /** LearningOut */
+        LearningOut: {
+            /**
+             * Transaction Id
+             * Format: uuid
+             */
+            transaction_id: string;
+            /** Ref No */
+            ref_no: string;
+            /** Type */
+            type: string;
+            /** Status */
+            status: string;
+            /** Currency */
+            currency: string;
+            /** Journal Entry No */
+            journal_entry_no?: number | null;
+            /** Lines */
+            lines: components["schemas"]["LearningLineOut"][];
+            /** Total Debit */
+            total_debit: number | string;
+            /** Total Credit */
+            total_credit: number | string;
+            /** Explanation */
+            explanation: string;
+            /** Note */
+            note?: string | null;
         };
         /** ChequebookOut */
         ChequebookOut: {
@@ -6072,6 +6352,52 @@ export interface operations {
             };
         };
     };
+    lab_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffDashboardOut"];
+                };
+            };
+        };
+    };
+    lab_sessions_learning_panel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LearningPanelIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionOut"];
+                };
+            };
+        };
+    };
     lab_sessions_open: {
         parameters: {
             query?: never;
@@ -7482,6 +7808,51 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApprovalOut"];
+                };
+            };
+        };
+    };
+    dashboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOut"];
+                };
+            };
+        };
+    };
+    txn_learning: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                txn_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LearningOut"];
                 };
             };
         };

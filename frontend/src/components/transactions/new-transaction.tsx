@@ -11,6 +11,7 @@ import { QueryState, ReadOnlyBanner } from "@/components/lab/common";
 import { TxnForm } from "./txn-form";
 import { TypeSelector, type Kind } from "./type-selector";
 import { TxnResult } from "./txn-result";
+import { LearningPanel, useLearningEnabled } from "./learning-panel";
 
 const PERM: Record<Kind, string> = {
   deposit: "txn.cash_deposit",
@@ -28,6 +29,12 @@ export function NewTransaction({ sid }: { sid: string }) {
   const [tab, setTab] = useState<Kind | null>(null);
   const [result, setResult] = useState<TransactionOut | null>(null);
   const [formKey, setFormKey] = useState(0);
+  const learning = useLearningEnabled(sid);
+  const [learnId, setLearnId] = useState<string | null>(null);
+  const onPosted = (t: TransactionOut) => {
+    setResult(t);
+    if (learning && t.status === "posted") setLearnId(t.id);
+  };
   // Any way of closing the result modal resets the form.
   const startNew = () => {
     setResult(null);
@@ -69,7 +76,7 @@ export function NewTransaction({ sid }: { sid: string }) {
               sid={sid}
               kind={kind}
               dateLabel={dateLabel}
-              onDone={setResult}
+              onDone={onPosted}
             />
           )
         )}
@@ -96,6 +103,7 @@ export function NewTransaction({ sid }: { sid: string }) {
           {readOnly && <ReadOnlyBanner />}
           {body}
         </QueryState>
+        <LearningPanel sid={sid} txnId={learnId} onClose={() => setLearnId(null)} />
         {result && (
           <TxnResult
             sid={sid}

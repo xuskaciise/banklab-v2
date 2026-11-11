@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  Archive,
   Activity,
   GraduationCap,
   PlayCircle,
@@ -12,14 +11,8 @@ import {
   Upload,
   Users,
 } from "lucide-react";
-import { apiFetch } from "@/lib/api/client";
-import type { SessionOut, StudentOut } from "@/lib/api/types";
-import {
-  formatDateTime,
-  humanizeAction,
-  useClasses,
-  useRecentAudit,
-} from "@/lib/lab";
+import { useStaffDashboard } from "@/lib/dashboard";
+import { actionLabel, formatDateTime, useClasses } from "@/lib/lab";
 import { useMe } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,39 +59,17 @@ export default function StaffOverviewPage() {
   const { data: user } = useMe();
   const classes = useClasses();
   const classList = classes.data;
-  const sessionQs = useQueries({
-    queries: (classList ?? []).map((c) => ({
-      queryKey: ["class-sessions", c.id],
-      queryFn: () => apiFetch<SessionOut[]>(`/api/classes/${c.id}/sessions`),
-    })),
-  });
-  const studentQs = useQueries({
-    queries: (classList ?? []).map((c) => ({
-      queryKey: ["students", c.id],
-      queryFn: () => apiFetch<StudentOut[]>(`/api/classes/${c.id}/students`),
-    })),
-  });
-  const audit = useRecentAudit();
+  const dash = useStaffDashboard();
+  const dd = dash.data;
 
   const loadingClasses = classes.isPending;
-  const sessionsReady = !!classList && sessionQs.every((q) => !q.isPending);
-  const studentsReady = !!classList && studentQs.every((q) => !q.isPending);
-  const sessions = sessionQs.flatMap((q) => q.data ?? []);
-  const studentCount = studentQs.reduce((n, q) => n + (q.data?.length ?? 0), 0);
-  const open = sessions.filter((s) => s.status === "active");
-  const draft = sessions.filter((s) => s.status === "draft");
-  const archived = sessions.filter((s) => s.status === "archived");
-  const fetching =
-    classes.isFetching ||
-    audit.isFetching ||
-    sessionQs.some((q) => q.isFetching) ||
-    studentQs.some((q) => q.isFetching);
+  const fetching = classes.isFetching || dash.isFetching;
 
   function refresh() {
     qc.invalidateQueries({ queryKey: ["classes"] });
     qc.invalidateQueries({ queryKey: ["class-sessions"] });
     qc.invalidateQueries({ queryKey: ["students"] });
-    qc.invalidateQueries({ queryKey: ["audit-recent"] });
+    qc.invalidateQueries({ queryKey: ["staff-dashboard"] });
   }
 
   const firstName = user?.full_name?.split(" ")[0];
@@ -119,87 +90,107 @@ export default function StaffOverviewPage() {
 
       <ErrorMsg error={classes.error} />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <ErrorMsg error={dash.error} />
+
+      <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
           label="Classes"
           icon={GraduationCap}
-          loading={loadingClasses}
-          value={classList?.length ?? 0}
+          loading={dash.isPending}
+          value={dd?.counts.classes ?? 0}
           hint="Classes you teach"
         />
         <StatCard
           label="Students"
           icon={Users}
-          loading={loadingClasses || !studentsReady}
-          value={studentCount}
+          loading={dash.isPending}
+          value={dd?.counts.students ?? 0}
           hint="Enrolled across your classes"
         />
         <StatCard
-          label="Open sessions"
+          label="Active sessions"
           icon={PlayCircle}
-          loading={loadingClasses || !sessionsReady}
-          value={open.length}
-          hint={`${draft.length} draft`}
-        />
-        <StatCard
-          label="Archived sessions"
-          icon={Archive}
-          loading={loadingClasses || !sessionsReady}
-          value={archived.length}
-          hint="Read-only history"
+          loading={dash.isPending}
+          value={dd?.counts.active_sessions ?? 0}
+          hint="Open for students now"
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          <Panel
-            title="Open sessions"
-            action={
-              <Link
-                href="/instructor/classes"
-                className="text-xs font-medium text-bank-accent hover:underline"
-              >
-                View classes
-              </Link>
-            }
+      <Panel
+        title="Active sessions"
+        action={
+          <Link
+            href="/instructor/classes"
+            className="text-xs font-medium text-bank-accent hover:underline"
           >
-            {loadingClasses || !sessionsReady ? (
-              <RowsSkeleton />
-            ) : open.length ? (
-              <ul className="divide-y divide-border">
-                {open.map((s) => (
-                  <li
-                    key={s.id}
-                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-text-strong">
-                        {s.name}
-                      </p>
-                      <p className="truncate text-xs text-text-muted">
-                        {s.class_name} · <span className="capitalize">{s.kind}</span>
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <StatusBadge status={s.status} />
+            View classes
+          </Link>
+        }
+      >
+        {dash.isPending ? (
+          <RowsSkeleton />
+        ) : dd?.sessions.length ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-surface text-xs text-text-muted uppercase">
+                <tr>
+                  <th scope="col" className="px-4 py-2 text-left font-medium">Session</th>
+                  <th scope="col" className="px-3 py-2 text-left font-medium">Kind</th>
+                  <th scope="col" className="px-3 py-2 text-left font-medium">Dr/Cr panel</th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium">Banks</th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium">Members</th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium">Txns today</th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium">Pending</th>
+                  <th scope="col" className="px-4 py-2" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {dd.sessions.map((s) => (
+                  <tr key={s.id} className="hover:bg-hover">
+                    <td className="px-4 py-2.5">
+                      <span className="block font-medium text-text-strong">{s.name}</span>
+                      <span className="block text-xs text-text-muted">{s.class_name}</span>
+                    </td>
+                    <td className="px-3 py-2.5 capitalize">{s.kind}</td>
+                    <td className="px-3 py-2.5">
+                      <StatusBadge
+                        status={s.learning_panel ? "active" : "inactive"}
+                        label={s.learning_panel ? "On" : "Off"}
+                      />
+                    </td>
+                    <td className="px-3 py-2.5 text-right tabular-nums">{s.banks_count}</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums">{s.members_count}</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums">{s.today_transactions}</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums">
+                      {s.pending_approvals > 0 ? (
+                        <span className="font-semibold text-fin-pending">{s.pending_approvals}</span>
+                      ) : (
+                        0
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 text-right">
                       <Link href={`/instructor/sessions/${s.id}`}>
                         <Button size="sm" variant="outline">
                           Control
                         </Button>
                       </Link>
-                    </div>
-                  </li>
+                    </td>
+                  </tr>
                 ))}
-              </ul>
-            ) : (
-              <EmptyState
-                className="rounded-none border-0"
-                title="No open sessions"
-                description="Open a session from one of your classes to start a lab."
-              />
-            )}
-          </Panel>
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <EmptyState
+            className="rounded-none border-0"
+            title="No active sessions"
+            description="Open a session from one of your classes to start a lab."
+          />
+        )}
+      </Panel>
 
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
           <Panel
             title="My classes"
             action={
@@ -215,7 +206,7 @@ export default function StaffOverviewPage() {
               <RowsSkeleton />
             ) : classList?.length ? (
               <ul className="divide-y divide-border">
-                {classList.map((c, i) => (
+                {classList.map((c) => (
                   <li key={c.id}>
                     <Link
                       href={`/instructor/classes/${c.id}`}
@@ -229,11 +220,6 @@ export default function StaffOverviewPage() {
                           {c.code}
                         </span>
                       </span>
-                      <span className="text-xs text-text-muted tabular-nums">
-                        {studentQs[i]?.data
-                          ? `${studentQs[i].data.length} students`
-                          : ""}
-                      </span>
                     </Link>
                   </li>
                 ))}
@@ -244,6 +230,39 @@ export default function StaffOverviewPage() {
                 title="No classes yet"
                 description="Create your first class to get started."
                 action={<CreateClassDialog label="Create class" />}
+              />
+            )}
+          </Panel>
+
+          <Panel title="Recent activity">
+            {dash.isPending ? (
+              <RowsSkeleton />
+            ) : dd?.recent_activity.length ? (
+              <ul className="divide-y divide-border">
+                {dd.recent_activity.map((a) => (
+                  <li key={a.id} className="flex gap-3 px-4 py-2.5">
+                    <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-bank-sky-light text-bank-primary">
+                      <Activity className="size-3.5" />
+                    </span>
+                    <div className="min-w-0 text-sm">
+                      <p className="truncate font-medium text-text-strong">
+                        {actionLabel(a.action)}
+                      </p>
+                      <p className="truncate text-xs text-text-muted">
+                        {a.actor_name ?? "system"}
+                        {a.bank_name ? ` · ${a.bank_name}` : ""}
+                        {a.session_name ? ` · ${a.session_name}` : ""}
+                        {` · ${formatDateTime(a.at)}`}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState
+                className="rounded-none border-0"
+                title="No activity yet"
+                description="Actions in your sessions will appear here."
               />
             )}
           </Panel>
@@ -271,40 +290,6 @@ export default function StaffOverviewPage() {
                 </p>
               )}
             </div>
-          </Panel>
-
-          <Panel title="Recent activity">
-            {audit.isPending ? (
-              <RowsSkeleton />
-            ) : audit.isError ? (
-              <div className="p-4">
-                <ErrorMsg error={audit.error} />
-              </div>
-            ) : audit.data?.items.length ? (
-              <ul className="divide-y divide-border">
-                {audit.data.items.slice(0, 8).map((a) => (
-                  <li key={a.id} className="flex gap-3 px-4 py-2.5">
-                    <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-bank-sky-light text-bank-primary">
-                      <Activity className="size-3.5" />
-                    </span>
-                    <div className="min-w-0 text-sm">
-                      <p className="truncate font-medium text-text-strong">
-                        {humanizeAction(a.action)}
-                      </p>
-                      <p className="truncate text-xs text-text-muted">
-                        {a.actor_username ?? "system"} · {formatDateTime(a.at)}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState
-                className="rounded-none border-0"
-                title="No activity yet"
-                description="Actions in your sessions will appear here."
-              />
-            )}
           </Panel>
         </div>
       </div>

@@ -114,18 +114,26 @@ export function KpiCards({
   sid,
   has,
   pending,
+  skipTeller,
+  skipManager,
 }: {
   sid: string;
   has: (c: string) => boolean;
   pending: Pending;
+  /** Server dashboard block already shows these values. */
+  skipTeller?: boolean;
+  skipManager?: boolean;
 }) {
-  const isTeller = has("till.open.request") || has("till.close");
-  const isManager = has("till.open.approve") || has("till.close.approve");
+  const isTeller = !skipTeller && (has("till.open.request") || has("till.close"));
+  const isManager = !skipManager && (has("till.open.approve") || has("till.close.approve"));
+  const showVault = !skipManager && has("vault.view");
+  const showPending = !skipManager && pending.show;
+  if (!showVault && !isTeller && !showPending && !isManager) return null;
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
-      {has("vault.view") && <VaultKpis sid={sid} />}
+      {showVault && <VaultKpis sid={sid} />}
       {isTeller && <TellerKpis sid={sid} showTxn={has("report.operational")} />}
-      {pending.show && (
+      {showPending && (
         <StatCard
           label="Pending approvals"
           className={CARD}

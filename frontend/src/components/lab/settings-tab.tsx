@@ -12,6 +12,7 @@ import {
   useSessionTransition,
 } from "@/lib/lab";
 import { formatMoney } from "@/lib/banking";
+import { useSetLearningPanel } from "@/lib/dashboard";
 import { useSosEnabled } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import { FormGrid, FormSection } from "@/components/shared/form-layout";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ConfirmButton, ErrorMsg, formatTemplateLabel, Labeled, TextInput } from "./common";
 import { VIS_OPTS } from "./session-options";
+import { SwitchRow } from "./roles-field";
 
 const STEPS = [
   { id: "draft", label: "Draft" },
@@ -111,6 +113,9 @@ export function SettingsTab({ session }: { session: SessionOut }) {
   const showSos = sosOn || Number(session.opening_capital_sos) !== 0;
   const t = useSessionTransition(session.id);
   const days = useBusinessDays(session.id);
+  const panel = useSetLearningPanel(session.id);
+  const isExam = session.kind === "exam";
+  const archived = session.status === "archived";
   const [groups, setGroups] = useState("2");
   const [groupErr, setGroupErr] = useState<string | null>(null);
   const perGroup = session.structure === "per_group";
@@ -182,6 +187,32 @@ export function SettingsTab({ session }: { session: SessionOut }) {
             </Tile>
           </div>
         </dl>
+      </FormSection>
+
+      <FormSection
+        title="Dr/Cr learning panel"
+        description="Shows students the debit and credit lines after each posting."
+      >
+        <SwitchRow
+          title="Show Dr/Cr learning panel"
+          description="Students see the journal entry behind every transaction they post."
+          checked={session.learning_panel}
+          disabled={isExam || archived || panel.isPending}
+          note={
+            isExam
+              ? "Not available in exam sessions: the panel would give away the answers."
+              : archived
+                ? "Archived sessions are read-only. Re-open the session to change this."
+                : undefined
+          }
+          onChange={(v) =>
+            panel.mutate(v, {
+              onSuccess: () => toast.success(v ? "Learning panel turned on" : "Learning panel turned off"),
+              onError: (e: Error) => toast.error(e.message),
+            })
+          }
+        />
+        <ErrorMsg error={panel.error} />
       </FormSection>
 
       {session.status === "draft" && (

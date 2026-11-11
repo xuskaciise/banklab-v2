@@ -718,6 +718,27 @@ def reopen_session(actor: User, session_id) -> Session:
     return session
 
 
+@transaction.atomic
+def set_learning_panel(actor: User, session_id, enabled: bool) -> Session:
+    """Switch the Dr/Cr learning panel on or off. Exams never have it; archived is read-only."""
+    session = get_writable_session(actor, session_id)
+    enabled = bool(enabled)
+    if enabled and session.kind == SessionKind.EXAM:
+        raise ValidationFailed("The learning panel cannot be enabled in an exam session")
+    before = session.learning_panel
+    session.learning_panel = enabled
+    session.save(update_fields=["learning_panel", "updated_at"])
+    _audit(
+        actor,
+        "lab.session_learning_panel",
+        ("session", session.pk),
+        before={"learning_panel": before},
+        after={"learning_panel": enabled},
+        session=session,
+    )
+    return session
+
+
 def list_banks(actor: User, session_id):
     session = get_session(actor, session_id)
     return Bank.objects.filter(session=session)

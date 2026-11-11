@@ -36,15 +36,18 @@ import {
   Th,
 } from "@/components/lab/common";
 import { ReceiptButton } from "./txn-result";
+import { LearningPanel, useLearningEnabled } from "./learning-panel";
 
 function ReverseDialog({
   sid,
   txn,
   onClose,
+  onReversed,
 }: {
   sid: string;
   txn: TransactionOut;
   onClose: () => void;
+  onReversed?: (t: TransactionOut) => void;
 }) {
   const rev = useReverseTxn(sid);
   const [reason, setReason] = useState("");
@@ -81,9 +84,10 @@ function ReverseDialog({
               rev.mutate(
                 { id: txn.id, reason: reason.trim() },
                 {
-                  onSuccess: () => {
+                  onSuccess: (r) => {
                     toast.success("Transaction reversed");
                     onClose();
+                    onReversed?.(r);
                   },
                 },
               );
@@ -108,6 +112,8 @@ export function TxnsList({
   const [type, setType] = useState("");
   const [page, setPage] = useState(1);
   const [reversing, setReversing] = useState<TransactionOut | null>(null);
+  const learning = useLearningEnabled(sid);
+  const [learnId, setLearnId] = useState<string | null>(null);
   const list = useTransactions(sid, { status, type, page });
   const filtered = !!(status || type);
 
@@ -206,6 +212,11 @@ export function TxnsList({
                   </Td>
                   <Td>
                     <div className="flex justify-end gap-2">
+                      {learning && (
+                        <Button variant="outline" size="sm" onClick={() => setLearnId(t.id)}>
+                          Show Dr/Cr
+                        </Button>
+                      )}
                       {(t.status === "posted" || t.status === "reversed") && (
                         <ReceiptButton sid={sid} id={t.id} />
                       )}
@@ -233,8 +244,14 @@ export function TxnsList({
         </>
       )}
       {reversing && (
-        <ReverseDialog sid={sid} txn={reversing} onClose={() => setReversing(null)} />
+        <ReverseDialog
+          sid={sid}
+          txn={reversing}
+          onClose={() => setReversing(null)}
+          onReversed={(r) => learning && setLearnId(r.id)}
+        />
       )}
+      <LearningPanel sid={sid} txnId={learnId} onClose={() => setLearnId(null)} />
     </div>
   );
 }

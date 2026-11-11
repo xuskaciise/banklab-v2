@@ -9,7 +9,7 @@ from apps.rbac import context as rbac_context
 from apps.rbac import services as rbac
 from apps.rbac.models import Permission
 
-from . import services
+from . import dashboard, services
 from .models import SessionMember
 
 router = Router(tags=["lab"])
@@ -153,6 +153,46 @@ class SessionOut(Schema):
     @staticmethod
     def resolve_class_name(obj):
         return obj.lab_class.name
+
+
+class LearningPanelIn(Schema):
+    enabled: bool
+
+
+class DashboardCountsOut(Schema):
+    classes: int
+    active_sessions: int
+    students: int
+
+
+class DashboardSessionOut(Schema):
+    id: UUID
+    name: str
+    class_id: UUID
+    class_name: str
+    kind: str
+    learning_panel: bool
+    opened_at: datetime | None = None
+    banks_count: int
+    members_count: int
+    today_transactions: int
+    pending_approvals: int
+
+
+class DashboardEventOut(Schema):
+    id: UUID
+    at: datetime
+    actor_name: str | None = None
+    action: str
+    bank_name: str | None = None
+    session_id: UUID | None = None
+    session_name: str | None = None
+
+
+class StaffDashboardOut(Schema):
+    counts: DashboardCountsOut
+    sessions: list[DashboardSessionOut]
+    recent_activity: list[DashboardEventOut]
 
 
 class OpenSessionIn(Schema):
@@ -375,6 +415,20 @@ def sessions_create(request, payload: SessionIn):
 @router.get("/sessions/{session_id}", response=SessionOut, operation_id="lab_sessions_get")
 def sessions_get(request, session_id: UUID):
     return services.get_session(request.user, session_id)
+
+
+@router.get("/dashboard", response=StaffDashboardOut, operation_id="lab_dashboard")
+def staff_dashboard(request):
+    return dashboard.staff_dashboard(request.user)
+
+
+@router.post(
+    "/sessions/{session_id}/learning-panel",
+    response=SessionOut,
+    operation_id="lab_sessions_learning_panel",
+)
+def sessions_learning_panel(request, session_id: UUID, payload: LearningPanelIn):
+    return services.set_learning_panel(request.user, session_id, payload.enabled)
 
 
 @router.post("/sessions/{session_id}/open", response=SessionOut, operation_id="lab_sessions_open")

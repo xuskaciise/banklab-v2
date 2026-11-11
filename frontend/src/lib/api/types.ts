@@ -107,3 +107,12 @@ export type CoaLineIn = Schemas["CoaLineIn"];
 export type CoaLinePatch = Schemas["CoaLinePatch"];
 export type SessionTemplateOut = Schemas["SessionTemplateOut"];
 export type SessionTemplateIn = Schemas["SessionTemplateIn"];
+
+// Dashboards + Dr/Cr learning panel 1.13
+export type SessionDashboard = Schemas["DashboardOut"];
+export type TellerDashboard = Schemas["TellerDashboardOut"];
+export type ManagerDashboard = Schemas["ManagerDashboardOut"];
+export type StaffDashboard = Schemas["StaffDashboardOut"];
+export type DashboardSession = Schemas["DashboardSessionOut"];
+export type DashboardEvent = Schemas["DashboardEventOut"];
+export type Learning = Schemas["LearningOut"];
