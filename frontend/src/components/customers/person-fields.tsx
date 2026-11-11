@@ -13,6 +13,8 @@ export type PersonDraft = {
   sex: string;
   date_of_birth: string;
   phone: string;
+  mother_name: string;
+  guardian_phone: string;
   relation: string;
   can_sign: boolean;
   docs: DocumentIn[];
@@ -31,6 +33,8 @@ export const emptyPerson = (relation: string): PersonDraft => ({
   sex: "",
   date_of_birth: "",
   phone: "",
+  mother_name: "",
+  guardian_phone: "",
   relation,
   can_sign: false,
   docs: [emptyDoc()],
@@ -155,11 +159,14 @@ export function PersonFields({
   value,
   onChange,
   relationOptions,
+  showFamily = false,
 }: {
   value: PersonDraft;
   onChange: (p: PersonDraft) => void;
   /** When more than one, a relation selector is shown. */
   relationOptions: string[];
+  /** Mother's name and guardian phone: individual customer's owner only. */
+  showFamily?: boolean;
 }) {
   const set = <K extends keyof PersonDraft>(k: K, v: PersonDraft[K]) =>
     onChange({ ...value, [k]: v });
@@ -194,6 +201,22 @@ export function PersonFields({
             onChange={(e) => set("date_of_birth", e.target.value)}
           />
         </Labeled>
+        {showFamily && (
+          <>
+            <Labeled label="Mother's name" optional>
+              <Input
+                value={value.mother_name}
+                onChange={(e) => set("mother_name", e.target.value)}
+              />
+            </Labeled>
+            <Labeled label="Parent/guardian phone" optional>
+              <Input
+                value={value.guardian_phone}
+                onChange={(e) => set("guardian_phone", e.target.value)}
+              />
+            </Labeled>
+          </>
+        )}
         {showRelation && (
           <Labeled label="Role in customer">
             <Select

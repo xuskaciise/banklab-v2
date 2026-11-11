@@ -78,6 +78,8 @@ class Party(NoDeleteModel):
     sex = models.CharField(max_length=6, choices=Sex.choices, blank=True, default="")
     date_of_birth = models.DateField(null=True, blank=True)
     phone = models.CharField(max_length=30, blank=True, default="")
+    mother_name = models.CharField(max_length=200, blank=True, default="")
+    guardian_phone = models.CharField(max_length=30, blank=True, default="")
     photo = models.FileField(upload_to=photo_path, null=True, blank=True)
     signature = models.FileField(upload_to=signature_path, null=True, blank=True)
 

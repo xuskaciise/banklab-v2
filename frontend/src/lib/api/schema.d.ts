@@ -4594,6 +4594,10 @@ export interface components {
             date_of_birth: string | null;
             /** Phone */
             phone: string;
+            /** Mother Name */
+            mother_name: string;
+            /** Guardian Phone */
+            guardian_phone: string;
             /** Has Photo */
             has_photo: boolean;
             /** Has Signature */
@@ -4680,6 +4684,16 @@ export interface components {
              * @default
              */
             phone: string;
+            /**
+             * Mother Name
+             * @default
+             */
+            mother_name: string;
+            /**
+             * Guardian Phone
+             * @default
+             */
+            guardian_phone: string;
             /** Relation */
             relation: string;
             /** Can Sign */
@@ -4737,6 +4751,16 @@ export interface components {
              */
             phone: string;
             /**
+             * Mother Name
+             * @default
+             */
+            mother_name: string;
+            /**
+             * Guardian Phone
+             * @default
+             */
+            guardian_phone: string;
+            /**
              * Identity Documents
              * @default []
              */
@@ -4757,6 +4781,10 @@ export interface components {
             date_of_birth?: string | null;
             /** Phone */
             phone?: string | null;
+            /** Mother Name */
+            mother_name?: string | null;
+            /** Guardian Phone */
+            guardian_phone?: string | null;
             /** Can Sign */
             can_sign?: boolean | null;
         };
@@ -4810,6 +4838,8 @@ export interface components {
             status?: string | null;
             /** Account No */
             account_no?: number | null;
+            /** Q */
+            q?: string | null;
         };
         /** AccountOut */
         AccountOut: {
@@ -8021,6 +8051,7 @@ export interface operations {
                 customer_id?: string | null;
                 status?: string | null;
                 account_no?: number | null;
+                q?: string | null;
                 page?: number;
                 page_size?: number | null;
             };

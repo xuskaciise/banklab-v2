@@ -45,6 +45,7 @@ class AccountFilters(Schema):
     customer_id: UUID | None = None
     status: str | None = None
     account_no: int | None = Field(None, ge=1, le=2147483647)
+    q: str | None = None
 
 
 class AccountOut(Schema):
@@ -112,6 +113,7 @@ def accounts_list(request, session_id: UUID, filters: Query[AccountFilters]):
         customer_id=filters.customer_id,
         status=filters.status,
         account_no=filters.account_no,
+        q=filters.q,
     )
 
 

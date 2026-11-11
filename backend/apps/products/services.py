@@ -14,6 +14,7 @@ from django.utils import timezone
 from apps.audit import services as audit
 from apps.core import platform
 from apps.customers import services as customers
+from apps.customers.models import CustomerParty
 from apps.lab.models import Bank, SessionMember
 from apps.ledger.services import LedgerError
 
@@ -82,13 +83,30 @@ def list_products(member: SessionMember):
     return Product.objects.filter(bank_id=member.bank_id).order_by("code")
 
 
-def list_accounts(member: SessionMember, *, customer_id=None, status=None, account_no=None):
+def list_accounts(member: SessionMember, *, customer_id=None, status=None, account_no=None, q=None):
     _, _, scope = customers._read_scope(member, PERM_VIEW)
     qs = _visible(member, scope)
     if account_no is not None:
         qs = qs.filter(account_no=account_no)
     if customer_id:
         qs = qs.filter(customer_id=customer_id)
+    q = (q or "").strip()
+    if q:
+        links = CustomerParty.objects.filter(bank_id=member.bank_id)
+        cond = (
+            Q(customer__display_name__icontains=q)
+            | Q(customer__phone__icontains=q)
+            | Q(
+                customer_id__in=links.filter(
+                    Q(party__full_name__icontains=q)
+                    | Q(party__phone__icontains=q)
+                    | Q(party__documents__number__icontains=q)
+                ).values("customer_id")
+            )
+        )
+        if q.isdigit() and len(q) <= 9:
+            cond |= Q(account_no=int(q))
+        qs = qs.filter(cond)
     if status:
         if status not in AccountStatus.values:
             raise _bad(

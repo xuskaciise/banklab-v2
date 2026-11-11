@@ -197,6 +197,8 @@ export function AddPersonDialog({
             sex: p.sex,
             date_of_birth: p.date_of_birth,
             phone: p.phone.trim(),
+            mother_name: "",
+            guardian_phone: "",
             identity_documents: p.docs,
             next_of_kin: p.kin,
           },
@@ -218,11 +220,14 @@ export function EditPersonDialog({
   sessionId,
   customerId,
   party,
+  family = false,
   onClose,
 }: {
   sessionId: string;
   customerId: string;
   party: PartyLink;
+  /** True when the party is the owner of an individual customer. */
+  family?: boolean;
   onClose: () => void;
 }) {
   const m = useUpdateParty(sessionId, customerId);
@@ -230,6 +235,8 @@ export function EditPersonDialog({
   const [sex, setSex] = useState(party.sex);
   const [dob, setDob] = useState(party.date_of_birth ?? "");
   const [phone, setPhone] = useState(party.phone);
+  const [mother, setMother] = useState(party.mother_name);
+  const [guardian, setGuardian] = useState(party.guardian_phone);
   const [canSign, setCanSign] = useState(party.can_sign);
   const [err, setErr] = useState<string | null>(null);
   const fixed = party.relation !== "director";
@@ -250,6 +257,9 @@ export function EditPersonDialog({
             sex,
             date_of_birth: dob || null,
             phone: phone.trim(),
+            ...(family
+              ? { mother_name: mother.trim(), guardian_phone: guardian.trim() }
+              : {}),
             ...(fixed ? {} : { can_sign: canSign }),
           },
           {
@@ -277,6 +287,16 @@ export function EditPersonDialog({
       <Labeled label="Phone">
         <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
       </Labeled>
+      {family && (
+        <>
+          <Labeled label="Mother's name">
+            <Input value={mother} onChange={(e) => setMother(e.target.value)} />
+          </Labeled>
+          <Labeled label="Parent/guardian phone">
+            <Input value={guardian} onChange={(e) => setGuardian(e.target.value)} />
+          </Labeled>
+        </>
+      )}
       {fixed ? (
         <p className="text-xs text-text-muted">
           {RELATION_LABEL[party.relation] ?? party.relation} can always sign.

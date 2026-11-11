@@ -62,6 +62,8 @@ class PartyIn(Schema):
     sex: str = ""
     date_of_birth: date | None = None
     phone: str = ""
+    mother_name: str = ""
+    guardian_phone: str = ""
     relation: str
     can_sign: bool | None = None
     identity_documents: list[DocumentIn] = []
@@ -78,6 +80,8 @@ class AddPartyIn(Schema):
     sex: str = ""
     date_of_birth: date | None = None
     phone: str = ""
+    mother_name: str = ""
+    guardian_phone: str = ""
     identity_documents: list[DocumentIn] = []
     next_of_kin: list[KinIn] = []
 
@@ -87,6 +91,8 @@ class PartyUpdateIn(Schema):
     sex: str | None = None
     date_of_birth: date | None = None
     phone: str | None = None
+    mother_name: str | None = None
+    guardian_phone: str | None = None
     can_sign: bool | None = None
 
 
@@ -141,6 +147,8 @@ class PartyLinkOut(Schema):
     sex: str
     date_of_birth: date | None
     phone: str
+    mother_name: str
+    guardian_phone: str
     has_photo: bool
     has_signature: bool
     identity_documents: list[DocumentOut]
@@ -161,6 +169,14 @@ class PartyLinkOut(Schema):
     @staticmethod
     def resolve_phone(obj):
         return obj.party.phone
+
+    @staticmethod
+    def resolve_mother_name(obj):
+        return obj.party.mother_name
+
+    @staticmethod
+    def resolve_guardian_phone(obj):
+        return obj.party.guardian_phone
 
     @staticmethod
     def resolve_has_photo(obj):

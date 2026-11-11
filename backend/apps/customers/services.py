@@ -104,18 +104,29 @@ def _choice(value, enum, what: str):
     return value
 
 
-def _clean_party(data: dict) -> dict:
+def _clean_party(data: dict, *, personal_extras: bool = False) -> dict:
+    """`personal_extras`: the person is the owner of an individual customer (the only party
+    allowed to carry mother_name / guardian_phone)."""
     sex = data.get("sex") or ""
     if sex:
         _choice(sex, Sex, "Sex")
     dob = data.get("date_of_birth")
     if dob is not None and dob >= date.today():
         raise _bad("Date of birth must be in the past")
+    mother_name = _text(data.get("mother_name"), "Mother name", 200, required=False)
+    guardian_phone = _phone(data.get("guardian_phone"), "Guardian phone")
+    if (mother_name or guardian_phone) and not personal_extras:
+        raise _bad(
+            "Mother name and guardian phone only apply to the owner of an individual customer",
+            "invalid_party_field",
+        )
     return {
         "full_name": _text(data.get("full_name"), "Full name", 200),
         "sex": sex,
         "date_of_birth": dob,
         "phone": _phone(data.get("phone")),
+        "mother_name": mother_name,
+        "guardian_phone": guardian_phone,
     }
 
 
@@ -207,12 +218,22 @@ def _visible(member: SessionMember, scope: str):
     return qs
 
 
+def _doc_number_customers(q: str):
+    """Subquery of customer ids whose linked person holds an ID document matching `q`
+    (a subquery, so the outer rows are never duplicated)."""
+    return CustomerParty.objects.filter(party__documents__number__icontains=q).values("customer_id")
+
+
 def _filtered(qs, q=None, ctype=None):
     if ctype:
         qs = qs.filter(type=_choice(ctype, CustomerType, "Type"))
     q = (q or "").strip()
     if q:
-        cond = Q(display_name__icontains=q) | Q(phone__icontains=q)
+        cond = (
+            Q(display_name__icontains=q)
+            | Q(phone__icontains=q)
+            | Q(pk__in=_doc_number_customers(q))
+        )
         if q.isdigit() and len(q) <= 9:
             cond |= Q(cif_no=int(q))
         qs = qs.filter(cond)
@@ -295,6 +316,8 @@ def _party_dict(p: Party) -> dict:
         "sex": p.sex,
         "date_of_birth": p.date_of_birth.isoformat() if p.date_of_birth else None,
         "phone": p.phone,
+        "mother_name": p.mother_name,
+        "guardian_phone": p.guardian_phone,
         "has_photo": bool(p.photo),
         "has_signature": bool(p.signature),
     }
@@ -401,7 +424,8 @@ def create_customer(
         for data in parties:
             relation = _choice(data.get("relation"), Relation, "Relation")
             can_sign = _default_can_sign(relation, data.get("can_sign"))
-            cleaned.append((data, relation, can_sign, _clean_party(data)))
+            extras = ctype == CustomerType.INDIVIDUAL and relation == Relation.OWNER
+            cleaned.append((data, relation, can_sign, _clean_party(data, personal_extras=extras)))
         _check_structure(ctype, reg_no, [(r, s) for _, r, s, _ in cleaned])
         name = _text(display_name, "Display name", 200, required=False)
         if not name and ctype == CustomerType.INDIVIDUAL:
@@ -542,9 +566,14 @@ def update_party(member: SessionMember, customer_id, party_id, **fields) -> Cust
             "sex": party.sex,
             "date_of_birth": party.date_of_birth,
             "phone": party.phone,
+            "mother_name": party.mother_name,
+            "guardian_phone": party.guardian_phone,
             **{k: v for k, v in fields.items() if k != "can_sign"},
         }
-        for key, value in _clean_party(merged).items():
+        extras = customer.type == CustomerType.INDIVIDUAL and any(
+            link.relation == Relation.OWNER for link in links
+        )
+        for key, value in _clean_party(merged, personal_extras=extras).items():
             setattr(party, key, value)
         party.save()
         if fields.get("can_sign") is not None:

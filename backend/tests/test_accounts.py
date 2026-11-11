@@ -316,3 +316,114 @@ class TestApi:
         closed = j(cso, "post", url(env, f"/accounts/{body['id']}/close"))
         assert closed.status_code == 200 and closed.json()["status"] == "closed"
         assert j(cso, "post", url(env, f"/accounts/{body['id']}/close")).status_code == 409
+
+
+# ---------------------------------------------------------------------------- 1.12c search
+
+
+def named_customer(env, name, doc_numbers, key="cso", phone="+252611111111"):
+    from tests.test_customers import doc, person
+
+    p = person(name, phone=phone, identity_documents=[doc(n) for n in doc_numbers])
+    c = make(env, key, individual(address="Hodan", parties=[p]))
+    complete_kyc(env, c, key)
+    return c
+
+
+@pytest.mark.django_db
+class TestAccountSearch:
+    def test_search_fields_no_duplicates(self, env):
+        c = named_customer(env, "Zainab Warsame", ["QX-111", "QX-222"], phone="+252629000111")
+        other = named_customer(env, "Other Person", ["ZZ-1"], phone="+252630000222")
+        a = open_(env, c)
+        b = open_(env, other)
+        m = env.member("cso")
+
+        def ids(q):
+            return [x.pk for x in ps.list_accounts(m, q=q)]
+
+        assert ids("zainab") == [a.pk]
+        assert ids("629000111") == [a.pk]
+        assert ids("QX-") == [a.pk]  # two docs match: still one row
+        assert ids(str(b.account_no)) == [b.pk]
+        assert ids("nomatch") == []
+        assert set(ids("")) == {a.pk, b.pk}
+        # existing filters still combine
+        assert [x.pk for x in ps.list_accounts(m, q="zainab", account_no=b.account_no)] == []
+        assert [x.pk for x in ps.list_accounts(m, q="QX", customer_id=c.pk)] == [a.pk]
+
+    def test_search_via_api(self, env):
+        c = named_customer(env, "Zainab Warsame", ["QX-111", "QX-222"])
+        open_(env, c)
+        r = api(env.user("cso")).get(url(env, "/accounts") + "?q=QX-2")
+        assert r.status_code == 200 and r.json()["count"] == 1
+
+    def test_cross_bank_isolation(self, world, env):
+        other = Env(world, "z")
+        oc = named_customer(other, "Zainab Warsame", ["QX-999"], phone="+252629000999")
+        oa = open_(other, oc)
+        m = env.member("manager")
+        for q in ("zainab", "629000999", "QX-999", str(oa.account_no)):
+            assert ps.list_accounts(m, q=q).count() == 0
+
+    def test_own_scope_respected(self, world):
+        env = Env(world, default_visibility="own")
+        c1 = named_customer(env, "Zainab One", ["OW-1"], key="cso")
+        c2 = named_customer(env, "Zainab Two", ["OW-2"], key="cso2")
+        a1, a2 = open_(env, c1), open_(env, c2, key="cso2")
+        assert [a.pk for a in ps.list_accounts(env.member("cso"), q="zainab")] == [a1.pk]
+        assert [a.pk for a in ps.list_accounts(env.member("cso2"), q="OW-")] == [a2.pk]
+        assert ps.list_accounts(env.member("manager"), q="zainab").count() == 2
+
+
+@pytest.mark.django_db
+class TestAccountSearchSameNameOtherBank:
+    """Identical name/phone/ID/account_no in another bank must never leak (1.12c)."""
+
+    def test_same_session_two_banks(self, world):
+        from apps.lab.models import Bank
+        from tests.test_cash import add_person
+
+        env = Env(world, "t", structure="per_group", default_visibility="all")
+        bank2 = Bank.objects.get(session=env.session, group_no=2)
+        u2, cso2 = add_person(world, env.session, bank2, "cso2tw", "cso")
+        a = open_(env, named_customer(env, "Twin Person", ["TW-1"], phone="+252628000001"))
+        c2 = named_customer_for(cso2, "Twin Person", ["TW-1"], "+252628000001")
+        b = ps.open_account(
+            cso2, customer_id=c2.pk, product_id=Product.objects.get(bank=bank2, code="SAV-USD").pk
+        )
+        assert a.account_no == b.account_no and a.bank_id != b.bank_id
+        for q in ("twin", "628000001", "TW-1", str(a.account_no)):
+            assert [x.pk for x in ps.list_accounts(env.member("cso"), q=q)] == [a.pk]
+            assert [x.pk for x in ps.list_accounts(cso2, q=q)] == [b.pk]
+        r = api(u2).get(url(env, "/accounts") + "?q=TW-1")
+        assert [x["id"] for x in r.json()["items"]] == [str(b.pk)]
+
+    def test_cross_session_same_data(self, world, env):
+        other = Env(world, "z2")
+        a = open_(env, named_customer(env, "Twin Person", ["TW-1"], phone="+252628000001"))
+        b = open_(other, named_customer(other, "Twin Person", ["TW-1"], phone="+252628000001"))
+        assert a.account_no == b.account_no
+        for q in ("twin", "628000001", "TW-1", str(a.account_no)):
+            assert [x.pk for x in ps.list_accounts(env.member("manager"), q=q)] == [a.pk]
+            assert [x.pk for x in ps.list_accounts(other.member("manager"), q=q)] == [b.pk]
+
+
+def named_customer_for(member, name, doc_numbers, phone):
+    from apps.customers import services as cs
+    from tests.test_customers import doc, person
+
+    p = person(name, phone=phone, identity_documents=[doc(n) for n in doc_numbers])
+    c = cs.create_customer(member, **individual(address="Hodan", parties=[p]))
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    from apps.customers.models import CustomerParty
+    from tests.test_customers import PDF, PNG
+
+    for link in CustomerParty.objects.filter(customer=c, can_sign=True):
+        pid = link.party_id
+        cs.upload_party_file(member, c.pk, pid, "photo", SimpleUploadedFile("a.png", PNG))
+        cs.upload_party_file(member, c.pk, pid, "signature", SimpleUploadedFile("a.png", PNG))
+        for d in link.party.documents.all():
+            cs.upload_document_file(member, c.pk, pid, d.pk, SimpleUploadedFile("a.pdf", PDF))
+    return c

@@ -46,12 +46,13 @@ export function useProducts(sid: string, enabled = true) {
 
 export function useAccounts(
   sid: string,
-  p: { customerId?: string; status?: string; page?: number },
+  p: { customerId?: string; status?: string; q?: string; page?: number },
   enabled = true,
 ) {
   const qs = new URLSearchParams();
   if (p.customerId) qs.set("customer_id", p.customerId);
   if (p.status) qs.set("status", p.status);
+  if (p.q) qs.set("q", p.q);
   if (p.page) qs.set("page", String(p.page));
   return useQuery({
     queryKey: ["accounts", sid, p],

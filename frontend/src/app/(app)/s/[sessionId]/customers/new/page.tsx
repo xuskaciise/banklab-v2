@@ -90,6 +90,8 @@ export default function NewCustomerPage() {
       sex: p.sex,
       date_of_birth: p.date_of_birth,
       phone: p.phone.trim(),
+      mother_name: p.mother_name.trim(),
+      guardian_phone: p.guardian_phone.trim(),
       relation: p.relation,
       ...(p.relation === "director" ? { can_sign: p.can_sign } : {}),
       identity_documents: p.docs.map((d) => ({ ...d, number: d.number.trim() })),
@@ -212,6 +214,7 @@ export default function NewCustomerPage() {
                 <PersonFields
                   value={p}
                   relationOptions={relationsFor(type)}
+                  showFamily={type === "individual"}
                   onChange={(np) => setPeople(people.map((x, j) => (j === i ? np : x)))}
                 />
               </FormSection>

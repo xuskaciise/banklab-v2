@@ -59,7 +59,7 @@ export function CustomersList({
           <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-text-muted" />
           <Input
             aria-label="Search customers"
-            placeholder="Search name, phone or CIF…"
+            placeholder="Search name, phone, CIF or ID number…"
             className="h-9 pl-9"
             value={text}
             onChange={(e) => setText(e.target.value)}

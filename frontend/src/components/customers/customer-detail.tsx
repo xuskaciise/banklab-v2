@@ -221,6 +221,7 @@ function PartyCard({
   customerId,
   party,
   canEdit,
+  family,
   onEdit,
   onAddDoc,
   onAddKin,
@@ -229,6 +230,7 @@ function PartyCard({
   customerId: string;
   party: PartyLink;
   canEdit: boolean;
+  family: boolean;
   onEdit: () => void;
   onAddDoc: () => void;
   onAddKin: () => void;
@@ -254,6 +256,12 @@ function PartyCard({
             <span>· Born {party.date_of_birth ?? "—"}</span>
             <span>· {party.phone || "—"}</span>
           </p>
+          {family && (
+            <p className="mt-1 text-sm text-text-muted">
+              Mother&apos;s name: {party.mother_name || "—"} · Parent/guardian phone:{" "}
+              {party.guardian_phone || "—"}
+            </p>
+          )}
         </div>
         {canEdit && (
           <Button size="sm" variant="outline" onClick={onEdit}>
@@ -356,6 +364,8 @@ export function CustomerDetailView({
   const party = (pid: string) => c?.parties.find((p) => p.party_id === pid);
   const close = () => setDlg(null);
   const org = c && (c.type === "company" || c.type === "ngo");
+  const isFamily = (p: PartyLink) =>
+    c?.type === "individual" && p.relation === "owner";
   return (
     <QueryState query={q}>
       {c && (
@@ -430,6 +440,7 @@ export function CustomerDetailView({
                 customerId={c.id}
                 party={p}
                 canEdit={canEdit}
+                family={isFamily(p)}
                 onEdit={() => setDlg({ kind: "person", partyId: p.party_id })}
                 onAddDoc={() => setDlg({ kind: "doc", partyId: p.party_id })}
                 onAddKin={() => setDlg({ kind: "kin", partyId: p.party_id })}
@@ -452,6 +463,7 @@ export function CustomerDetailView({
                   sessionId={scope.sessionId}
                   customerId={c.id}
                   party={party(dlg.partyId)!}
+                  family={isFamily(party(dlg.partyId)!)}
                   onClose={close}
                 />
               )}

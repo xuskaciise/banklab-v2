@@ -870,3 +870,114 @@ class TestKyc:
         base = f"/api/sessions/{env.session.pk}/banks/{env.bank.pk}/customers"
         staff = api(env.world["ia"]).get(f"{base}/{c['id']}").json()
         assert staff["kyc_complete"] is True and staff["kyc_missing"] == []
+
+
+# ---------------------------------------------------------------------------- 1.12c
+
+
+def ind_with(**extra):
+    return individual(parties=[person(**extra)])
+
+
+@pytest.mark.django_db
+class TestPartyExtras:
+    def test_create_and_output(self, env):
+        c = make(env, "cso", ind_with(mother_name="  Hawa Nur ", guardian_phone="0612345678"))
+        p = c.links.get().party
+        assert (p.mother_name, p.guardian_phone) == ("Hawa Nur", "0612345678")
+        out = cs.list_customers(env.member("cso")).get()
+        assert out.links.all()[0].party.mother_name == "Hawa Nur"
+
+    def test_api_roundtrip(self, world, env):
+        client = api(env.user("cso"))
+        data = cust_json(client, env, ind_with(mother_name="Hawa", guardian_phone="0612345678"))
+        r = client.get(env.url(f"/{data['id']}"))
+        party = r.json()["parties"][0] if "parties" in r.json() else None
+        body = r.json()
+        party = party or body["links"][0]
+        assert party["mother_name"] == "Hawa" and party["guardian_phone"] == "0612345678"
+
+    def test_update_audits_before_after(self, env):
+        c = make(env, "cso", ind_with(mother_name="Old"))
+        pid = c.links.get().party_id
+        cs.update_party(
+            env.member("cso"), c.pk, pid, mother_name="New", guardian_phone="0611000111"
+        )
+        row = AuditLog.objects.filter(action="customer.party_updated").latest("at")
+        assert row.before["mother_name"] == "Old" and row.before["guardian_phone"] == ""
+        assert row.after["mother_name"] == "New" and row.after["guardian_phone"] == "0611000111"
+        # unrelated update keeps the values
+        cs.update_party(env.member("cso"), c.pk, pid, phone="0611999999")
+        assert Party.objects.get(pk=pid).mother_name == "New"
+
+    def test_bad_guardian_phone(self, env):
+        with pytest.raises(LedgerError) as e:
+            make(env, "cso", ind_with(guardian_phone="abc"))
+        assert e.value.status == 400
+
+    def test_rejected_for_company_and_joint_parties(self, env):
+        for data in (company(), joint()):
+            data["parties"][0]["mother_name"] = "X"
+            with pytest.raises(LedgerError) as e:
+                make(env, "cso", data)
+            assert e.value.status == 400
+        data = joint()
+        data["parties"][1]["guardian_phone"] = "0611000111"
+        with pytest.raises(LedgerError):
+            make(env, "cso", data)
+        assert Customer.objects.count() == 0
+
+    def test_rejected_on_update_and_add_for_non_owner(self, env):
+        c = make(env, "cso", company())
+        pid = c.links.get(relation="signatory").party_id
+        with pytest.raises(LedgerError) as e:
+            cs.update_party(env.member("cso"), c.pk, pid, mother_name="X")
+        assert e.value.status == 400
+        with pytest.raises(LedgerError) as e:
+            cs.add_party(
+                env.member("cso"),
+                c.pk,
+                relation="signatory",
+                **{k: v for k, v in person("New", "signatory").items() if k != "relation"},
+                mother_name="X",
+            )
+        assert e.value.status == 400
+        assert Party.objects.get(pk=pid).mother_name == ""
+
+
+@pytest.mark.django_db
+class TestCustomerSearchByDocument:
+    def test_by_doc_number_no_duplicates(self, env):
+        p = person(identity_documents=[doc("PASS-7001"), doc("PASS-7002", type="passport")])
+        c = make(env, "cso", individual(parties=[p]))
+        make(env, "cso")
+        m = env.member("cso")
+        assert [x.pk for x in cs.list_customers(m, q="PASS-700")] == [c.pk]
+        assert cs.list_customers(m, q="pass-7002").count() == 1
+        r = api(env.user("cso")).get(env.url() + "?q=PASS-700")
+        assert r.json()["count"] == 1
+
+    def test_cross_bank_and_own_scope(self, world):
+        env = Env(world, default_visibility="own")
+        other = Env(world, "z")
+        make(other, "cso", individual(parties=[person(identity_documents=[doc("SECRET-1")])]))
+        mine = make(env, "cso2", individual(parties=[person(identity_documents=[doc("SECRET-2")])]))
+        assert cs.list_customers(env.member("cso2"), q="SECRET").count() == 1
+        assert cs.list_customers(env.member("cso"), q="SECRET").count() == 0  # not own
+        assert cs.list_customers(env.member("cso2"), q="SECRET-1").count() == 0
+        assert mine.pk in {x.pk for x in cs.list_customers(env.member("cso2"), q="SECRET-2")}
+
+
+@pytest.mark.django_db
+class TestDocSearchTwoBanksOneSession:
+    def test_same_doc_number_other_bank_same_session(self, world):
+        env = Env(world, "d", structure="per_group", default_visibility="all")
+        bank2 = Bank.objects.get(session=env.session, group_no=2)
+        u2, cso2 = add_person(world, env.session, bank2, "cso2dd", "cso")
+        data = individual(parties=[person("Twin Person", identity_documents=[doc("DUP-77")])])
+        c1 = make(env, "cso", data)
+        c2 = cs.create_customer(cso2, **data)
+        assert [x.pk for x in cs.list_customers(env.member("cso"), q="DUP-77")] == [c1.pk]
+        assert [x.pk for x in cs.list_customers(cso2, q="DUP-77")] == [c2.pk]
+        r = api(u2).get(env.url() + "?q=DUP-77")
+        assert [x["id"] for x in r.json()["items"]] == [str(c2.pk)]

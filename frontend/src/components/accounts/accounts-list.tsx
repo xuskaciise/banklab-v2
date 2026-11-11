@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Wallet } from "lucide-react";
+import { Plus, Search, Wallet } from "lucide-react";
 import { ACCOUNT_PAGE_SIZE, formatAccountNo, statusLabel, useAccounts } from "@/lib/accounts";
 import { formatMoney } from "@/lib/banking";
 import { formatCif } from "@/lib/customers";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Pagination } from "@/components/shared/pagination";
@@ -23,13 +24,27 @@ export function AccountsList({
 }) {
   const router = useRouter();
   const [status, setStatus] = useState("");
+  const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [opening, setOpening] = useState(false);
-  const list = useAccounts(sessionId, { status, page });
+  const list = useAccounts(sessionId, { status, q: q.trim(), page });
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
+        <div className="relative w-full sm:w-80">
+          <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-text-muted" />
+          <Input
+            aria-label="Search accounts"
+            placeholder="Account no, name, phone or ID number"
+            className="h-9 pl-9"
+            value={q}
+            onChange={(e) => {
+              setPage(1);
+              setQ(e.target.value);
+            }}
+          />
+        </div>
         <Select
           aria-label="Account status"
           className="h-9"
@@ -56,10 +71,10 @@ export function AccountsList({
       ) : list.data.items.length === 0 ? (
         <EmptyState
           icon={Wallet}
-          title={status ? "No matching accounts" : "No accounts yet"}
+          title={status || q ? "No matching accounts" : "No accounts yet"}
           description={
-            status
-              ? "Try a different filter."
+            status || q
+              ? "Try a different search or filter."
               : "Accounts opened in this bank will appear here."
           }
         />
