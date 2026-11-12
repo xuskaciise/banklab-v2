@@ -25,6 +25,7 @@ import {
   Building2,
   ListTree,
   LayoutTemplate,
+  ClipboardCheck,
 } from "lucide-react";
 import type { Me } from "@/lib/api/types";
 import { isStudent } from "@/lib/auth";
@@ -52,7 +53,7 @@ const STAFF_NAV: NavItem[] = [
   {
     label: "Classes",
     href: "/instructor/classes",
-    match: /^\/instructor\/(classes|sessions)/,
+    match: /^\/instructor\/(classes|sessions|exams)/,
     icon: GraduationCap,
   },
 ];
@@ -74,7 +75,7 @@ const STUDENT_NAV: NavItem[] = [
 
 export function navFor(
   user: Me | null | undefined,
-  session?: { id: string; permissions: string[] },
+  session?: { id: string; permissions: string[]; isExam?: boolean },
 ): NavItem[] {
   if (user?.platform_role === "admin") return [...STAFF_NAV, ...ADMIN_NAV];
   if (!isStudent(user)) return STAFF_NAV;
@@ -119,6 +120,13 @@ export function navFor(
       href: `/s/${session.id}/accounts`,
       match: /^\/s\/[^/]+\/accounts/,
       icon: Wallet,
+    });
+  if (session?.isExam)
+    items.push({
+      label: "Exam",
+      href: `/s/${session.id}/exam`,
+      match: /^\/s\/[^/]+\/exam/,
+      icon: ClipboardCheck,
     });
   const has = (c: string) => !!session?.permissions.includes(c);
   if (session && (has("txn.cash_deposit") || has("txn.cash_withdrawal") || has("txn.transfer")))
@@ -194,6 +202,7 @@ export function SidebarContent({
       ? {
           id: sessionId,
           permissions: sessionMe.data.permissions.map((p) => p.code),
+          isExam: sessionMe.data.kind === "exam",
         }
       : undefined,
   );

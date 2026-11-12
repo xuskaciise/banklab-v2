@@ -2722,6 +2722,263 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/exam-check-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check Types */
+        get: operations["exam_check_types"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/exam": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Exam Get */
+        get: operations["exam_get"];
+        /** Exam Save */
+        put: operations["exam_save"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/exam/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Task Create */
+        post: operations["exam_task_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/exam/tasks/reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tasks Reorder */
+        post: operations["exam_tasks_reorder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/exam/tasks/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Task Update */
+        put: operations["exam_task_update"];
+        post?: never;
+        /** Task Delete */
+        delete: operations["exam_task_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/exam/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Exam Publish */
+        post: operations["exam_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/exam/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Exam Results */
+        get: operations["exam_results"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/exam/results/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Results Publish */
+        post: operations["exam_results_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/exam/results/{result_id}/adjust": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Result Adjust */
+        post: operations["exam_result_adjust"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/exam/results.xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Results Xlsx */
+        get: operations["exam_results_xlsx"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sessions/{session_id}/exam/results.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Results Pdf */
+        get: operations["exam_results_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/exam": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Student Get */
+        get: operations["exam_student_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/exam/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Student Start */
+        post: operations["exam_student_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/exam/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Student Submit */
+        post: operations["exam_student_submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/s/{session_id}/exam/result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Student Result */
+        get: operations["exam_student_result"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3565,6 +3822,33 @@ export interface components {
             /** Role */
             role?: string | null;
         };
+        /**
+         * ExamClockOut
+         * @description Exam timing for the top-bar countdown (exam sessions with a published exam).
+         */
+        ExamClockOut: {
+            /** State */
+            state: string;
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /** Deadline At */
+            deadline_at?: string | null;
+            /**
+             * Server Time
+             * Format: date-time
+             */
+            server_time: string;
+            /** Remaining Seconds */
+            remaining_seconds?: number | null;
+        };
         /** PermissionGrantOut */
         PermissionGrantOut: {
             /** Code */
@@ -3603,6 +3887,7 @@ export interface components {
             read_only: boolean;
             /** Permissions */
             permissions: components["schemas"]["PermissionGrantOut"][];
+            exam?: components["schemas"]["ExamClockOut"] | null;
         };
         /** BalanceOut */
         BalanceOut: {
@@ -5316,6 +5601,315 @@ export interface components {
             date_from?: string | null;
             /** Date To */
             date_to?: string | null;
+        };
+        /** CheckTypeOut */
+        CheckTypeOut: {
+            /** Name */
+            name: string;
+            /** Label */
+            label: string;
+        };
+        /** ExamOut */
+        ExamOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /** Duration Minutes */
+            duration_minutes: number;
+            /** Instructions */
+            instructions: string;
+            /** Seed */
+            seed: {
+                [key: string]: unknown;
+            }[];
+            /** Status */
+            status: string;
+            /** Published At */
+            published_at?: string | null;
+            /** Results Published */
+            results_published: boolean;
+            /** Total Points */
+            total_points: number | string;
+            /** Tasks */
+            tasks: components["schemas"]["TaskOut"][];
+        };
+        /** TaskOut */
+        TaskOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Position */
+            position: number;
+            /** Title */
+            title: string;
+            /** Instructions */
+            instructions: string;
+            /** Check Type */
+            check_type: string;
+            /** Check Params */
+            check_params: {
+                [key: string]: unknown;
+            };
+            /** Points */
+            points: number | string;
+        };
+        /** ExamIn */
+        ExamIn: {
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /** Duration Minutes */
+            duration_minutes: number;
+            /**
+             * Instructions
+             * @default
+             */
+            instructions: string;
+            /**
+             * Seed
+             * @default []
+             */
+            seed: components["schemas"]["SeedSpecIn"][];
+        };
+        /** SeedSpecIn */
+        SeedSpecIn: {
+            /** Product Code */
+            product_code: string;
+            /** Amount */
+            amount: number | string;
+            /**
+             * Vary
+             * @default false
+             */
+            vary: boolean;
+        };
+        /** TaskIn */
+        TaskIn: {
+            /** Title */
+            title: string;
+            /**
+             * Instructions
+             * @default
+             */
+            instructions: string;
+            /** Check Type */
+            check_type: string;
+            /**
+             * Check Params
+             * @default {}
+             */
+            check_params: {
+                [key: string]: unknown;
+            };
+            /** Points */
+            points: number | string;
+        };
+        /** ReorderIn */
+        ReorderIn: {
+            /** Task Ids */
+            task_ids: string[];
+        };
+        /** TaskPatch */
+        TaskPatch: {
+            /** Title */
+            title?: string | null;
+            /** Instructions */
+            instructions?: string | null;
+            /** Check Type */
+            check_type?: string | null;
+            /** Check Params */
+            check_params?: {
+                [key: string]: unknown;
+            } | null;
+            /** Points */
+            points?: number | string | null;
+        };
+        /** ResultsOut */
+        ResultsOut: {
+            /** Results Published */
+            results_published: boolean;
+            /** Max Score */
+            max_score: number | string;
+            /** Students */
+            students: components["schemas"]["StudentRowOut"][];
+        };
+        /** StudentRowOut */
+        StudentRowOut: {
+            /**
+             * Member Id
+             * Format: uuid
+             */
+            member_id: string;
+            /** Username */
+            username: string;
+            /** Full Name */
+            full_name: string;
+            /** Status */
+            status: string;
+            /** Started At */
+            started_at?: string | null;
+            /** Submitted At */
+            submitted_at?: string | null;
+            /** Auto Submitted */
+            auto_submitted: boolean;
+            /** Score */
+            score?: number | string | null;
+            /** Tasks */
+            tasks: components["schemas"]["TaskResultOut"][];
+        };
+        /** TaskResultOut */
+        TaskResultOut: {
+            /**
+             * Result Id
+             * Format: uuid
+             */
+            result_id: string;
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
+            /** Title */
+            title: string;
+            /** Max Points */
+            max_points: number | string;
+            /** Passed */
+            passed: boolean;
+            /** Auto Points */
+            auto_points: number | string;
+            /** Adjusted Points */
+            adjusted_points?: number | string | null;
+            /** Points */
+            points: number | string;
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            };
+        };
+        /** AdjustIn */
+        AdjustIn: {
+            /** Adjusted Points */
+            adjusted_points?: number | string | null;
+        };
+        /** StudentExamOut */
+        StudentExamOut: {
+            /** State */
+            state: string;
+            /** Instructions */
+            instructions: string;
+            /**
+             * Starts At
+             * Format: date-time
+             */
+            starts_at: string;
+            /**
+             * Ends At
+             * Format: date-time
+             */
+            ends_at: string;
+            /** Duration Minutes */
+            duration_minutes: number;
+            /**
+             * Server Time
+             * Format: date-time
+             */
+            server_time: string;
+            /** Started At */
+            started_at?: string | null;
+            /** Deadline At */
+            deadline_at?: string | null;
+            /** Submitted At */
+            submitted_at?: string | null;
+            /** Auto Submitted */
+            auto_submitted: boolean;
+            /** Remaining Seconds */
+            remaining_seconds?: number | null;
+            /** Results Published */
+            results_published: boolean;
+            /** Tasks */
+            tasks: components["schemas"]["StudentTaskOut"][];
+        };
+        /** StudentTaskOut */
+        StudentTaskOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Position */
+            position: number;
+            /** Title */
+            title: string;
+            /** Instructions */
+            instructions: string;
+            /** Points */
+            points: number | string;
+            /** Passed */
+            passed?: boolean | null;
+        };
+        /** MyResultOut */
+        MyResultOut: {
+            /** Score */
+            score: number | string;
+            /** Max Score */
+            max_score: number | string;
+            /**
+             * Submitted At
+             * Format: date-time
+             */
+            submitted_at: string;
+            /** Auto Submitted */
+            auto_submitted: boolean;
+            /** Tasks */
+            tasks: components["schemas"]["MyTaskResultOut"][];
+        };
+        /** MyTaskResultOut */
+        MyTaskResultOut: {
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
+            /** Title */
+            title: string;
+            /** Max Points */
+            max_points: number | string;
+            /** Passed */
+            passed: boolean;
+            /** Points */
+            points: number | string;
+            /** Adjusted */
+            adjusted: boolean;
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            };
         };
     };
     responses: never;
@@ -9714,6 +10308,397 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    exam_check_types: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckTypeOut"][];
+                };
+            };
+        };
+    };
+    exam_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"] | null;
+                };
+            };
+        };
+    };
+    exam_save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExamIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+        };
+    };
+    exam_task_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+        };
+    };
+    exam_tasks_reorder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+        };
+    };
+    exam_task_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskPatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+        };
+    };
+    exam_task_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+        };
+    };
+    exam_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+        };
+    };
+    exam_results: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultsOut"];
+                };
+            };
+        };
+    };
+    exam_results_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+        };
+    };
+    exam_result_adjust: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                result_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdjustIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultsOut"];
+                };
+            };
+        };
+    };
+    exam_results_xlsx: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    exam_results_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    exam_student_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentExamOut"];
+                };
+            };
+        };
+    };
+    exam_student_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentExamOut"];
+                };
+            };
+        };
+    };
+    exam_student_submit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentExamOut"];
+                };
+            };
+        };
+    };
+    exam_student_result: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyResultOut"];
+                };
             };
         };
     };

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "apps.ledger",
     "apps.products",
     "apps.reports",
+    "apps.exams",
 ]
 
 MIDDLEWARE = [

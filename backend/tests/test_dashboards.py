@@ -11,6 +11,7 @@ from apps.banking import tellers, transactions
 from apps.banking.models import Branch, CashTransfer, Till, Transaction
 from apps.lab import services as lab
 from apps.rbac import services as rbac
+from tests.exam_util import open_exam_window
 from tests.test_customers import Env, _media, complete_kyc, individual, make  # noqa: F401
 from tests.test_lab import _reset_rbac, active_session, api, j, world  # noqa: F401
 from tests.test_transactions import dep, mk_account, wd
@@ -350,6 +351,7 @@ class TestLearningEndpoint:
 
     def test_403_in_exam(self, world):
         env = Env(world, "e", kind="exam")
+        open_exam_window(env.session)
         open_till_both(env)
         usd = mk_account(env)
         txn = dep(env, usd, "10")

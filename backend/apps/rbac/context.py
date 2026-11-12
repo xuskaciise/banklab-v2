@@ -122,5 +122,10 @@ def lock_writable_session(request):
     session = Session.objects.select_for_update().get(pk=request.lab_session.pk)
     if session.status != SessionStatus.ACTIVE:
         raise HttpError(409, "Session is not active (read-only)")
+    member = getattr(request, "session_member", None)
+    if member is not None:
+        from apps.exams.guard import check_write_allowed
+
+        check_write_allowed(session, member)  # exam window / Start / submit guard (1.14)
     request.lab_session = session
     return session

@@ -215,6 +215,8 @@ def _visible(member: SessionMember, scope: str):
         qs = qs.filter(
             Q(created_by=member) | Q(seed_owner=member) | Q(is_seed=True, seed_owner__isnull=True)
         )
+    elif member.session.kind == "exam":  # exam seed rows stay private to their owner
+        qs = qs.filter(Q(seed_owner__isnull=True) | Q(seed_owner=member))
     return qs
 
 

@@ -571,6 +571,17 @@ class PermissionGrantOut(Schema):
     scope: str
 
 
+class ExamClockOut(Schema):
+    """Exam timing for the top-bar countdown (exam sessions with a published exam)."""
+
+    state: str  # not_open | ready | in_progress | submitted | missed
+    starts_at: datetime
+    ends_at: datetime
+    deadline_at: datetime | None = None
+    server_time: datetime
+    remaining_seconds: int | None = None
+
+
 class SessionMeOut(Schema):
     session_id: UUID
     session_name: str
@@ -585,6 +596,7 @@ class SessionMeOut(Schema):
     learning_panel: bool
     read_only: bool
     permissions: list[PermissionGrantOut]
+    exam: ExamClockOut | None = None
 
 
 def _require_student(user: User) -> None:
@@ -632,7 +644,13 @@ def session_me(request, session_id: UUID):
             scope = rbac.permission_scope(role, code, session=session, overrides=overrides)
             if scope:
                 permissions.append({"code": code, "scope": scope})
+    exam_clock = None
+    if session.kind == "exam":
+        from apps.exams import services as exam_services  # avoids an import cycle
+
+        exam_clock = exam_services.clock_for(ctx.member)
     return {
+        "exam": exam_clock,
         "session_id": session.pk,
         "session_name": session.name,
         "kind": session.kind,

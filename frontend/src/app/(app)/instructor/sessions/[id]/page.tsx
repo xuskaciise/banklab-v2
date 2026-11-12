@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { useBanks, useMembers, useSession } from "@/lib/lab";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -48,6 +50,16 @@ export default function SessionControlPage() {
                 <span className="flex flex-wrap items-center gap-3">
                   {s.name} <StatusBadge status={s.status} />
                 </span>
+              }
+              actions={
+                s.kind === "exam" && (
+                  <>
+                    <Button variant="outline" nativeButton={false} render={<Link href={`/instructor/exams/${s.id}/results`} />}>
+                      Exam results
+                    </Button>
+                    <Button nativeButton={false} render={<Link href={`/instructor/exams/${s.id}`} />}>Exam setup</Button>
+                  </>
+                )
               }
               subtitle={`${s.class_name} · ${s.kind === "exam" ? "Exam" : "Practice"} session`}
             />

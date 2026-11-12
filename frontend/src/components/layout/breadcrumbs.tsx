@@ -66,6 +66,16 @@ function crumbsFor(pathname: string): Crumb[] {
       { label: <SessionClassCrumb id={m[1]} /> },
       { label: <SessionName id={m[1]} /> },
     ];
+  if ((m = pathname.match(/^\/instructor\/exams\/([^/]+)(\/results)?$/)))
+    return [
+      { label: "Classes", href: "/instructor/classes" },
+      { label: <SessionClassCrumb id={m[1]} /> },
+      { label: <SessionName id={m[1]} />, href: `/instructor/sessions/${m[1]}` },
+      m[2]
+        ? { label: "Exam", href: `/instructor/exams/${m[1]}` }
+        : { label: "Exam setup" },
+      ...(m[2] ? [{ label: "Results" }] : []),
+    ];
   if (pathname === "/sessions") return [{ label: "My sessions" }];
   if ((m = pathname.match(/^\/s\/([^/]+)/)))
     return [

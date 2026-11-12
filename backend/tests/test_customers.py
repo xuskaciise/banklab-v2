@@ -20,6 +20,7 @@ from apps.lab.models import Bank, SessionMember
 from apps.ledger.models import JournalEntry
 from apps.ledger.services import LedgerError
 from apps.rbac import services as rbac
+from tests.exam_util import open_exam_window
 from tests.test_cash import add_person
 from tests.test_lab import (  # noqa: F401  (fixtures)
     _reset_rbac,
@@ -510,6 +511,7 @@ class TestVisibility:
 
     def test_exam_forces_own(self, world):
         env = Env(world, kind="exam", default_visibility="all")
+        open_exam_window(env.session)
         mine = make(env, "cso")
         make(env, "cso2")
         assert {c.pk for c in cs.list_customers(env.member("cso"))} == {mine.pk}

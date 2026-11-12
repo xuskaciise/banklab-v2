@@ -42,7 +42,7 @@ Domain details for every item live in [CONCEPT.md](CONCEPT.md).
 | 1.12c | Customer service upgrades (university request 2026-11-11): individual owner gets mother's name + parent/guardian phone (editable, audited); customer search by ID document number; account search by customer name, phone or ID number (not only account no) | 1.12b | [x] |
 | 1.12d | Optional KYC capture (alongside file upload): draw signature on screen (`signature_pad`; mouse/touch/stylus, PNG) and take profile photo from a webcam or USB/UVC camera (`getUserMedia`, device picker, JPEG square crop); same upload endpoints, Party gets `signature_source`/`photo_source` (audited); camera needs localhost or HTTPS | 1.12c | [x] |
 | 1.13 | Dashboards (instructor, manager, teller) + Dr/Cr learning panel toggle | 1.12d | [x] |
-| 1.14 | Exam sessions: timer, tasks, per-student seed data, auto-check, scores, results export | 1.13 | [ ] |
+| 1.14 | Exam sessions: timer, tasks, per-student seed data, auto-check, scores, results export | 1.13 | [x] |
 | 1.15 | Hardening: load test (100–200 students), security review, deploy to VPS | 1.14 | [ ] |
 
 ## Later phases (do not start before Phase 1 is done)

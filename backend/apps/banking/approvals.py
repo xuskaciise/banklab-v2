@@ -8,6 +8,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.customers import services as customers
+from apps.exams.guard import check_write_allowed
 from apps.rbac import services as rbac
 
 from . import cheques
@@ -83,6 +84,8 @@ def _close(approval, member, status, note):
 def approve(member, approval_id, note: str = "") -> Approval:
     with transaction.atomic():
         session, role, approval, txn = _decide_ctx(member, approval_id)
+        # money posts on the maker's behalf: the maker's exam window must still be open
+        check_write_allowed(session, approval.requested_by)
         note = customers._text(note, "Note", 300, required=False)
         day = core.open_day(member.bank_id)
         if txn.business_date != day.date:

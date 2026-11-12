@@ -21,6 +21,7 @@ import {
   initials,
   roleName,
 } from "@/components/layout/sidebar";
+import { ExamClockBadge } from "@/components/exams/exam-clock";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "banklab.sidebar.collapsed";
@@ -29,6 +30,12 @@ function StudentContext({ sessionId }: { sessionId: string }) {
   const { data } = useSessionMe(sessionId);
   if (!data) return null;
   return (
+    <>
+    {data.exam && (
+      <span className="text-xs">
+        <ExamClockBadge sessionId={sessionId} exam={data.exam} />
+      </span>
+    )}
     <div className="hidden items-center gap-3 text-xs text-text-muted lg:flex">
       {data.bank_name && (
         <span>
@@ -45,6 +52,7 @@ function StudentContext({ sessionId }: { sessionId: string }) {
         {roleLabel(data.role)}
       </span>
     </div>
+    </>
   );
 }
 

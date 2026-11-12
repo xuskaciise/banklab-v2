@@ -15,6 +15,8 @@ from apps.banking.txn_api import txn_router
 from apps.core.api import router as platform_router
 from apps.customers.api import router as customers_router
 from apps.customers.api import student_router as customers_student_router
+from apps.exams.api import router as exams_router
+from apps.exams.api import student_router as exams_student_router
 from apps.lab.api import router as lab_router
 from apps.lab.api import student_router
 from apps.lab.services import LabError
@@ -46,6 +48,8 @@ api.add_router("", customers_student_router)
 api.add_router("", products_student_router)
 api.add_router("", reports_router)
 api.add_router("", reports_student_router)
+api.add_router("", exams_router)
+api.add_router("", exams_student_router)
 
 
 @api.exception_handler(AccountsError)

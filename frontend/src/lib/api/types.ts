@@ -116,3 +116,18 @@ export type StaffDashboard = Schemas["StaffDashboardOut"];
 export type DashboardSession = Schemas["DashboardSessionOut"];
 export type DashboardEvent = Schemas["DashboardEventOut"];
 export type Learning = Schemas["LearningOut"];
+
+// Exam sessions (1.14)
+export type CheckType = Schemas["CheckTypeOut"];
+export type ExamOut = Schemas["ExamOut"];
+export type ExamIn = Schemas["ExamIn"];
+export type ExamTask = Schemas["TaskOut"];
+export type ExamTaskIn = Schemas["TaskIn"];
+export type ExamTaskPatch = Schemas["TaskPatch"];
+export type ExamResults = Schemas["ResultsOut"];
+export type ExamStudentRow = Schemas["StudentRowOut"];
+export type ExamTaskResult = Schemas["TaskResultOut"];
+export type StudentExam = Schemas["StudentExamOut"];
+export type StudentTask = Schemas["StudentTaskOut"];
+export type MyExamResult = Schemas["MyResultOut"];
+export type ExamClock = Schemas["ExamClockOut"];

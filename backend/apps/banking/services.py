@@ -16,6 +16,7 @@ from django.db import IntegrityError, transaction
 from apps.accounts.models import User
 from apps.audit import services as audit
 from apps.core import platform
+from apps.exams.guard import check_write_allowed
 from apps.lab import services as lab
 from apps.lab.models import Bank, RoleAssignment, Session, SessionMember, SessionStatus
 from apps.ledger import services as ledger
@@ -250,6 +251,7 @@ def _lock_session(member: SessionMember) -> Session:
         raise _conflict("session_archived", "Session is archived (read-only)")
     if session.status != SessionStatus.ACTIVE:
         raise _conflict("session_not_active", "Session is not active")
+    check_write_allowed(session, member)  # exam window / Start / submit guard (1.14)
     return session
 
 

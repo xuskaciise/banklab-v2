@@ -85,6 +85,10 @@ def _create(
         counter = None
         if counter_id is not None:
             counter = core.check_account(accounts.get(counter_id), currency, "Destination account")
+        for found, what in ((acc, "Account"), (counter, "Destination account")):
+            # another student's exam seed account behaves as if it does not exist
+            if found is not None and found.seed_owner_id not in (None, member.pk):
+                raise core.not_found(what)
         core.precheck(txn_type, acc, counter, amount, currency, ts)
         cheque = None
         if txn_type == TxnType.CHEQUE_WITHDRAWAL:
