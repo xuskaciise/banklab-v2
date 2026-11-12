@@ -209,6 +209,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/students": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Students List */
+        get: operations["admin_students_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/students/{user_id}/username": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Students Rename */
+        put: operations["admin_students_rename"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/classes/{class_id}/instructor": {
         parameters: {
             query?: never;
@@ -3139,6 +3173,27 @@ export interface components {
             /** Is Active */
             is_active: boolean;
         };
+        /** AdminStudentOut */
+        AdminStudentOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Username */
+            username: string;
+            /** Full Name */
+            full_name: string;
+            /** Phone */
+            phone: string;
+            /** Is Active */
+            is_active: boolean;
+        };
+        /** StudentRenameIn */
+        StudentRenameIn: {
+            /** Username */
+            username: string;
+        };
         /** ClassOut */
         ClassOut: {
             /**
@@ -5649,6 +5704,11 @@ export interface components {
             total_points: number | string;
             /** Tasks */
             tasks: components["schemas"]["TaskOut"][];
+            /**
+             * Seed Failures
+             * @default []
+             */
+            seed_failures: string[];
         };
         /** TaskOut */
         TaskOut: {
@@ -6205,6 +6265,54 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    admin_students_list: {
+        parameters: {
+            query?: {
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminStudentOut"][];
+                };
+            };
+        };
+    };
+    admin_students_rename: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudentRenameIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminStudentOut"];
+                };
             };
         };
     };

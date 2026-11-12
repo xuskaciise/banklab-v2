@@ -463,3 +463,96 @@ class TestReassignClass:
             lab.create_class(w["admin"], "N", "N1", instructor_id=w["ib"].pk)
         with pytest.raises(lab.ValidationFailed):
             lab.create_class(w["admin"], "N", "N2", instructor_id=w["studs"][0].pk)
+
+
+@pytest.mark.django_db
+class TestRenameStudent:
+    def _rename(self, client, user, new):
+        return j(client, "put", f"/api/admin/students/{user.pk}/username", {"username": new})
+
+    def test_forbidden_for_non_admin(self, world):  # noqa: F811
+        stu = world["studs"][1]
+        for user in (world["ia"], world["studs"][0]):
+            c = api(user)
+            assert c.get("/api/admin/students").status_code == 403
+            assert self._rename(c, stu, "newid1").status_code == 403
+        stu.refresh_from_db()
+        assert stu.username == "s1"
+        assert not AuditLog.objects.filter(action="admin.student_renamed").exists()
+
+    def test_other_institution_and_non_student_404(self, world, adm):  # noqa: F811
+        oadm, _ = other_inst_admin()
+        assert self._rename(api(oadm), world["studs"][0], "newid1").status_code == 404
+        assert self._rename(adm, world["ia"], "newid1").status_code == 404
+        assert api(oadm).get("/api/admin/students").json() == []
+
+    def test_bad_format_400(self, world, adm):  # noqa: F811
+        stu = world["studs"][0]
+        for bad in ("ab", "", "  ", "-abc", "a b c", "x" * 31, "abéc"):
+            assert self._rename(adm, stu, bad).status_code == 400, bad
+        assert self._rename(adm, stu, "s0").status_code == 400  # same as current
+        stu.refresh_from_db()
+        assert stu.username == "s0"
+
+    def test_duplicates_409(self, world, adm):  # noqa: F811
+        stu = world["studs"][0]
+        User.objects.filter(username="s1").update(username="stud1")
+        assert self._rename(adm, stu, "stud1").status_code == 409
+        assert self._rename(adm, stu, "STUD1").status_code == 409
+        assert self._rename(adm, stu, "ADM").status_code == 409  # staff username too
+        User.objects.filter(username="o1").update(username="other1")
+        assert self._rename(adm, stu, "OTHER1").status_code == 409  # other instructor student
+        stu.refresh_from_db()
+        assert stu.username == "s0"
+
+    def test_case_only_change_of_own_id_allowed(self, world, adm):  # noqa: F811
+        stu = world["studs"][0]
+        User.objects.filter(pk=stu.pk).update(username="stud0")
+        stu.refresh_from_db()
+        r = self._rename(adm, stu, "STUD0")
+        assert r.status_code == 200
+        assert r.json()["username"] == "STUD0"
+
+    def test_rename_audit_login_and_history_kept(self, world, adm):  # noqa: F811
+        from apps.lab.models import Enrollment, SessionMember
+        from tests.test_auth import student_login
+        from tests.test_lab import active_session
+
+        stu = world["studs"][0]
+        active_session(world)
+        enr = Enrollment.objects.filter(user=stu).count()
+        mem = SessionMember.objects.filter(user=stu).count()
+        assert enr == 1 and mem == 1
+        r = self._rename(adm, stu, " 2024.Stu-01 ")
+        assert r.status_code == 200
+        assert r.json()["username"] == "2024.Stu-01"
+        row = AuditLog.objects.get(action="admin.student_renamed", entity_id=str(stu.pk))
+        assert row.actor_id == world["admin"].id
+        assert row.before == {"username": "s0"}
+        assert row.after == {"username": "2024.Stu-01"}
+        assert Enrollment.objects.filter(user_id=stu.pk).count() == enr
+        assert SessionMember.objects.filter(user_id=stu.pk).count() == mem
+        assert student_login("2024.Stu-01", "0111")[2].status_code == 200
+        assert student_login("s0", "0111")[2].status_code != 200
+
+    def test_list_search_and_scope(self, world, adm):  # noqa: F811
+        names = [s["username"] for s in adm.get("/api/admin/students").json()]
+        assert names == ["o1", "s0", "s1", "s2"]
+        assert [s["username"] for s in adm.get("/api/admin/students?q=stud 1").json()] == ["s1"]
+        assert [s["username"] for s in adm.get("/api/admin/students?q=O1").json()] == ["o1"]
+        oadm, _ = other_inst_admin()
+        assert api(oadm).get("/api/admin/students?q=s0").json() == []
+
+    def test_instructor_patch_cannot_change_username(self, world):  # noqa: F811
+        stu = world["studs"][0]
+        c = api(world["ia"])
+        r = j(
+            c,
+            "patch",
+            f"/api/classes/{world['ca'].pk}/students/{stu.pk}",
+            {"username": "hacked1", "full_name": "New Name"},
+        )
+        assert r.status_code == 200
+        stu.refresh_from_db()
+        assert stu.username == "s0"
+        assert stu.full_name == "New Name"

@@ -68,6 +68,8 @@ type Props<T> = {
   onRowSelectionChange?: (s: RowSelectionState) => void;
   /** Let cells wrap so the table fits its container instead of scrolling sideways. */
   fit?: boolean;
+  /** Hide the built-in client-side search box (when the page searches on the server). */
+  hideSearch?: boolean;
 };
 
 const PAGE_SIZES = [10, 25, 50];
@@ -90,6 +92,7 @@ export function DataTable<T>({
   rowSelection,
   onRowSelectionChange,
   fit = false,
+  hideSearch = false,
 }: Props<T>) {
   const [sorting, setSorting] = useState<SortingState>(initialSort);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -154,26 +157,28 @@ export function DataTable<T>({
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
       <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2.5">
-        <div className="relative min-w-0 flex-1 sm:max-w-xs">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-text-muted" />
-          <Input
-            aria-label="Search table"
-            placeholder={searchPlaceholder}
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            className="h-8 pr-8 pl-8"
-          />
-          {globalFilter && (
-            <button
-              type="button"
-              aria-label="Clear search"
-              onClick={() => setGlobalFilter("")}
-              className="absolute top-1/2 right-2 -translate-y-1/2 rounded text-text-muted hover:text-text-strong"
-            >
-              <X className="size-4" />
-            </button>
-          )}
-        </div>
+        {!hideSearch && (
+          <div className="relative min-w-0 flex-1 sm:max-w-xs">
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-text-muted" />
+            <Input
+              aria-label="Search table"
+              placeholder={searchPlaceholder}
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              className="h-8 pr-8 pl-8"
+            />
+            {globalFilter && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setGlobalFilter("")}
+                className="absolute top-1/2 right-2 -translate-y-1/2 rounded text-text-muted hover:text-text-strong"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
+        )}
         {filters}
         <div className="ml-auto flex items-center gap-2">
           {columnToggle && hideable.length > 1 && (

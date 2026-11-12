@@ -59,6 +59,7 @@ const STAFF_NAV: NavItem[] = [
 ];
 const ADMIN_NAV: NavItem[] = [
   { label: "Instructors", href: "/admin/instructors", match: new RegExp("^/admin/instructors"), icon: UserCog },
+  { label: "Students", href: "/admin/students", match: new RegExp("^/admin/students"), icon: GraduationCap },
   { label: "Institution", href: "/admin/institution", match: new RegExp("^/admin/institution"), icon: Building2 },
   { label: "CoA templates", href: "/admin/coa-templates", match: new RegExp("^/admin/coa-templates"), icon: ListTree },
   { label: "Session templates", href: "/admin/session-templates", match: new RegExp("^/admin/session-templates"), icon: LayoutTemplate },

@@ -99,6 +99,7 @@ export type PlatformSettingsIn = Schemas["PlatformSettingsIn"];
 // Admin console (1.12b)
 export type InstructorOut = Schemas["InstructorOut"];
 export type InstructorIn = Schemas["InstructorIn"];
+export type AdminStudentOut = Schemas["AdminStudentOut"];
 export type InstitutionOut = Schemas["InstitutionOut"];
 export type CoaTemplateRow = Schemas["CoaTemplateRow"];
 export type CoaTemplateDetail = Schemas["CoaTemplateDetail"];

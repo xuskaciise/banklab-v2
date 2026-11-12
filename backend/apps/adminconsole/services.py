@@ -2,8 +2,10 @@
 session templates. Every function takes the acting admin, scopes to the admin's
 institution, runs atomically and writes an audit row."""
 
-from django.db import IntegrityError, transaction
-from django.db.models import Count
+import re
+
+from django.db import IntegrityError, connection, transaction
+from django.db.models import Count, Q
 
 from apps.accounts import services as accounts
 from apps.accounts.models import Institution, PlatformRole, User
@@ -15,6 +17,8 @@ from apps.ledger import services as ledger
 from apps.ledger.coa import DEFAULT_COA_NAME
 from apps.ledger.models import AccountType, CoaTemplate, CoaTemplateLine
 
+STUDENT_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{2,29}$")
+MAX_STUDENT_ROWS = 200
 MAX_LOGO_BYTES = 1024 * 1024
 LOGO_TYPES = {b"\xff\xd8\xff": "jpg", b"\x89PNG\r\n\x1a\n": "png"}
 
@@ -130,6 +134,63 @@ def reset_instructor_password(actor: User, user_id, request=None) -> None:
     target = _get_instructor(actor, user_id)
     accounts.reset_password(actor, target)
     _audit(actor, "auth.password_reset", ("user", target.pk), request=request)
+
+
+# ----------------------------------------------------------------------- students
+
+
+def list_students(actor: User, q: str = ""):
+    require_admin(actor)
+    qs = User.objects.filter(
+        institution_id=actor.institution_id, platform_role=PlatformRole.STUDENT
+    )
+    q = (q or "").strip()
+    if q:
+        qs = qs.filter(Q(username__icontains=q) | Q(full_name__icontains=q) | Q(phone__icontains=q))
+    return list(qs.order_by("username")[:MAX_STUDENT_ROWS])
+
+
+@transaction.atomic
+def rename_student(actor: User, user_id, new_username, request=None) -> User:
+    require_admin(actor)
+    user = (
+        User.objects.select_for_update()
+        .filter(pk=user_id, institution_id=actor.institution_id, platform_role=PlatformRole.STUDENT)
+        .first()
+    )
+    if user is None:
+        raise NotFound("Student not found")
+    new = (new_username or "").strip()
+    if not STUDENT_ID_RE.match(new):
+        raise ConsoleError(
+            "Student ID must be 3–30 letters, digits, '.', '_' or '-', "
+            "starting with a letter or digit"
+        )
+    old = user.username
+    if new == old:
+        raise ConsoleError("The new Student ID is the same as the current one")
+    # Serialize concurrent renames to case-variants of the same ID (the DB unique index
+    # is case-sensitive), then check uniqueness across ALL users, case-insensitively;
+    # never reveal which institution owns it.
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", [f"username:{new.lower()}"])
+    if User.objects.filter(username__iexact=new).exclude(pk=user.pk).exists():
+        raise Conflict("Student ID is not available")
+    user.username = new
+    try:
+        with transaction.atomic():
+            user.save(update_fields=["username"])
+    except IntegrityError:
+        raise Conflict("Student ID is not available") from None
+    _audit(
+        actor,
+        "admin.student_renamed",
+        ("user", user.pk),
+        before={"username": old},
+        after={"username": new},
+        request=request,
+    )
+    return user
 
 
 @transaction.atomic

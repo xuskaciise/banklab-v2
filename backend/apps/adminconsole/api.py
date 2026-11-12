@@ -31,6 +31,18 @@ class InstructorOut(Schema):
     must_change_password: bool
 
 
+class AdminStudentOut(Schema):
+    id: UUID
+    username: str
+    full_name: str
+    phone: str
+    is_active: bool
+
+
+class StudentRenameIn(Schema):
+    username: str
+
+
 class ActiveIn(Schema):
     is_active: bool
 
@@ -185,6 +197,23 @@ def instructors_set_active(request, user_id: UUID, payload: ActiveIn):
 def instructors_reset_password(request, user_id: UUID):
     services.reset_instructor_password(_admin(request), user_id, request=request)
     return 204, None
+
+
+# ------------------------------------------------------------------------- students
+
+
+@router.get("/students", response=list[AdminStudentOut], operation_id="admin_students_list")
+def students_list(request, q: str = ""):
+    return services.list_students(_admin(request), q)
+
+
+@router.put(
+    "/students/{user_id}/username",
+    response=AdminStudentOut,
+    operation_id="admin_students_rename",
+)
+def students_rename(request, user_id: UUID, payload: StudentRenameIn):
+    return services.rename_student(_admin(request), user_id, payload.username, request=request)
 
 
 @router.put(

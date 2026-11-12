@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiBlob, apiFetch } from "@/lib/api/client";
 import { ME_KEY } from "@/lib/auth";
 import type {
+  AdminStudentOut,
   ClassOut,
   CoaLineIn,
   CoaLineOut,
@@ -22,6 +23,26 @@ const INSTRUCTORS = ["admin", "instructors"] as const;
 const INSTITUTION = ["admin", "institution"] as const;
 const COA = ["admin", "coa"] as const;
 const SESSION_TPL = ["admin", "session-templates"] as const;
+
+// ---- students (username rename) ----
+export const useAdminStudents = (q: string) =>
+  useQuery({
+    queryKey: ["admin", "students", q],
+    queryFn: () =>
+      apiFetch<AdminStudentOut[]>(`${A}/students${q ? `?q=${encodeURIComponent(q)}` : ""}`),
+  });
+
+export function useRenameStudent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { id: string; username: string }) =>
+      apiFetch<AdminStudentOut>(`${A}/students/${v.id}/username`, {
+        method: "PUT",
+        json: { username: v.username },
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "students"] }),
+  });
+}
 
 // ---- instructors ----
 export const useInstructors = (enabled = true) =>
