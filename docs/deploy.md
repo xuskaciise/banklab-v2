@@ -12,7 +12,7 @@ Browser ──HTTPS──> Cloudflare (proxied; SSL mode "Full (strict)")
                       │ HTTPS
                       ▼
           host nginx 1.24 on the VPS (:80/:443, conf.d/*.conf, certbot certs)
-             ├─ bank2.siulabs.so /api/ /admin/ /static/ ─> 127.0.0.1:8100  banklab2 backend (gunicorn + Django + WhiteNoise)
+             ├─ bank2.siulabs.so /api/ /static/        ─> 127.0.0.1:8100  banklab2 backend (gunicorn + Django + WhiteNoise)
              └─ bank2.siulabs.so everything else        ─> 127.0.0.1:3100  banklab2 frontend (Next.js standalone)
                                                            banklab2 db (Postgres 16, compose-internal network only)
 ```
