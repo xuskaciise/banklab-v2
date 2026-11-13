@@ -52,14 +52,21 @@ export default function SessionControlPage() {
                 </span>
               }
               actions={
-                s.kind === "exam" && (
+                <>
+                  {!readOnly && (
+                    <Button variant="outline" nativeButton={false} render={<Link href={`/instructor/sessions/${s.id}/edit`} />}>
+                      Edit
+                    </Button>
+                  )}
+                  {s.kind === "exam" && (
                   <>
                     <Button variant="outline" nativeButton={false} render={<Link href={`/instructor/exams/${s.id}/results`} />}>
                       Exam results
                     </Button>
                     <Button nativeButton={false} render={<Link href={`/instructor/exams/${s.id}`} />}>Exam setup</Button>
                   </>
-                )
+                  )}
+                </>
               }
               subtitle={`${s.class_name} · ${s.kind === "exam" ? "Exam" : "Practice"} session`}
             />

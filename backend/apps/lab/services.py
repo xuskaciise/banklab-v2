@@ -615,6 +615,195 @@ def create_session(
     return session
 
 
+SESSION_FIELDS = (
+    "name",
+    "kind",
+    "structure",
+    "allowed_roles",
+    "default_visibility",
+    "learning_panel",
+    "seed_profile",
+    "opening_capital_usd",
+    "opening_capital_sos",
+    "template_id",
+)
+_EXAM_FORCED = ("structure", "default_visibility", "learning_panel")
+_EXAM_REASON = "Exams always use one bank, own-work visibility and no learning panel"
+_ARCHIVED_REASON = "Archived sessions are read-only"
+_ALWAYS_EDITABLE = ("name", "allowed_roles", "default_visibility", "learning_panel")
+
+
+def locked_fields(session: Session) -> dict[str, str]:
+    """Fields the instructor cannot change right now, with a short English reason."""
+    if session.status == SessionStatus.ARCHIVED:
+        return dict.fromkeys(SESSION_FIELDS, _ARCHIVED_REASON)
+    locked: dict[str, str] = {}
+    if session.status == SessionStatus.ACTIVE:
+        locked["kind"] = locked["structure"] = "Banks already exist"
+        locked["opening_capital_usd"] = locked["opening_capital_sos"] = (
+            "Opening capital is already posted to the ledger"
+        )
+        locked["template_id"] = locked["seed_profile"] = "Fixed once the session is open"
+    if session.kind == SessionKind.EXAM:
+        for f in _EXAM_FORCED:
+            locked.setdefault(f, _EXAM_REASON)
+    return locked
+
+
+def _session_values(s: Session) -> dict:
+    """Editable fields in `_session_dict` shape (plus template_id)."""
+    d = _session_dict(s)
+    d["template_id"] = str(s.template_id) if s.template_id else None
+    return {k: d[k] for k in SESSION_FIELDS}
+
+
+def _has_exam(session: Session) -> bool:
+    from apps.exams.models import Exam  # local import: exams depends on lab
+
+    return Exam.objects.filter(session=session).exists()
+
+
+@transaction.atomic
+def update_session(
+    actor: User,
+    session_id,
+    *,
+    name=None,
+    kind=None,
+    structure=None,
+    allowed_roles=None,
+    default_visibility=None,
+    learning_panel=None,
+    seed_profile=None,
+    opening_capital_usd=None,
+    opening_capital_sos=None,
+    template_id=None,
+    clear_template: bool = False,
+) -> Session:
+    """Edit a session after creation. None = not sent; `clear_template` unlinks the template.
+
+    Draft: everything is editable. Active: only name, allowed_roles, default_visibility and
+    learning_panel; a locked field sent with its current value is accepted silently, a different
+    value is a 409. Archived: read-only. Exams: explicitly sending a value the exam forbids
+    (learning panel on, visibility "all", per-group structure) is rejected with a 400; values
+    that merely follow from switching kind to exam are normalized.
+    """
+    session = get_session(actor, session_id, lock=True)
+    if session.status == SessionStatus.ARCHIVED:
+        raise Conflict("Session is archived (read-only)")
+    if template_id is not None and clear_template:
+        raise ValidationFailed("Send either template_id or clear_template, not both")
+
+    before = _session_values(session)
+    sent = {
+        "name": name,
+        "kind": kind,
+        "structure": structure,
+        "allowed_roles": allowed_roles,
+        "default_visibility": default_visibility,
+        "learning_panel": learning_panel,
+        "seed_profile": seed_profile,
+        "opening_capital_usd": opening_capital_usd,
+        "opening_capital_sos": opening_capital_sos,
+    }
+    sent = {k: v for k, v in sent.items() if v is not None}
+
+    # Validate and canonicalise each sent value (same helpers as create).
+    if "name" in sent:
+        sent["name"] = (sent["name"] or "").strip()
+        if not sent["name"]:
+            raise ValidationFailed("Name is required")
+    if "allowed_roles" in sent:
+        sent["allowed_roles"] = _check_roles(sent["allowed_roles"])
+    if "seed_profile" in sent:
+        sent["seed_profile"] = (sent["seed_profile"] or "").strip()
+        if len(sent["seed_profile"]) > 80:
+            raise ValidationFailed("Seed profile must be at most 80 characters")
+    for key, label in (
+        ("opening_capital_usd", "Opening capital USD"),
+        ("opening_capital_sos", "Opening capital SOS"),
+    ):
+        if key in sent:
+            sent[key] = str(_check_capital(sent[key], label))
+    new_template = None
+    if template_id is not None:
+        new_template = SessionTemplate.objects.filter(
+            pk=template_id, institution_id=session.lab_class.institution_id
+        ).first()
+        if new_template is None or new_template.lab_class_id not in (None, session.lab_class_id):
+            raise NotFound("Template not found")
+        sent["template_id"] = str(new_template.pk)
+    elif clear_template:
+        sent["template_id"] = None
+
+    if session.status != SessionStatus.DRAFT:
+        locked = locked_fields(session)
+        for field, value in list(sent.items()):
+            if field in _ALWAYS_EDITABLE:
+                continue
+            if value == before[field]:
+                del sent[field]  # unchanged locked field: accepted silently
+            else:
+                raise Conflict(f"{field} cannot be changed: {locked[field]}")
+
+    # Exam rules.
+    new_kind = sent.get("kind", before["kind"])
+    if new_kind not in SessionKind.values:
+        raise ValidationFailed("Invalid session kind")
+    if new_kind == SessionKind.EXAM:
+        if sent.get("learning_panel") is True:
+            raise ValidationFailed("The learning panel cannot be enabled in an exam session")
+        if sent.get("default_visibility") == Visibility.ALL:
+            raise ValidationFailed("An exam session always uses own-work visibility")
+        if sent.get("structure") == SessionStructure.PER_GROUP:
+            raise ValidationFailed("An exam session always uses a single bank")
+    elif before["kind"] == SessionKind.EXAM and _has_exam(session):
+        raise Conflict("This session already has an exam set up")
+
+    merged = {**before, **sent}
+    kind_, structure_, visibility_, panel_ = _normalize_settings(
+        merged["kind"], merged["structure"], merged["default_visibility"], merged["learning_panel"]
+    )
+    merged.update(
+        kind=kind_, structure=structure_, default_visibility=visibility_, learning_panel=panel_
+    )
+
+    removed = set(before["allowed_roles"]) - set(merged["allowed_roles"])
+    if removed:
+        in_use = sorted(
+            set(
+                RoleAssignment.objects.filter(
+                    session_member__session=session, active_to__isnull=True, role__in=removed
+                ).values_list("role", flat=True)
+            )
+        )
+        if in_use:
+            raise Conflict(f"Role {in_use[0]} is currently assigned and cannot be removed")
+
+    changed = [k for k in SESSION_FIELDS if merged[k] != before[k]]
+    if not changed:
+        return session
+
+    for k in changed:
+        if k == "template_id":
+            session.template = new_template
+        elif k.startswith("opening_capital"):
+            setattr(session, k, Decimal(merged[k]))
+        else:
+            setattr(session, k, merged[k])
+    columns = ["template" if k == "template_id" else k for k in changed]
+    session.save(update_fields=[*columns, "updated_at"])
+    _audit(
+        actor,
+        "lab.session_updated",
+        ("session", session.pk),
+        before={k: before[k] for k in changed},
+        after={k: merged[k] for k in changed},
+        session=session,
+    )
+    return session
+
+
 def _create_bank(actor, session: Session, name: str, group_no, business_date) -> Bank:
     with _conflict_guard():
         bank = Bank.objects.create(session=session, name=name, group_no=group_no)
