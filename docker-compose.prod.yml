@@ -4,10 +4,10 @@
 # projects on the VPS:
 #   docker compose -p banklab2 -f docker-compose.prod.yml --env-file .env.prod up -d --build
 #
-# Nothing is published on public ports. The host's shared reverse proxy
-# reaches the app over the external Docker network ${PROXY_NETWORK}
-# (aliases banklab2-web / banklab2-api), or, if the proxy runs on the host
-# instead of in Docker, over 127.0.0.1:${WEB_PORT}/${API_PORT}.
+# V1 is the compose project "banklab" on the same VPS; this one is "banklab2".
+# Nothing is published on public ports: the host nginx reaches the app on
+# 127.0.0.1:${API_PORT} (Django) and 127.0.0.1:${WEB_PORT} (Next.js).
+# See deploy/nginx-banklab2.conf.
 name: banklab2
 
 services:
@@ -45,10 +45,7 @@ services:
       - media_data:/app/media
     ports:
       - "127.0.0.1:${API_PORT:-8100}:8000"
-    networks:
-      internal:
-      proxy:
-        aliases: [banklab2-api]
+    networks: [internal]
     depends_on:
       db:
         condition: service_healthy
@@ -68,9 +65,7 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:${WEB_PORT:-3100}:3000"
-    networks:
-      proxy:
-        aliases: [banklab2-web]
+    networks: [internal]
     depends_on:
       - backend
 
@@ -80,6 +75,3 @@ volumes:
 
 networks:
   internal:
-  proxy:
-    external: true
-    name: ${PROXY_NETWORK:?set PROXY_NETWORK to the shared reverse-proxy network}

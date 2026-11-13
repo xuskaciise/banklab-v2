@@ -37,7 +37,7 @@ The review was done by grep sweeps plus two `ledger-reviewer` passes over all
 
 ## Open / accepted
 
-- **Cloudflare SSL mode is likely "Flexible"** (Cloudflare → nginx over plain HTTP). Recommended: switch to "Full (strict)" with a Cloudflare Origin Certificate, and firewall ports 80/443 to Cloudflare's IP ranges so the origin cannot be reached directly. This is a VPS/Cloudflare change for the owner (`docs/deploy.md`).
+- **Cloudflare SSL mode:** checked on 2026-11-13. It is "Full (strict)" and nginx terminates TLS with certbot certs. Optional: firewall ports 80/443 to Cloudflare ranges (ufw is inactive on the VPS), but this affects every site there, so it is the owner's call.
 - **`PROXY_SHARED_SECRET` unset:** the app trusts proxy headers from anyone that can reach it. The documented setup always sets it.
 - **Limit-rule race:** the limit check (`needs_approval`) now runs before the bank lock. A limit rule edited at the same instant could apply to one in-flight transaction. Balances and tills are still checked under lock. Accepted.
 - **Non-ASCII usernames:** usernames differing only in non-ASCII case (e.g. "ß") are not normalised beyond `lower()`. IDs are ASCII in practice.
