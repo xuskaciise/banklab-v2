@@ -2,7 +2,7 @@
 
 Everything here runs inside the caller's `transaction.atomic()`.
 
-Lock order (extends ledger/services.py): lab session -> teller session -> bank row (ref_no
+Lock order (extends ledger/services.py): lab session (shared) -> teller session -> bank row (ref_no
 sequence) -> customer accounts by id -> [posting service: business day -> cash positions ->
 GL balances]. Money moves only through `ledger.post_entry` / `ledger.reverse_entry`.
 """

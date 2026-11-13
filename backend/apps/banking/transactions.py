@@ -62,7 +62,10 @@ def _create(
     party,
     cheque_no=None,
 ):
-    """Common path of C1/C2/C4: validate, then post now or park for approval."""
+    """Common path of C1/C2/C4: validate, then post now or park for approval.
+
+    The detail read-back happens after COMMIT so the bank lock is not held while it runs.
+    """
     with transaction.atomic():
         session, role = core.require_perm(member, core.PERM[txn_type])
         amount = _amount(amount)
@@ -78,6 +81,7 @@ def _create(
             ts = core.require_open_ts(
                 core.lock_ts(member.bank_id, member=member, business_date=day.date)
             )
+        pending = limits.needs_approval(member.bank_id, role, txn_type, currency, amount)
         bank = core.lock_bank(member.bank_id)
         ids = [i for i in (account_id, counter_id) if i is not None]
         accounts = core.lock_accounts(bank.pk, ids)
@@ -93,7 +97,6 @@ def _create(
         cheque = None
         if txn_type == TxnType.CHEQUE_WITHDRAWAL:
             cheque = cheques.reserve(bank.pk, acc, cheque_no)
-        pending = limits.needs_approval(bank, role, txn_type, currency, amount)
         txn = core.new_txn(
             bank,
             day,
@@ -123,7 +126,8 @@ def _create(
         else:
             core.post(txn, bank, acc, counter, ts, member)
             core.audit_txn(member, role, "txn.posted", session, txn)
-        return detail_qs().get(pk=txn.pk)
+        txn_pk = txn.pk
+    return detail_qs().get(pk=txn_pk)
 
 
 def deposit(
@@ -272,7 +276,8 @@ def reverse(member, txn_id, reason: str = "") -> Transaction:
                 "reversed_at": timezone.now().isoformat(),
             },
         )
-        return detail_qs().get(pk=txn.pk)
+        txn_pk = txn.pk
+    return detail_qs().get(pk=txn_pk)
 
 
 # --------------------------------------------------------------------------- reads

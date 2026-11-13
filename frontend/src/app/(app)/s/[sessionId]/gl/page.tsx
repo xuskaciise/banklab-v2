@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api/client";
 import type { components } from "@/lib/api/schema";
 import { formatMoney } from "@/lib/banking";
+import { useSessionMe } from "@/lib/lab";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { QueryState, Table, Td, Th } from "@/components/lab/common";
@@ -15,6 +16,8 @@ type Gl = components["schemas"]["GLAccountOut"];
 
 export default function GlAccountsPage() {
   const { sessionId: sid } = useParams<{ sessionId: string }>();
+  // Own-work-only viewers (always in exams) get the chart without bank-wide balances.
+  const ownOnly = useSessionMe(sid).data?.visibility === "own";
   const q = useQuery({
     queryKey: ["gl-accounts", sid],
     queryFn: () => apiFetch<Gl[]>(`/api/s/${sid}/gl/accounts`),
@@ -23,7 +26,11 @@ export default function GlAccountsPage() {
     <ReportShell
       sid={sid}
       title="Chart of accounts"
-      subtitle="GL accounts with balances per currency. Open one to see its ledger lines."
+      subtitle={
+        ownOnly
+          ? "Chart of accounts. Bank-wide balances are hidden because this session shows your own work only."
+          : "GL accounts with balances per currency. Open one to see its ledger lines."
+      }
       anyOf={["gl.view"]}
     >
       <QueryState query={q}>
@@ -36,7 +43,7 @@ export default function GlAccountsPage() {
                 <Th>Code</Th>
                 <Th>Name</Th>
                 <Th>Type</Th>
-                <Th className="text-right">Balances</Th>
+                {!ownOnly && <Th className="text-right">Balances</Th>}
                 <Th>Ledger</Th>
               </tr>
             </thead>
@@ -51,6 +58,7 @@ export default function GlAccountsPage() {
                     )}
                   </Td>
                   <Td className="capitalize">{a.type}</Td>
+                  {!ownOnly && (
                   <Td className="text-right tabular-nums">
                     {a.balances.length === 0
                       ? "-"
@@ -58,6 +66,7 @@ export default function GlAccountsPage() {
                           <div key={b.currency}>{formatMoney(b.balance, b.currency)}</div>
                         ))}
                   </Td>
+                  )}
                   <Td>
                     {a.postable && (
                       <Link

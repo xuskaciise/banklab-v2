@@ -11,7 +11,15 @@ from apps.ledger.models import GLAccount, JournalLine
 from apps.products import services as products
 from apps.products.models import Account
 
-from .ctx import Ctx, bad, check_currency, date_range, new_report, not_found
+from .ctx import (
+    Ctx,
+    bad,
+    check_currency,
+    date_range,
+    new_report,
+    not_found,
+    require_bank_wide,
+)
 from .doc import ZERO, Column, Report, Section
 
 
@@ -56,8 +64,13 @@ def _running(bank, lines, start, end, opening, credit_normal, cur, title, summar
             }
         )
     rows.append(
-        {"description": "Closing balance", "debit": total_dr, "credit": total_cr,
-         "balance": balance, "style": "total"}
+        {
+            "description": "Closing balance",
+            "debit": total_dr,
+            "credit": total_cr,
+            "balance": balance,
+            "style": "total",
+        }
     )
     cols = [
         Column("date", "Date", "date", 1.1),
@@ -95,7 +108,10 @@ def account_statement(
     )
     no = str(account.account_no).zfill(8)
     report = new_report(
-        ctx, "account-statement", "Account Statement", f"{start:%d %b %Y} to {end:%d %b %Y}",
+        ctx,
+        "account-statement",
+        "Account Statement",
+        f"{start:%d %b %Y} to {end:%d %b %Y}",
         landscape=False,
     )
     head = [
@@ -105,8 +121,16 @@ def account_statement(
         ("Currency", account.currency, "text"),
     ]
     return _running(
-        ctx.bank, lines, start, end, _opening(lines, start, True), True, account.currency,
-        f"Statement of account {no}", head, report,
+        ctx.bank,
+        lines,
+        start,
+        end,
+        _opening(lines, start, True),
+        True,
+        account.currency,
+        f"Statement of account {no}",
+        head,
+        report,
     )
 
 
@@ -118,6 +142,7 @@ def gl_ledger(
     date_to: date | None = None,
 ) -> Report:
     """One GL account (and its children for a header account) in one currency."""
+    require_bank_wide(ctx)
     if not check_currency(currency):
         raise bad("currency is required (USD or SOS)")
     account = GLAccount.objects.filter(bank=ctx.bank, pk=gl_account_id).first()
@@ -135,15 +160,20 @@ def gl_ledger(
     lines = JournalLine.objects.filter(
         entry__bank=ctx.bank, gl_account_id__in=ids, currency=currency
     )
-    report = new_report(
-        ctx, "gl-ledger", "General Ledger", f"{start:%d %b %Y} to {end:%d %b %Y}"
-    )
+    report = new_report(ctx, "gl-ledger", "General Ledger", f"{start:%d %b %Y} to {end:%d %b %Y}")
     head = [
         ("GL account", f"{account.code} {account.name}", "text"),
         ("Currency", currency, "text"),
     ]
     return _running(
-        ctx.bank, lines, start, end, _opening(lines, start, not account.debit_normal),
-        not account.debit_normal, currency, f"Ledger {account.code} {account.name} - {currency}",
-        head, report,
+        ctx.bank,
+        lines,
+        start,
+        end,
+        _opening(lines, start, not account.debit_normal),
+        not account.debit_normal,
+        currency,
+        f"Ledger {account.code} {account.name} - {currency}",
+        head,
+        report,
     )

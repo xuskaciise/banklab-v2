@@ -1,0 +1,58 @@
+name: Deploy
+
+# Runs only after CI passed on main (or by hand). The "production" environment
+# can require a manual approval: Settings -> Environments -> production ->
+# Required reviewers. Only BankLab V2's own directory and compose project
+# (banklab2) on the shared VPS are touched — see deploy/deploy.sh.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: ${{ vars.BANKLAB_URL }}
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - name: Set up SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Pinned host key (no trust-on-first-use).
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Deploy ${{ env.SHA }}
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          APP_DIR: ${{ vars.APP_DIR || '~/banklab-v2' }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$VPS_USER@$VPS_HOST" \
+            "set -e; cd $APP_DIR && git fetch --quiet origin main && git checkout --quiet --detach $SHA && ./deploy/deploy.sh"
+
+      - name: Clean up key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

@@ -12,6 +12,7 @@ from ninja.errors import HttpError
 from ninja.security import django_auth
 
 from apps.audit import services as audit
+from apps.core.net import client_ip
 
 from . import services
 from .models import PlatformRole, User
@@ -19,8 +20,10 @@ from .models import PlatformRole, User
 router = Router(tags=["auth"])
 
 MAX_ATTEMPTS_PER_USER_IP = 5
-# One class (100-200 students) logs in from a single NAT IP at lecture start.
-# TODO(1.15): tune per-IP caps once the reverse proxy and trusted X-Forwarded-For are in place.
+# One class (100-200 students) logs in from a single NAT IP at lecture start. The per-IP cap
+# therefore counts only FAILED attempts (successful logins never consume it); 300 failures per
+# 5 minutes still stops password spraying from one address while tolerating typos in a big class.
+# The per-user+IP and per-ID caps still count every attempt before authenticating.
 MAX_ATTEMPTS_PER_IP = 300
 THROTTLE_SECONDS = 300
 MAX_ATTEMPTS_PER_ID = 20
@@ -77,31 +80,28 @@ def _enforce_csrf(request) -> None:
         raise HttpError(403, "CSRF check failed")
 
 
-def _client_ip(request) -> str:
-    # TODO(1.15): behind the reverse proxy, derive the client IP from a trusted
-    # X-Forwarded-For hop instead of REMOTE_ADDR.
-    return request.META.get("REMOTE_ADDR", "unknown")
-
-
 def _hit(key: str, timeout: int = THROTTLE_SECONDS) -> int:
     cache.add(key, 0, timeout)
     return cache.incr(key)
 
 
+def _ip_key(ip: str) -> str:
+    return f"login-ip:{ip}"
+
+
 def _throttle(request, prefix: str, ident: str) -> tuple[str, str]:
     """Count the attempt (before checking credentials); return the per-ID+IP key."""
-    ip = _client_ip(request)
+    ip = client_ip(request) or "unknown"
     digest = hashlib.sha256(ident.lower().encode()).hexdigest()[:32]
     user_key = f"{prefix}:{digest}:{ip}"
     id_key = f"{prefix}-id:{digest}"
-    ip_key = f"login-ip:{ip}"  # one per-IP budget shared by both endpoints
     # Count every attempt before authenticating so concurrent guesses cannot race past the cap.
     user_hits = _hit(user_key)
     id_hits = _hit(id_key, THROTTLE_ID_SECONDS)
-    ip_hits = _hit(ip_key)
+    ip_failures = cache.get(_ip_key(ip), 0)  # failures only, one budget for both endpoints
     if (
         user_hits > MAX_ATTEMPTS_PER_USER_IP
-        or ip_hits > MAX_ATTEMPTS_PER_IP
+        or ip_failures >= MAX_ATTEMPTS_PER_IP
         or id_hits > MAX_ATTEMPTS_PER_ID
     ):
         raise HttpError(429, "Too many login attempts. Try again later.")
@@ -109,6 +109,7 @@ def _throttle(request, prefix: str, ident: str) -> tuple[str, str]:
 
 
 def _login_failed(request, known: User | None, method: str) -> None:
+    _hit(_ip_key(client_ip(request) or "unknown"))
     # Never store the typed values: only a resolved user id, else a bare marker.
     audit.record(
         "auth.login_failed",
@@ -140,9 +141,12 @@ def csrf(request):
 def staff_login_view(request, payload: StaffLoginIn):
     _enforce_csrf(request)
     keys = _throttle(request, "login", payload.username)
-    user = authenticate(request, username=payload.username, password=payload.password)
+    known = services.find_user(payload.username)
+    # Authenticate with the stored spelling so "Admin" and "admin" are the same account.
+    user = authenticate(
+        request, username=known.username if known else payload.username, password=payload.password
+    )
     if user is None or not user.is_active or user.platform_role == PlatformRole.STUDENT:
-        known = User.objects.filter(username=payload.username).first()
         _login_failed(request, known, "staff")
         raise HttpError(401, INVALID_LOGIN)
     _login_ok(request, user, keys, "staff")
@@ -154,9 +158,13 @@ def student_login_view(request, payload: StudentLoginIn):
     _enforce_csrf(request)
     keys = _throttle(request, "slogin", payload.student_id)
     # Always run the password check so unknown IDs cost the same as known ones.
-    user = authenticate(request, username=payload.student_id, password=payload.password)
+    known = services.find_user(payload.student_id)
+    user = authenticate(
+        request,
+        username=known.username if known else payload.student_id,
+        password=payload.password,
+    )
     if user is None or not user.is_active or user.platform_role != PlatformRole.STUDENT:
-        known = User.objects.filter(username=payload.student_id).first()
         _login_failed(request, known, "student")
         raise HttpError(401, INVALID_LOGIN)
     _login_ok(request, user, keys, "student")

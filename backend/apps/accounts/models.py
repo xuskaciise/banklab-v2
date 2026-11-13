@@ -3,6 +3,7 @@ import uuid
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
+from django.db.models.functions import Lower
 from django.utils import timezone
 
 DEFAULT_INSTITUTION_NAME = "SIU"
@@ -72,6 +73,12 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = ["full_name"]
+
+    class Meta:
+        constraints = [
+            # "S5101" and "s5101" are the same person: usernames are unique ignoring case.
+            models.UniqueConstraint(Lower("username"), name="accounts_user_username_ci_uniq"),
+        ]
 
     def __str__(self) -> str:
         return self.username

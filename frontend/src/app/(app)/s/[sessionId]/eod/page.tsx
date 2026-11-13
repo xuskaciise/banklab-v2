@@ -20,7 +20,9 @@ export default function EndOfDayPage() {
   const { sessionId: sid } = useParams<{ sessionId: string }>();
   const router = useRouter();
   const me = useSessionMe(sid);
-  const canRun = !!me.data?.permissions.some((p) => p.code === "eod.run");
+  // Own-work-only viewers (always in exams) get 403 from the bank-wide EOD status API.
+  const ownOnly = me.data?.visibility === "own";
+  const canRun = !ownOnly && !!me.data?.permissions.some((p) => p.code === "eod.run");
   const readOnly = !!me.data?.read_only;
   const status = useEodStatus(sid, canRun);
   const close = useCloseDay(sid);
@@ -49,7 +51,12 @@ export default function EndOfDayPage() {
       />
       <QueryState query={me}>
         {readOnly && <ReadOnlyBanner />}
-        {!canRun ? (
+        {ownOnly ? (
+          <EmptyState
+            title="Not available in this session"
+            description="This session shows your own work only. End of day is run bank-wide."
+          />
+        ) : !canRun ? (
           <EmptyState title="No access" description="Your role cannot run end of day." />
         ) : status.isPending ? (
           <LoadingSkeleton />

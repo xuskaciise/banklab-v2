@@ -127,11 +127,16 @@ class TestFinancial:
         assert summary(body)["SOS net income"] == "0.00"
         day = env.bank.business_days.get().date
         later = get(
-            env, "accountant", "income-statement", date_from=str(day + timedelta(days=1)),
+            env,
+            "accountant",
+            "income-statement",
+            date_from=str(day + timedelta(days=1)),
             date_to=str(day + timedelta(days=2)),
         ).json()
         assert summary(later)["USD net income"] == "0.00"
-        bad = get(env, "accountant", "income-statement", date_from="2030-02-01", date_to="2030-01-01")
+        bad = get(
+            env, "accountant", "income-statement", date_from="2030-02-01", date_to="2030-01-01"
+        )
         assert bad.status_code == 400
 
     def test_permissions(self, ready):
@@ -140,7 +145,12 @@ class TestFinancial:
             for slug in ("trial-balance", "balance-sheet", "income-statement"):
                 assert get(env, key, slug).status_code == 403, (key, slug)
         assert get(env, "manager", "trial-balance").status_code == 200
-        assert get(env, "cso", "gl-ledger", gl_account_id=str(gl(env, "CASH_VAULT").pk), currency="USD").status_code == 403
+        assert (
+            get(
+                env, "cso", "gl-ledger", gl_account_id=str(gl(env, "CASH_VAULT").pk), currency="USD"
+            ).status_code
+            == 403
+        )
 
     def test_isolation(self, ready, world):
         env, _, _ = ready
@@ -179,8 +189,13 @@ class TestFinancial:
         header = next(r for r in ws.iter_rows() if r[0].value == "Code")
         assert header[0].font.bold
         money_cell = next(
-            c for r in ws.iter_rows() for c in r if c.value is not None and c.column == 3
-            and isinstance(c.value, (int, float, Decimal)) and c.row > header[0].row
+            c
+            for r in ws.iter_rows()
+            for c in r
+            if c.value is not None
+            and c.column == 3
+            and isinstance(c.value, (int, float, Decimal))
+            and c.row > header[0].row
         )
         assert money_cell.number_format == "#,##0.00"
 
@@ -192,8 +207,14 @@ class TestStatement:
         dep(env, a, "250.50")
         wd(env, a, "100")
         day = env.bank.business_days.get().date
-        body = get(env, "cso", "account-statement", account_id=str(a.pk),
-                   date_from=str(day), date_to=str(day)).json()
+        body = get(
+            env,
+            "cso",
+            "account-statement",
+            account_id=str(a.pk),
+            date_from=str(day),
+            date_to=str(day),
+        ).json()
         sec = body["sections"][0]
         rows = sec["rows"]
         assert rows[0]["description"] == "Opening balance" and rows[0]["balance"] == "0.00"
@@ -212,8 +233,14 @@ class TestStatement:
         env, _, a = ready
         day = env.bank.business_days.get().date
         nxt = day + timedelta(days=1)
-        body = get(env, "cso", "account-statement", account_id=str(a.pk),
-                   date_from=str(nxt), date_to=str(nxt)).json()
+        body = get(
+            env,
+            "cso",
+            "account-statement",
+            account_id=str(a.pk),
+            date_from=str(nxt),
+            date_to=str(nxt),
+        ).json()
         s = summary(body)
         assert s["Opening balance"] == s["Closing balance"] == "1000.00"
         assert len(body["sections"][0]["rows"]) == 2
@@ -270,12 +297,26 @@ class TestGlLedger:
         parent = parent.filter(type="liability").first()
         r = get(env, "accountant", "gl-ledger", gl_account_id=str(parent.pk), currency="USD")
         assert r.status_code == 200
-        assert get(env, "accountant", "gl-ledger", gl_account_id=str(parent.pk),
-                   currency="XXX").status_code == 400
-        assert get(env, "accountant", "gl-ledger", ".xlsx", gl_account_id=str(parent.pk),
-                   currency="USD").status_code == 200
-        assert get(env, "accountant", "gl-ledger", ".pdf", gl_account_id=str(parent.pk),
-                   currency="USD").content.startswith(b"%PDF")
+        assert (
+            get(
+                env, "accountant", "gl-ledger", gl_account_id=str(parent.pk), currency="XXX"
+            ).status_code
+            == 400
+        )
+        assert (
+            get(
+                env,
+                "accountant",
+                "gl-ledger",
+                ".xlsx",
+                gl_account_id=str(parent.pk),
+                currency="USD",
+            ).status_code
+            == 200
+        )
+        assert get(
+            env, "accountant", "gl-ledger", ".pdf", gl_account_id=str(parent.pk), currency="USD"
+        ).content.startswith(b"%PDF")
 
 
 @pytest.mark.django_db
@@ -294,10 +335,16 @@ def test_xlsx_neutralises_formulas():
 
     evil = ["=1+1", "+SUM(A1)", "-2+3", "@cmd", "\tx", "plain"]
     report = Report(
-        slug="x", title="T", bank_name="B",
+        slug="x",
+        title="T",
+        bank_name="B",
         sections=[Section("S", [Column("a", "A")], [{"a": v} for v in evil])],
     )
     ws = load_workbook(BytesIO(render_xlsx(report))).active
-    vals = [r[0] for r in ws.iter_rows(values_only=True) if r[0] and r[0] in {"'" + e for e in evil[:5]} | {"plain"}]
+    vals = [
+        r[0]
+        for r in ws.iter_rows(values_only=True)
+        if r[0] and r[0] in {"'" + e for e in evil[:5]} | {"plain"}
+    ]
     assert vals == ["'" + e for e in evil[:5]] + ["plain"]
     assert all(c.data_type != "f" for row in ws.iter_rows() for c in row)

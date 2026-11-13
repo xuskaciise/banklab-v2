@@ -75,15 +75,25 @@ class ReportOut(Schema):
 
 # (slug, operation name, permission, filter schema, builder)
 REPORTS = [
-    ("account-statement", "account_statement", "account.statement", StatementFilters,
-     statement.account_statement),
+    (
+        "account-statement",
+        "account_statement",
+        "account.statement",
+        StatementFilters,
+        statement.account_statement,
+    ),
     ("teller-cash", "teller_cash", "report.operational", TellerCashFilters, teller.teller_cash),
     ("branch-daily", "branch_daily", "report.operational", DailyFilters, ops.branch_daily),
     ("transaction-journal", "journal", "report.operational", JournalFilters, ops.journal),
     ("trial-balance", "trial_balance", "report.financial", AsOfFilters, fin.trial_balance),
     ("balance-sheet", "balance_sheet", "report.financial", AsOfFilters, fin.balance_sheet),
-    ("income-statement", "income_statement", "report.financial", RangeFilters,
-     fin.income_statement),
+    (
+        "income-statement",
+        "income_statement",
+        "report.financial",
+        RangeFilters,
+        fin.income_statement,
+    ),
     ("gl-ledger", "gl_ledger", "gl.view", GlLedgerFilters, statement.gl_ledger),
 ]
 
@@ -137,9 +147,9 @@ def _register() -> None:
             suffix = "" if fmt == "json" else f".{fmt}"
             op = f"report_{name}" + ("" if fmt == "json" else f"_{fmt}")
             kw = {"response": ReportOut} if fmt == "json" else {}
-            student_router.get(
-                f"/s/{{session_id}}/reports/{slug}{suffix}", operation_id=op, **kw
-            )(_student_view(perm, filt, build, fmt))
+            student_router.get(f"/s/{{session_id}}/reports/{slug}{suffix}", operation_id=op, **kw)(
+                _student_view(perm, filt, build, fmt)
+            )
             router.get(
                 f"/sessions/{{session_id}}/banks/{{bank_id}}/reports/{slug}{suffix}",
                 operation_id=f"report_staff_{name}" + ("" if fmt == "json" else f"_{fmt}"),

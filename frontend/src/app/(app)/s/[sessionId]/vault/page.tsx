@@ -13,7 +13,9 @@ export default function VaultPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const me = useSessionMe(sessionId);
   const perms = new Set(me.data?.permissions.map((p) => p.code));
-  const canView = perms.has("vault.view");
+  // Own-work-only viewers (always in exams) get 403 from the bank-wide vault API.
+  const ownOnly = me.data?.visibility === "own";
+  const canView = perms.has("vault.view") && !ownOnly;
   const vault = useVault(sessionId, canView);
   const transfers = useCashTransfers(sessionId, canView);
   const qc = useQueryClient();
@@ -32,7 +34,9 @@ export default function VaultPage() {
       />
       <QueryState query={me}>
         {readOnly && <ReadOnlyBanner />}
-        {!canView ? (
+        {ownOnly ? (
+          <EmptyState title="Not available in this session" description="This session shows your own work only. The bank-wide vault is not available here." />
+        ) : !canView ? (
           <EmptyState title="No access" description="Your role cannot view the vault." />
         ) : (
           <>

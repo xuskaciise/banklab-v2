@@ -13,6 +13,7 @@ from .ctx import (
     gl_nets,
     new_report,
     report_currencies,
+    require_bank_wide,
     side_amount,
 )
 from .doc import ZERO, Column, Report, Section
@@ -29,6 +30,7 @@ def _postable(ctx: Ctx):
 
 
 def trial_balance(ctx: Ctx, as_of: date | None = None, currency: str | None = None) -> Report:
+    require_bank_wide(ctx)
     as_of = as_of or current_date(ctx.bank)
     nets = gl_nets(ctx.bank, date_to=as_of, currency=check_currency(currency))
     accounts = _postable(ctx)
@@ -66,6 +68,7 @@ def _group(rows, title, accounts, nets, cur, total_label) -> Decimal:
 def balance_sheet(ctx: Ctx, as_of: date | None = None, currency: str | None = None) -> Report:
     """Assets = Liabilities + Equity + (Income - Expenses). The system has no year-end close,
     so the result line is the cumulative Income - Expenses up to `as_of`."""
+    require_bank_wide(ctx)
     as_of = as_of or current_date(ctx.bank)
     nets = gl_nets(ctx.bank, date_to=as_of, currency=check_currency(currency))
     accounts = _postable(ctx)
@@ -103,6 +106,7 @@ def income_statement(
     date_to: date | None = None,
     currency: str | None = None,
 ) -> Report:
+    require_bank_wide(ctx)
     start, end = date_range(ctx.bank, date_from, date_to)
     nets = gl_nets(ctx.bank, date_from=start, date_to=end, currency=check_currency(currency))
     accounts = _postable(ctx)
@@ -113,11 +117,19 @@ def income_statement(
     for cur in _currencies(ctx, currency, end):
         rows: list[dict] = []
         income = _group(
-            rows, "INCOME", [a for a in accounts if a.type == AccountType.INCOME], nets, cur,
+            rows,
+            "INCOME",
+            [a for a in accounts if a.type == AccountType.INCOME],
+            nets,
+            cur,
             "Total income",
         )
         expense = _group(
-            rows, "EXPENSES", [a for a in accounts if a.type == AccountType.EXPENSE], nets, cur,
+            rows,
+            "EXPENSES",
+            [a for a in accounts if a.type == AccountType.EXPENSE],
+            nets,
+            cur,
             "Total expenses",
         )
         rows.append({"name": "Net income", "amount": income - expense, "style": "total"})

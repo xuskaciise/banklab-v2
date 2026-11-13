@@ -1,3 +1,5 @@
+from apps.core.net import client_ip
+
 from .models import AuditLog
 
 _SENSITIVE_PARTS = (
@@ -11,12 +13,6 @@ _SENSITIVE_PARTS = (
     "hash",
     "csrf",
 )
-
-
-def _client_ip(request) -> str:
-    # TODO(1.15): behind the reverse proxy, derive the client IP from a trusted
-    # X-Forwarded-For hop instead of REMOTE_ADDR.
-    return request.META.get("REMOTE_ADDR", "") if request is not None else ""
 
 
 def _scrub(value):
@@ -60,7 +56,7 @@ def record(
         entity_id=entity_id,
         before=_scrub(before),
         after=_scrub(after),
-        ip=_client_ip(request),
+        ip=client_ip(request),
         session_id=session_id,
         bank_id=bank_id,
     )

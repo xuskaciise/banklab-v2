@@ -1,6 +1,7 @@
 import re
 
 from django.db import transaction
+from django.db.models.functions import Lower
 
 from .models import PlatformRole, User, get_default_institution
 
@@ -53,11 +54,24 @@ def validate_student_phone(phone: str) -> None:
         raise ValidationFailed("Enter a valid phone number")
 
 
+def find_user(username: str) -> User | None:
+    """Case-insensitive username lookup (usernames are unique ignoring case).
+
+    Login resolves the typed name to the stored spelling, so "s5101" signs in as "S5101".
+    Stored usernames are never rewritten: staff keep what the admin typed, students keep
+    the Student ID as created/imported.
+    """
+    username = (username or "").strip()
+    if not username:
+        return None
+    return User.objects.annotate(_ulower=Lower("username")).filter(_ulower=username.lower()).first()
+
+
 @transaction.atomic
 def create_user(username, full_name, phone, platform_role, institution=None) -> User:
     if platform_role not in PlatformRole.values:
         raise ValidationFailed("Invalid platform role")
-    if User.objects.filter(username=username).exists():
+    if User.objects.annotate(_ulower=Lower("username")).filter(_ulower=username.lower()).exists():
         raise ValidationFailed("Username already exists")
     if platform_role == PlatformRole.STUDENT:
         validate_student_phone(phone)

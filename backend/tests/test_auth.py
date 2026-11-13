@@ -463,7 +463,6 @@ class TestPhoneNormalisation:
         assert services.normalize_phone(raw) == expected
 
 
-
 @pytest.mark.django_db
 class TestServices:
     def test_initial_password(self):

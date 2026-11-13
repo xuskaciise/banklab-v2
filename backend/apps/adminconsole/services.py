@@ -6,6 +6,7 @@ import re
 
 from django.db import IntegrityError, connection, transaction
 from django.db.models import Count, Q
+from django.db.models.functions import Lower
 
 from apps.accounts import services as accounts
 from apps.accounts.models import Institution, PlatformRole, User
@@ -174,7 +175,12 @@ def rename_student(actor: User, user_id, new_username, request=None) -> User:
     # never reveal which institution owns it.
     with connection.cursor() as cursor:
         cursor.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", [f"username:{new.lower()}"])
-    if User.objects.filter(username__iexact=new).exclude(pk=user.pk).exists():
+    if (
+        User.objects.annotate(_ulower=Lower("username"))
+        .filter(_ulower=new.lower())
+        .exclude(pk=user.pk)
+        .exists()
+    ):
         raise Conflict("Student ID is not available")
     user.username = new
     try:

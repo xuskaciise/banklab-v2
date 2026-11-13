@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.prod.example
 
 # python
 __pycache__/
@@ -22,3 +23,4 @@ coverage/
 .DS_Store
 *.log
 .claude/settings.local.json
+backend/loadtest/*.csv

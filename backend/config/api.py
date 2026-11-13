@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.contrib.admin.views.decorators import staff_member_required
 from django.db import connection
 from ninja import NinjaAPI, Schema
 
@@ -28,7 +30,18 @@ from apps.rbac.services import RbacError
 from apps.reports.api import router as reports_router
 from apps.reports.api import student_router as reports_student_router
 
-api = NinjaAPI(title="BankLab API", version="0.1.0", auth=ActiveSessionAuth())
+
+def docs_decorator_for(debug: bool):
+    """OpenAPI JSON and Swagger UI are open in DEBUG (type generation) and staff-only otherwise."""
+    return None if debug else staff_member_required
+
+
+api = NinjaAPI(
+    title="BankLab API",
+    version="0.1.0",
+    auth=ActiveSessionAuth(),
+    docs_decorator=docs_decorator_for(settings.DEBUG),
+)
 api.add_router("/auth", auth_router)
 api.add_router("/audit", audit_router)
 api.add_router("/admin", admin_router)

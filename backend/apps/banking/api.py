@@ -10,6 +10,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from ninja import Router, Schema
+from ninja.errors import HttpError
 
 from apps.rbac import context as rbac_context
 from apps.rbac.context import require_bank_permission
@@ -216,6 +217,9 @@ def denominations(request):
 @student_router.get("/s/{session_id}/vault", response=VaultOut, operation_id="banking_vault")
 @require_bank_permission("vault.view")
 def vault(request, session_id: UUID):
+    # Vault cash is a bank-wide aggregate: hidden from own-work-only viewers (exam students).
+    if request.permission_scope == "own":
+        raise HttpError(403, "Not allowed")
     return services.vault_overview(request.bank)
 
 
@@ -226,7 +230,8 @@ def vault(request, session_id: UUID):
 )
 @require_bank_permission("vault.view")
 def transfers_list(request, session_id: UUID):
-    return services.list_transfers(request.bank)
+    own = request.session_member if request.permission_scope == "own" else None
+    return services.list_transfers(request.bank, own_member=own)
 
 
 def _member(request, session_id):

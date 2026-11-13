@@ -16,6 +16,7 @@ from django.utils import timezone
 from apps.audit import services as audit
 from apps.ledger import services as ledger
 from apps.ledger.models import JournalLine
+from apps.rbac import context as rbac_context
 from apps.rbac import services as rbac
 
 from . import eod_summary as summary
@@ -141,7 +142,10 @@ def _status(bank, day) -> dict:
 
 
 def eod_status(member) -> dict:
-    _require(member)
+    role = _require(member)
+    # The status is bank-wide (all tellers, pending items, totals): not for own-work-only viewers.
+    if rbac_context.effective_visibility(member.session, member, role) == "own":
+        raise rbac.PermissionDenied("Not allowed")
     day = core.open_day(member.bank_id)
     return _status(member.bank, day)
 

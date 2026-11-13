@@ -158,7 +158,9 @@ class TestClassesAndStudents:
         assert {"c1", "c4", "s0"} <= enrolled
         assert not User.objects.filter(username__in=["c2", "c3"]).exists()
         assert AuditLog.objects.filter(action="lab.students_imported").exists()
-        again = j(client, "post", f"/api/classes/{cid}/students/import/confirm", {"csv_text": csv_text})
+        again = j(
+            client, "post", f"/api/classes/{cid}/students/import/confirm", {"csv_text": csv_text}
+        )
         assert again.json()["ok_count"] == 0
 
     def test_csv_missing_columns_and_foreign_class(self, world):
@@ -191,7 +193,9 @@ class TestClassesAndStudents:
                 content_type="application/json",
             )
             assert r.status_code == 404
-        r = api(world["studs"][1]).patch(url, data={"full_name": "x"}, content_type="application/json")
+        r = api(world["studs"][1]).patch(
+            url, data={"full_name": "x"}, content_type="application/json"
+        )
         assert r.status_code == 403
         s.refresh_from_db()
         assert s.full_name == "Renamed"
@@ -258,7 +262,11 @@ class TestTemplatesAndSessions:
             default_visibility="all",
             learning_panel=True,
         )
-        assert (s.structure, s.default_visibility, s.learning_panel) == ("single_bank", "own", False)
+        assert (s.structure, s.default_visibility, s.learning_panel) == (
+            "single_bank",
+            "own",
+            False,
+        )
 
     def test_open_single_bank_creates_bank_and_day(self, world):
         s = active_session(world)
@@ -457,8 +465,12 @@ class TestPermissionOverrides:
             lab.set_permission_override(world["ia"], s.pk, "king", "gl.view", True)
         url = f"/api/sessions/{s.pk}/permissions/overrides"
         body = {"role": "teller", "permission_code": "gl.view", "allowed": True}
-        assert api(world["ib"]).put(url, data=body, content_type="application/json").status_code == 404
-        assert api(world["ia"]).put(url, data=body, content_type="application/json").status_code == 200
+        assert (
+            api(world["ib"]).put(url, data=body, content_type="application/json").status_code == 404
+        )
+        assert (
+            api(world["ia"]).put(url, data=body, content_type="application/json").status_code == 200
+        )
         assert j(api(world["ia"]), "post", url + "/clear", body).status_code == 204
 
     def test_person_level_sod_checks_ignore_overrides(self, world):
@@ -641,7 +653,9 @@ class TestAuditScoping:
         s2 = lab.create_session(world["ia"], world["ca"].pk, "S2")
         lab.open_session(world["ia"], s2.pk)
         inst = world["ia"].institution_id
-        audit.record("x.s2", session_id=s2.pk, bank_id=Bank.objects.get(session=s2).pk, institution_id=inst)
+        audit.record(
+            "x.s2", session_id=s2.pk, bank_id=Bank.objects.get(session=s2).pk, institution_id=inst
+        )
         rows = api(world["studs"][0]).get("/api/audit").json()["items"]
         assert "x.s2" not in {r["action"] for r in rows}
 
@@ -682,8 +696,13 @@ class TestReviewFixes:
         bank = Bank.objects.get(session=s)
         inst = world["ia"].institution_id
         audit.record("x.mine", actor=world["studs"][0], session_id=s.pk, bank_id=bank.pk)
-        audit.record("x.theirs", actor=world["studs"][1], session_id=s.pk, bank_id=bank.pk,
-                     institution_id=inst)
+        audit.record(
+            "x.theirs",
+            actor=world["studs"][1],
+            session_id=s.pk,
+            bank_id=bank.pk,
+            institution_id=inst,
+        )
         actions = {r["action"] for r in api(world["studs"][0]).get("/api/audit").json()["items"]}
         assert "x.mine" in actions and "x.theirs" not in actions
 
@@ -709,8 +728,13 @@ class TestReviewFixes:
     def test_foreign_institution_username_is_generic(self, world):
         from apps.accounts.models import Institution
 
-        foreign = acc.create_user("fx", "Foreign", PHONE, PlatformRole.STUDENT,
-                                  institution=Institution.objects.create(name="Other"))
+        foreign = acc.create_user(
+            "fx",
+            "Foreign",
+            PHONE,
+            PlatformRole.STUDENT,
+            institution=Institution.objects.create(name="Other"),
+        )
         with pytest.raises(lab.ValidationFailed) as e:
             lab.add_student(world["ib"], world["cb"].pk, foreign.username)
         assert e.value.message == lab.USERNAME_UNAVAILABLE

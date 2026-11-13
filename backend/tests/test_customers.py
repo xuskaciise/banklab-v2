@@ -694,9 +694,7 @@ class TestFiles:
             ("customer.party_signature_uploaded", "drawn"),
             ("customer.party_photo_uploaded", "camera"),
         ):
-            assert (
-                AuditLog.objects.filter(action=action).latest("at").after["source"] == src
-            )
+            assert AuditLog.objects.filter(action=action).latest("at").after["source"] == src
 
     def test_invalid_source_saves_nothing(self, env, settings):
         c, pid = self.setup_customer(env)

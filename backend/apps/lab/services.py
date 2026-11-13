@@ -237,7 +237,7 @@ def _add_student(actor, lab_class, username, full_name, phone) -> tuple[User, bo
     username = (username or "").strip()
     if not username:
         raise ValidationFailed("username is required")
-    user = User.objects.filter(username=username).first()
+    user = accounts.find_user(username)
     created = False
     if user is not None and user.institution_id != lab_class.institution_id:
         raise ValidationFailed(USERNAME_UNAVAILABLE)  # never reveal other institutions
@@ -370,7 +370,7 @@ def _validate_csv(lab_class: Class, text: str) -> CsvResult:
             row.action, row.error = "error", "duplicate username in file"
         else:
             seen.add(row.username.lower())
-            user = User.objects.filter(username=row.username).first()
+            user = accounts.find_user(row.username)
             if user is None:
                 if not row.full_name:
                     row.action, row.error = "error", "full_name is required"

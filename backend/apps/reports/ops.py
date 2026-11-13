@@ -74,8 +74,13 @@ def _by_type_section(txns) -> tuple[Section, int]:
     for cur in sorted(totals):
         n, amount = totals[cur]
         rows.append(
-            {"item": "Total posted", "currency": cur, "count": n, "amount": amount,
-             "style": "total"}
+            {
+                "item": "Total posted",
+                "currency": cur,
+                "count": n,
+                "amount": amount,
+                "style": "total",
+            }
         )
     reversed_ = (
         txns.filter(status=TxnStatus.REVERSED)
@@ -208,8 +213,7 @@ def journal(
             totals[t.currency] += t.amount
     for cur in sorted(totals):
         rows.append(
-            {"ref": f"Total posted {cur}", "currency": cur, "amount": totals[cur],
-             "style": "total"}
+            {"ref": f"Total posted {cur}", "currency": cur, "amount": totals[cur], "style": "total"}
         )
     report = new_report(
         ctx,

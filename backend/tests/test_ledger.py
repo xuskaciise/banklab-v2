@@ -154,14 +154,22 @@ class TestChartOfAccounts:
     def test_session_template_coa_is_used(self, world):
         inst = world["ia"].institution
         custom = CoaTemplate.objects.create(institution=inst, name="Custom")
-        custom.lines.create(code="1110", name="Vault X", type="asset", postable=True,
-                            system_tag="CASH_VAULT")
-        custom.lines.create(code="3100", name="Capital X", type="equity", postable=True,
-                            system_tag="CAPITAL")
+        custom.lines.create(
+            code="1110", name="Vault X", type="asset", postable=True, system_tag="CASH_VAULT"
+        )
+        custom.lines.create(
+            code="3100", name="Capital X", type="equity", postable=True, system_tag="CAPITAL"
+        )
         tmpl = SessionTemplate.objects.create(
-            institution=inst, lab_class=world["ca"], name="T", kind="practice",
-            structure="single_bank", allowed_roles=[], default_visibility="all",
-            created_by=world["ia"], coa_template=custom,
+            institution=inst,
+            lab_class=world["ca"],
+            name="T",
+            kind="practice",
+            structure="single_bank",
+            allowed_roles=[],
+            default_visibility="all",
+            created_by=world["ia"],
+            coa_template=custom,
         )
         s = lab.create_session(world["ia"], world["ca"].pk, "Custom session")
         s.template = tmpl
@@ -194,7 +202,9 @@ class TestPosting:
         s2 = active_session(world, "Two")
         b2 = bank_of(s2)
         assert [fund_vault(b1).entry_no, fund_vault(b1).entry_no, fund_vault(b2).entry_no] == [
-            1, 2, 1,
+            1,
+            2,
+            1,
         ]
 
     @pytest.mark.parametrize(
@@ -248,7 +258,9 @@ class TestPosting:
             assert exc.value.code == "account_not_postable"
         other = bank_of(active_session(world, "Other"))
         with pytest.raises(LedgerError) as exc:
-            post(bank, [LineSpec(acct(other, "CASH_VAULT"), debit=D("1")), cr(bank, "CAPITAL", "1")])
+            post(
+                bank, [LineSpec(acct(other, "CASH_VAULT"), debit=D("1")), cr(bank, "CAPITAL", "1")]
+            )
         assert exc.value.code == "foreign_account"
         assert bal(other, "CASH_VAULT") == 0
 
@@ -295,8 +307,9 @@ class TestPosting:
 
     def test_allow_negative_account(self, bank):
         # Dr Retained Earnings (equity, credit-normal) drives it below zero: allowed.
-        post(bank, [dr(bank, "RETAINED_EARNINGS", "10"), cr(bank, "CASH_VAULT", "10")]) if False \
-            else None
+        post(
+            bank, [dr(bank, "RETAINED_EARNINGS", "10"), cr(bank, "CASH_VAULT", "10")]
+        ) if False else None
         fund_vault(bank, "10")
         post(bank, [dr(bank, "RETAINED_EARNINGS", "10"), cr(bank, "CAPITAL", "10")])
         assert bal(bank, "RETAINED_EARNINGS") == D("-10.00")
@@ -445,12 +458,18 @@ class TestDbProtection:
         with pytest.raises(DatabaseError, match="not balanced|at least two"):
             with transaction.atomic():
                 entry = JournalEntry.objects.create(
-                    bank=bank, entry_no=1, business_date="2026-01-01", currency="USD",
+                    bank=bank,
+                    entry_no=1,
+                    business_date="2026-01-01",
+                    currency="USD",
                     source_type="raw",
                 )
                 JournalLine.objects.create(
-                    entry=entry, gl_account=acct(bank, "CASH_VAULT"), currency="USD",
-                    debit=D("5"), credit=D("0"),
+                    entry=entry,
+                    gl_account=acct(bank, "CASH_VAULT"),
+                    currency="USD",
+                    debit=D("5"),
+                    credit=D("0"),
                 )
                 with connection.cursor() as cur:
                     cur.execute("SET CONSTRAINTS ALL IMMEDIATE")
@@ -460,22 +479,32 @@ class TestDbProtection:
         for debit, credit in ((0, 0), (1, 1), (-1, 0)):
             with pytest.raises(DatabaseError), transaction.atomic():
                 JournalLine.objects.create(
-                    entry=e, gl_account=acct(bank, "CASH_VAULT"), currency="USD",
-                    debit=D(debit), credit=D(credit),
+                    entry=e,
+                    gl_account=acct(bank, "CASH_VAULT"),
+                    currency="USD",
+                    debit=D(debit),
+                    credit=D(credit),
                 )
 
     def test_entry_no_unique_and_single_reversal(self, bank):
         e = fund_vault(bank)
         with pytest.raises(DatabaseError), transaction.atomic():
             JournalEntry.objects.create(
-                bank=bank, entry_no=1, business_date=e.business_date, currency="USD",
+                bank=bank,
+                entry_no=1,
+                business_date=e.business_date,
+                currency="USD",
                 source_type="x",
             )
         ledger.reverse_entry(bank, e)
         with pytest.raises(DatabaseError), transaction.atomic():
             JournalEntry.objects.create(
-                bank=bank, entry_no=99, business_date=e.business_date, currency="USD",
-                source_type="x", reversal_of=e,
+                bank=bank,
+                entry_no=99,
+                business_date=e.business_date,
+                currency="USD",
+                source_type="x",
+                reversal_of=e,
             )
 
 
@@ -536,12 +565,18 @@ def test_deferred_trigger_fires_on_commit(bank):
     with pytest.raises(DatabaseError, match="not balanced|at least two"):
         with transaction.atomic():
             entry = JournalEntry.objects.create(
-                bank=bank, entry_no=1, business_date="2026-01-01", currency="USD",
+                bank=bank,
+                entry_no=1,
+                business_date="2026-01-01",
+                currency="USD",
                 source_type="raw",
             )
             JournalLine.objects.create(
-                entry=entry, gl_account=acct(bank, "CASH_VAULT"), currency="USD",
-                debit=D("5"), credit=D("0"),
+                entry=entry,
+                gl_account=acct(bank, "CASH_VAULT"),
+                currency="USD",
+                debit=D("5"),
+                credit=D("0"),
             )
     assert not JournalEntry.objects.filter(bank=bank).exists()
 

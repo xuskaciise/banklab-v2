@@ -73,8 +73,9 @@ def _currency_block(ts, cur, lines, txn_type, transfer_reason, transfers) -> tup
     moves.append({"item": "Transfers sent (vault / teller)", "cash_out": tout})
     cash_in = sum((r[1] for r in by_type.values()), ZERO)
     cash_out = sum((r[2] for r in by_type.values()), ZERO)
-    moves.append({"item": "Total", "cash_in": cash_in + tin, "cash_out": cash_out + tout,
-                  "style": "total"})
+    moves.append(
+        {"item": "Total", "cash_in": cash_in + tin, "cash_out": cash_out + tout, "style": "total"}
+    )
     expected = opening + cash_in - cash_out + tin - tout
     count = (
         CashCount.objects.filter(teller_session=ts, kind=CashCountKind.CLOSE, currency=cur)
@@ -152,5 +153,3 @@ def teller_cash(ctx: Ctx, teller_session_id: UUID) -> Report:
         report.sections.append(Section(f"Cash movements - {cur}", move_cols, moves, currency=cur))
         report.sections.append(Section(f"Cash position - {cur}", pos_cols, pos, currency=cur))
     return report
-
-

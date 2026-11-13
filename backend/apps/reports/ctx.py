@@ -34,6 +34,17 @@ def bad(message: str, code: str = "invalid_report_filter") -> LedgerError:
     return LedgerError(code, message)
 
 
+def require_bank_wide(ctx: "Ctx") -> None:
+    """Bank-wide GL views (trial balance, statements, GL ledger) aggregate every member's
+    postings, so own-work-only readers (always in exams) may not open them."""
+    if ctx.own_only:
+        raise LedgerError(
+            "own_work_only",
+            "Not available: this session shows your own work only",
+            status=403,
+        )
+
+
 def not_found(what: str) -> LedgerError:
     return LedgerError("not_found", f"{what} not found", status=404)
 

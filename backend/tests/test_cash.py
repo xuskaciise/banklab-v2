@@ -208,8 +208,12 @@ class TestOpeningCapital:
         body = r.json()
         assert body["opening_capital_usd"] == "5.00"
         assert body["opening_capital_sos"] == "5000000000.00"
-        bad = j(client, "post", "/api/sessions", {"class_id": str(world["ca"].pk), "name": "x",
-                                                  "opening_capital_usd": "-3"})
+        bad = j(
+            client,
+            "post",
+            "/api/sessions",
+            {"class_id": str(world["ca"].pk), "name": "x", "opening_capital_usd": "-3"},
+        )
         assert bad.status_code == 400
 
     def test_per_group_banks_each_get_branch_vault_capital(self, world):
@@ -237,8 +241,13 @@ class TestCashHolders:
     def test_cash_line_without_holder_rejected(self, env):
         bank = env.bank
         with pytest.raises(LedgerError) as e:
-            self.post(bank, [self.spec(bank, "CASH_VAULT", debit=D("1")),
-                             self.spec(bank, "CAPITAL", credit=D("1"))])
+            self.post(
+                bank,
+                [
+                    self.spec(bank, "CASH_VAULT", debit=D("1")),
+                    self.spec(bank, "CAPITAL", credit=D("1")),
+                ],
+            )
         assert e.value.code == "cash_holder_required"
 
     def test_wrong_holder_type_unknown_and_foreign_holder_rejected(self, env, world):
@@ -250,36 +259,64 @@ class TestCashHolders:
             ("vault", vault_of(other).pk),
         ):
             with pytest.raises(LedgerError) as e:
-                self.post(bank, [
-                    self.spec(bank, "CASH_VAULT", holder, debit=D("1"), cash_holder_type=holder_type),
-                    self.spec(bank, "CAPITAL", credit=D("1")),
-                ])
+                self.post(
+                    bank,
+                    [
+                        self.spec(
+                            bank, "CASH_VAULT", holder, debit=D("1"), cash_holder_type=holder_type
+                        ),
+                        self.spec(bank, "CAPITAL", credit=D("1")),
+                    ],
+                )
             assert e.value.code in ("cash_holder_required", "unknown_cash_holder")
 
     def test_holder_on_non_cash_account_rejected(self, env):
         bank = env.bank
         with pytest.raises(LedgerError) as e:
-            self.post(bank, [
-                self.spec(bank, "CASH_VAULT", env.vault.pk, debit=D("1"), cash_holder_type="vault"),
-                self.spec(bank, "CAPITAL", env.vault.pk, credit=D("1"), cash_holder_type="vault"),
-            ])
+            self.post(
+                bank,
+                [
+                    self.spec(
+                        bank, "CASH_VAULT", env.vault.pk, debit=D("1"), cash_holder_type="vault"
+                    ),
+                    self.spec(
+                        bank, "CAPITAL", env.vault.pk, credit=D("1"), cash_holder_type="vault"
+                    ),
+                ],
+            )
         assert e.value.code == "unexpected_cash_holder"
 
     def test_vault_never_negative(self, env):
         bank = env.bank
         with pytest.raises(LedgerError) as e:
-            self.post(bank, [
-                self.spec(bank, "CAPITAL", debit=D("1")),
-                self.spec(bank, "CASH_VAULT", env.vault.pk, credit=CAP_USD + D("0.01"),
-                          cash_holder_type="vault"),
-            ])
+            self.post(
+                bank,
+                [
+                    self.spec(bank, "CAPITAL", debit=D("1")),
+                    self.spec(
+                        bank,
+                        "CASH_VAULT",
+                        env.vault.pk,
+                        credit=CAP_USD + D("0.01"),
+                        cash_holder_type="vault",
+                    ),
+                ],
+            )
         assert e.value.code in ("insufficient_cash", "unbalanced")
         with pytest.raises(LedgerError) as e:
-            self.post(bank, [
-                self.spec(bank, "CAPITAL", debit=CAP_USD + D("1")),
-                self.spec(bank, "CASH_VAULT", env.vault.pk, credit=CAP_USD + D("1"),
-                          cash_holder_type="vault"),
-            ])
+            self.post(
+                bank,
+                [
+                    self.spec(bank, "CAPITAL", debit=CAP_USD + D("1")),
+                    self.spec(
+                        bank,
+                        "CASH_VAULT",
+                        env.vault.pk,
+                        credit=CAP_USD + D("1"),
+                        cash_holder_type="vault",
+                    ),
+                ],
+            )
         assert e.value.code == "insufficient_cash"
         assert position(bank, env.vault.pk) == CAP_USD
         assert gl_balance(bank, "CASH_VAULT") == CAP_USD
@@ -288,10 +325,15 @@ class TestCashHolders:
 
     def test_reversal_restores_positions(self, env):
         bank = env.bank
-        entry = self.post(bank, [
-            self.spec(bank, "CASH_VAULT", env.vault.pk, credit=D("40.00"), cash_holder_type="vault"),
-            self.spec(bank, "CAPITAL", debit=D("40.00")),
-        ])
+        entry = self.post(
+            bank,
+            [
+                self.spec(
+                    bank, "CASH_VAULT", env.vault.pk, credit=D("40.00"), cash_holder_type="vault"
+                ),
+                self.spec(bank, "CAPITAL", debit=D("40.00")),
+            ],
+        )
         assert position(bank, env.vault.pk) == CAP_USD - D("40.00")
         ledger.reverse_entry(bank, entry)
         assert position(bank, env.vault.pk) == CAP_USD
@@ -302,10 +344,15 @@ class TestCashHolders:
     def test_reversal_cannot_drive_cash_negative(self, env):
         bank = env.bank
         a1 = JournalEntry.objects.get(bank=bank, source_type="opening_capital", currency="USD")
-        self.post(bank, [
-            self.spec(bank, "CASH_VAULT", env.vault.pk, credit=D("5.00"), cash_holder_type="vault"),
-            self.spec(bank, "CAPITAL", debit=D("5.00")),
-        ])
+        self.post(
+            bank,
+            [
+                self.spec(
+                    bank, "CASH_VAULT", env.vault.pk, credit=D("5.00"), cash_holder_type="vault"
+                ),
+                self.spec(bank, "CAPITAL", debit=D("5.00")),
+            ],
+        )
         with pytest.raises(LedgerError):
             ledger.reverse_entry(bank, a1)  # would take 1,000,000 out of a vault holding less
         assert position(bank, env.vault.pk) == CAP_USD - D("5.00")
@@ -320,7 +367,9 @@ class TestCashHolders:
         assert ledger.cash_matches_lines(bank) is False
 
     def test_journal_line_holder_immutable(self, env):
-        line = JournalLine.objects.filter(entry__bank=env.bank, cash_holder_id__isnull=False).first()
+        line = JournalLine.objects.filter(
+            entry__bank=env.bank, cash_holder_id__isnull=False
+        ).first()
         line.cash_holder_id = uuid.uuid4()
         with pytest.raises(LedgerImmutableError):
             line.save()
@@ -344,7 +393,10 @@ class TestDualControl:
         entry = t2.journal_entry
         lines = list(entry.lines.select_related("gl_account"))
         assert sum(x.debit for x in lines) == sum(x.credit for x in lines) == D("250.00")
-        assert {(x.gl_account.code, x.debit > 0) for x in lines} == {("1120", True), ("1110", False)}
+        assert {(x.gl_account.code, x.debit > 0) for x in lines} == {
+            ("1120", True),
+            ("1110", False),
+        }
         assert position(bank, env.vault.pk) == CAP_USD - D("250.00")
         assert position(bank, teller) == D("250.00")
         assert gl_balance(bank, "CASH_VAULT") == CAP_USD - D("250.00")
@@ -352,13 +404,21 @@ class TestDualControl:
         assert all(r["ok"] for r in ledger.cash_reconciliation(bank))
         assert ledger.cash_matches_lines(bank)
         actions = set(AuditLog.objects.filter(entity_id=str(t.pk)).values_list("action", flat=True))
-        assert {"cash.transfer_requested", "cash.transfer_custodian_approved",
-                "cash.transfer_posted"} <= actions
+        assert {
+            "cash.transfer_requested",
+            "cash.transfer_custodian_approved",
+            "cash.transfer_posted",
+        } <= actions
 
         # B2: teller -> vault, requested by the teller
         back = banking.request_vault_transfer(
-            env.member("teller"), from_type="teller_session", from_id=teller,
-            to_type="vault", to_id=env.vault.pk, currency="USD", amount=D("100.00"),
+            env.member("teller"),
+            from_type="teller_session",
+            from_id=teller,
+            to_type="vault",
+            to_id=env.vault.pk,
+            currency="USD",
+            amount=D("100.00"),
         )
         full_approval(env, back)
         assert position(bank, teller) == D("150.00")
@@ -408,8 +468,13 @@ class TestDualControl:
                 request_transfer(env, teller, role=role)
         with pytest.raises(rbac.PermissionDenied):  # only tellers may return cash to the vault
             banking.request_vault_transfer(
-                env.member("manager"), from_type="teller_session", from_id=teller,
-                to_type="vault", to_id=env.vault.pk, currency="USD", amount=D("1"),
+                env.member("manager"),
+                from_type="teller_session",
+                from_id=teller,
+                to_type="vault",
+                to_id=env.vault.pk,
+                currency="USD",
+                amount=D("1"),
             )
         assert position(bank, env.vault.pk) == CAP_USD
 
@@ -427,8 +492,10 @@ class TestDualControl:
         assert position(bank, env.vault.pk) == CAP_USD
         for fn in (banking.approve_custodian, banking.approve_manager):
             with pytest.raises(LedgerError) as e:
-                fn(env.member("vault_custodian" if fn is banking.approve_custodian else "manager"),
-                   t.pk)
+                fn(
+                    env.member("vault_custodian" if fn is banking.approve_custodian else "manager"),
+                    t.pk,
+                )
             assert e.value.code == "invalid_status"
         assert AuditLog.objects.filter(action="cash.transfer_rejected").count() == 1
         # the requester cannot reject their own request, the teller cannot reject at all
@@ -481,8 +548,14 @@ class TestDualControl:
             ({"to_type": "vault", "to_id": env.vault.pk}, "invalid_holder_type"),
         ]
         for override, code in cases:
-            args = dict(from_type="vault", from_id=env.vault.pk, to_type="teller_session",
-                        to_id=teller, currency="USD", amount=D("10.00"))
+            args = dict(
+                from_type="vault",
+                from_id=env.vault.pk,
+                to_type="teller_session",
+                to_id=teller,
+                currency="USD",
+                amount=D("10.00"),
+            )
             args.update(override)
             with pytest.raises(LedgerError) as e:
                 banking.request_vault_transfer(env.member("manager"), **args)
@@ -490,8 +563,13 @@ class TestDualControl:
         # teller -> teller is not supported yet (needs 1.8)
         with pytest.raises(rbac.PermissionDenied):
             banking.request_vault_transfer(
-                env.member("manager"), from_type="teller_session", from_id=teller,
-                to_type="teller_session", to_id=teller, currency="USD", amount=D("1"),
+                env.member("manager"),
+                from_type="teller_session",
+                from_id=teller,
+                to_type="teller_session",
+                to_id=teller,
+                currency="USD",
+                amount=D("1"),
             )
         assert not CashTransfer.objects.exists()
 
@@ -510,10 +588,18 @@ class TestDualControl:
         # the vault is drained after the request
         ledger.post_entry(
             bank,
-            [LineSpec(acct(bank, "CAPITAL"), debit=D("500000.00")),
-             LineSpec(acct(bank, "CASH_VAULT"), credit=D("500000.00"),
-                      cash_holder_type="vault", cash_holder_id=env.vault.pk)],
-            currency="USD", source_type="test", description="drain",
+            [
+                LineSpec(acct(bank, "CAPITAL"), debit=D("500000.00")),
+                LineSpec(
+                    acct(bank, "CASH_VAULT"),
+                    credit=D("500000.00"),
+                    cash_holder_type="vault",
+                    cash_holder_id=env.vault.pk,
+                ),
+            ],
+            currency="USD",
+            source_type="test",
+            description="drain",
         )
         with pytest.raises(LedgerError) as e:
             banking.approve_manager(env.member("manager"), t.pk)
@@ -542,8 +628,9 @@ class TestDualControl:
             banking.approve_custodian(env.member("vault_custodian"), t.pk)
         client = api(env.user("manager"))
         assert client.get(f"/api/s/{env.session.pk}/vault").status_code == 200
-        r = j(client, "post", f"/api/s/{env.session.pk}/cash-transfers/{t.pk}/reject",
-              {"reason": "x"})
+        r = j(
+            client, "post", f"/api/s/{env.session.pk}/cash-transfers/{t.pk}/reject", {"reason": "x"}
+        )
         assert r.status_code == 409
 
     def test_transfers_cannot_be_deleted(self, env, teller_holders):
@@ -574,53 +661,91 @@ class TestCashApi:
 
     def test_full_flow_over_api(self, env, teller_holders):
         teller = teller_holders(env.bank)
-        body = {"from_type": "vault", "from_id": str(env.vault.pk), "to_type": "teller_session",
-                "to_id": str(teller), "currency": "USD", "amount": "75.50"}
+        body = {
+            "from_type": "vault",
+            "from_id": str(env.vault.pk),
+            "to_type": "teller_session",
+            "to_id": str(teller),
+            "currency": "USD",
+            "amount": "75.50",
+        }
         r = j(api(env.user("teller")), "post", self.url(env, "cash-transfers"), body)
         assert r.status_code == 200, r.content
         t = r.json()
         assert t["status"] == "pending" and t["amount"] == "75.50"
         tid = t["id"]
         # manager before custodian
-        r = j(api(env.user("manager")), "post",
-              self.url(env, f"cash-transfers/{tid}/approve-manager"))
+        r = j(
+            api(env.user("manager")), "post", self.url(env, f"cash-transfers/{tid}/approve-manager")
+        )
         assert r.status_code == 409 and r.json()["code"] == "custodian_approval_required"
-        r = j(api(env.user("vault_custodian")), "post",
-              self.url(env, f"cash-transfers/{tid}/approve-custodian"))
+        r = j(
+            api(env.user("vault_custodian")),
+            "post",
+            self.url(env, f"cash-transfers/{tid}/approve-custodian"),
+        )
         assert r.status_code == 200 and r.json()["status"] == "custodian_approved"
         assert r.json()["approved_by_1_name"]
-        r = j(api(env.user("manager")), "post",
-              self.url(env, f"cash-transfers/{tid}/approve-manager"))
+        r = j(
+            api(env.user("manager")), "post", self.url(env, f"cash-transfers/{tid}/approve-manager")
+        )
         assert r.status_code == 200 and r.json()["status"] == "posted"
         assert r.json()["journal_entry_id"]
         listing = api(env.user("vault_custodian")).get(self.url(env, "cash-transfers")).json()
         assert [x["id"] for x in listing] == [tid]
-        assert listing[0]["from_label"].startswith("Vault · ") and listing[0]["to_label"].startswith("Till ")
+        assert listing[0]["from_label"].startswith("Vault · ") and listing[0][
+            "to_label"
+        ].startswith("Till ")
         v = api(env.user("vault_custodian")).get(self.url(env, "vault")).json()
         usd = next(p for p in v["branches"][0]["positions"] if p["currency"] == "USD")
         assert D(usd["balance"]) == CAP_USD - D("75.50")
         assert all(row["ok"] for row in v["reconciliation"])
 
     def test_permissions_on_vault_and_transfers(self, env, teller_holders):
-        for role, code in (("teller", 403), ("cso", 403), ("manager", 200),
-                           ("vault_custodian", 200)):
+        for role, code in (
+            ("teller", 403),
+            ("cso", 403),
+            ("manager", 200),
+            ("vault_custodian", 200),
+        ):
             client = api(env.user(role))
             assert client.get(self.url(env, "vault")).status_code == code
             assert client.get(self.url(env, "cash-transfers")).status_code == code
         t = request_transfer(env, teller_holders(env.bank))
         for role in ("teller", "cso", "manager"):
-            r = j(api(env.user(role)), "post",
-                  self.url(env, f"cash-transfers/{t.pk}/approve-custodian"))
+            r = j(
+                api(env.user(role)),
+                "post",
+                self.url(env, f"cash-transfers/{t.pk}/approve-custodian"),
+            )
             assert r.status_code == 403
-        r = j(api(env.user("cso")), "post", self.url(env, f"cash-transfers/{t.pk}/reject"),
-              {"reason": "no"})
+        r = j(
+            api(env.user("cso")),
+            "post",
+            self.url(env, f"cash-transfers/{t.pk}/reject"),
+            {"reason": "no"},
+        )
         assert r.status_code == 403
-        r = j(api(env.user("teller")), "post", self.url(env, f"cash-transfers/{t.pk}/reject"),
-              {"reason": ""})  # the requester may cancel
+        r = j(
+            api(env.user("teller")),
+            "post",
+            self.url(env, f"cash-transfers/{t.pk}/reject"),
+            {"reason": ""},
+        )  # the requester may cancel
         assert r.status_code == 200 and r.json()["status"] == "cancelled"
-        r = j(api(env.user("cso")), "post", self.url(env, "cash-transfers"),
-              {"from_type": "vault", "from_id": str(env.vault.pk), "to_type": "teller_session",
-               "to_id": str(uuid.uuid4()), "currency": "USD", "amount": "1.00"})
+        r = j(
+            api(env.user("cso")),
+            "post",
+            self.url(env, "cash-transfers"),
+            {
+                "from_type": "vault",
+                "from_id": str(env.vault.pk),
+                "to_type": "teller_session",
+                "to_id": str(uuid.uuid4()),
+                "currency": "USD",
+                "amount": "1.00",
+            },
+        )
         assert r.status_code == 403
         assert api(env.world["ia"]).get(self.url(env, "vault")).status_code == 403
 
@@ -643,13 +768,21 @@ class TestCashApi:
         with pytest.raises(LedgerError) as e:
             banking.approve_custodian(cust2[1], t.pk)
         assert e.value.status == 404
-        assert j(api(mgr2[0]), "post", f"/api/s/{sid}/cash-transfers/{t.pk}/reject",
-                 {"reason": "x"}).status_code == 404
+        assert (
+            j(
+                api(mgr2[0]), "post", f"/api/s/{sid}/cash-transfers/{t.pk}/reject", {"reason": "x"}
+            ).status_code
+            == 404
+        )
         # bank 2 cannot request from bank 1's vault
         with pytest.raises(LedgerError) as e:
             banking.request_vault_transfer(
-                mgr2[1], from_type="vault", from_id=vault_of(bank1).pk,
-                to_type="teller_session", to_id=teller_holders(bank1), currency="USD",
+                mgr2[1],
+                from_type="vault",
+                from_id=vault_of(bank1).pk,
+                to_type="teller_session",
+                to_id=teller_holders(bank1),
+                currency="USD",
                 amount=D("1"),
             )
         assert e.value.code == "unknown_cash_holder"
@@ -658,10 +791,13 @@ class TestCashApi:
         other = api(env_b.user("manager"))
         assert other.get(f"/api/s/{sid}/vault").status_code == 403
         assert other.get(f"/api/s/{sid}/cash-transfers").status_code == 403
-        assert j(other, "post", f"/api/s/{sid}/cash-transfers/{t.pk}/approve-manager"
-                 ).status_code == 403
-        assert api(env_b.user("manager")).get(f"/api/s/{env_b.session.pk}/cash-transfers"
-                                              ).json() == []
+        assert (
+            j(other, "post", f"/api/s/{sid}/cash-transfers/{t.pk}/approve-manager").status_code
+            == 403
+        )
+        assert (
+            api(env_b.user("manager")).get(f"/api/s/{env_b.session.pk}/cash-transfers").json() == []
+        )
 
     def test_denominations(self, env):
         rows = api(env.user("teller")).get("/api/denominations").json()
@@ -686,8 +822,9 @@ class TestBranchesAndTills:
         assert branch["code"] == "002" and branch["vault_id"]
         vault = Vault.objects.get(pk=branch["vault_id"])
         assert vault.bank_id == env.bank.pk
-        assert sorted(CashPosition.objects.filter(holder_id=vault.pk).values_list(
-            "currency", "balance")) == [("SOS", 0), ("USD", 0)]
+        assert sorted(
+            CashPosition.objects.filter(holder_id=vault.pk).values_list("currency", "balance")
+        ) == [("SOS", 0), ("USD", 0)]
         assert [b["code"] for b in client.get(self.base(env)).json()] == ["001", "002"]
         r = j(client, "patch", f"{self.base(env)}/{branch['id']}", {"name": "Hargeisa 2"})
         assert r.status_code == 200 and r.json()["name"] == "Hargeisa 2"
@@ -719,8 +856,10 @@ class TestBranchesAndTills:
             assert c.get(self.base(env)).status_code == code
             assert j(c, "post", self.base(env), {"code": "9", "name": "n"}).status_code == code
             assert j(c, "patch", f"{self.base(env)}/{branch.pk}", {"name": "n"}).status_code == code
-            assert j(c, "post", f"{self.base(env)}/{branch.pk}/tills", {"code": "t"}
-                     ).status_code == code
+            assert (
+                j(c, "post", f"{self.base(env)}/{branch.pk}/tills", {"code": "t"}).status_code
+                == code
+            )
         # a bank of another session / a branch of another bank is never reachable
         other = Env(world, "o")
         client = api(world["ia"])
@@ -740,10 +879,11 @@ class TestBranchesAndTills:
         assert client.get(self.base(env)).status_code == 200
         assert j(client, "post", self.base(env), {"code": "003", "name": "n"}).status_code == 409
         branch = Branch.objects.get(bank=env.bank)
-        assert j(client, "post", f"{self.base(env)}/{branch.pk}/tills", {"code": "t"}
-                 ).status_code == 409
-        assert j(client, "patch", f"{self.base(env)}/{branch.pk}", {"name": "n"}
-                 ).status_code == 409
+        assert (
+            j(client, "post", f"{self.base(env)}/{branch.pk}/tills", {"code": "t"}).status_code
+            == 409
+        )
+        assert j(client, "patch", f"{self.base(env)}/{branch.pk}", {"name": "n"}).status_code == 409
 
 
 # ---------------------------------------------------------------------------- backfill

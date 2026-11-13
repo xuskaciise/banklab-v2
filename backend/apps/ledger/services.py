@@ -5,12 +5,14 @@
 approvals before calling; this module re-checks everything that protects the books.
 
 LOCK ORDER (every caller in 1.5+ that locks ledger-related rows must follow it):
-    session (FOR NO KEY UPDATE) -> bank (FOR NO KEY UPDATE; serialises entry_no)
+    session (FOR SHARE, shared by all writers; see lab/locking.py) -> bank (FOR NO KEY UPDATE;
+    serialises entry_no)
     -> open business day -> cash positions (by id) -> GL balances (by id).
 Lines on the cash control accounts (1110 vault, 1120 teller) must name their cash holder;
 the matching `CashPosition` moves in the same transaction (Dr +, Cr -, never below zero).
 Archiving takes a plain FOR UPDATE on the session, so it waits for in-flight postings and
-blocks new ones; postings in different banks of one session do not block each other.
+blocks new ones; postings in different banks of one session do not block each other (the
+session lock is shared; exam submit/start take it exclusively and wait for in-flight postings).
 """
 
 import uuid
@@ -19,12 +21,13 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
-from django.db.models import Max, Sum
+from django.db.models import Max, Q, Sum
 
 from apps.accounts.models import Institution
 from apps.audit import services as audit
 from apps.banking.cash import GL_TAG_HOLDER, holder_exists
 from apps.banking.models import BusinessDay, BusinessDayStatus, CashPosition
+from apps.lab.locking import lock_session_shared
 from apps.lab.models import Bank, RoleAssignment, Session, SessionMember, SessionStatus
 from apps.products.models import Account
 
@@ -219,7 +222,7 @@ def _check_actor(bank: Bank, actor_member: SessionMember | None) -> None:
 def _lock_context(bank: Bank) -> tuple[Bank, BusinessDay]:
     """Lock session (archive guard), bank (entry_no + serialisation) and the open day,
     in the documented order."""
-    session = Session.objects.select_for_update(no_key=True).get(pk=bank.session_id)
+    session = lock_session_shared(bank.session_id, select_related=("lab_class",))
     if session.status == SessionStatus.ARCHIVED:
         raise _conflict("session_archived", "Session is archived (read-only)")
     if session.status != SessionStatus.ACTIVE:
@@ -232,6 +235,7 @@ def _lock_context(bank: Bank) -> tuple[Bank, BusinessDay]:
     )
     if day is None:
         raise _conflict("day_closed", "The bank has no open business day")
+    locked._institution_id = session.lab_class.institution_id  # saves a query in _write
     return locked, day
 
 
@@ -420,11 +424,13 @@ def _write(
             session_member=actor_member, active_to__isnull=True
         ).first()
         role = assignment.role if assignment else ""
-    institution_id = (
-        Session.objects.filter(pk=bank.session_id)
-        .values_list("lab_class__institution_id", flat=True)
-        .first()
-    )
+    institution_id = getattr(bank, "_institution_id", None)
+    if institution_id is None:
+        institution_id = (
+            Session.objects.filter(pk=bank.session_id)
+            .values_list("lab_class__institution_id", flat=True)
+            .first()
+        )
     audit.record(
         audit_action,
         actor=user,
@@ -591,12 +597,19 @@ def balances_match_lines(bank: Bank) -> bool:
     return all(stored.get(key, ZERO) == value for key, value in recompute_balances(bank).items())
 
 
-def gl_tree(bank: Bank) -> list[dict]:
-    """Every GL account of the bank with its balance per currency."""
+def gl_tree(bank: Bank, *, with_balances: bool = True) -> list[dict]:
+    """Every GL account of the bank with its balance per currency.
+
+    `with_balances=False` (own-work-only viewers, e.g. exam students) returns the chart only:
+    bank-wide balances would reveal other students' postings.
+    """
     balances: dict[object, dict[str, Decimal]] = defaultdict(dict)
-    for acc_id, cur, bal in GLBalance.objects.filter(bank=bank).values_list(
-        "gl_account_id", "currency", "balance"
-    ):
+    stored = (
+        GLBalance.objects.filter(bank=bank).values_list("gl_account_id", "currency", "balance")
+        if with_balances
+        else []
+    )
+    for acc_id, cur, bal in stored:
         balances[acc_id][cur] = bal
     rows = []
     for acc in GLAccount.objects.filter(bank=bank).order_by("code"):
@@ -621,8 +634,26 @@ def gl_tree(bank: Bank) -> list[dict]:
     return rows
 
 
-def list_entries(bank: Bank, *, currency=None, date_from=None, date_to=None):
+def _own_entries(qs, member: SessionMember):
+    """Entries the member posted, or that come from a transaction the member created."""
+    from apps.banking.models import Transaction
+
+    mine = Transaction.objects.filter(created_by=member).values("pk")
+    return qs.filter(Q(posted_by=member) | Q(source_type="transaction", source_id__in=mine))
+
+
+def list_entries(
+    bank: Bank,
+    *,
+    currency=None,
+    date_from=None,
+    date_to=None,
+    own_member: SessionMember | None = None,
+):
+    """Journal of the bank; `own_member` restricts it to that member's own work."""
     qs = JournalEntry.objects.filter(bank=bank).prefetch_related("lines__gl_account")
+    if own_member is not None:
+        qs = _own_entries(qs, own_member)
     if currency:
         qs = qs.filter(currency=currency)
     if date_from:
@@ -632,12 +663,11 @@ def list_entries(bank: Bank, *, currency=None, date_from=None, date_to=None):
     return qs.order_by("-entry_no")
 
 
-def get_entry(bank: Bank, entry_id) -> JournalEntry:
-    entry = (
-        JournalEntry.objects.filter(bank=bank, pk=entry_id)
-        .prefetch_related("lines__gl_account")
-        .first()
-    )
+def get_entry(bank: Bank, entry_id, own_member: SessionMember | None = None) -> JournalEntry:
+    qs = JournalEntry.objects.filter(bank=bank, pk=entry_id).prefetch_related("lines__gl_account")
+    if own_member is not None:
+        qs = _own_entries(qs, own_member)
+    entry = qs.first()
     if entry is None:
         raise LedgerError("not_found", "Journal entry not found", status=404)
     return entry

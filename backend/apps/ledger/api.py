@@ -98,12 +98,17 @@ def _staff_bank(request, session_id: UUID, bank_id: UUID) -> Bank:
 # ------------------------------------------------------------------ student (bank role)
 
 
+def _own(request):
+    """The acting member when the viewer may only see their own work, else None."""
+    return request.session_member if request.permission_scope == "own" else None
+
+
 @student_router.get(
     "/s/{session_id}/gl/accounts", response=list[GLAccountOut], operation_id="ledger_gl_accounts"
 )
 @require_bank_permission("gl.view")
 def gl_accounts(request, session_id: UUID):
-    return services.gl_tree(request.bank)
+    return services.gl_tree(request.bank, with_balances=request.permission_scope != "own")
 
 
 @student_router.get(
@@ -114,6 +119,7 @@ def gl_accounts(request, session_id: UUID):
 def journal_list(request, session_id: UUID, filters: JournalFilters = FILTERS):
     return services.list_entries(
         request.bank,
+        own_member=_own(request),
         currency=filters.currency,
         date_from=filters.date_from,
         date_to=filters.date_to,
@@ -127,7 +133,7 @@ def journal_list(request, session_id: UUID, filters: JournalFilters = FILTERS):
 )
 @require_bank_permission("gl.view")
 def journal_get(request, session_id: UUID, entry_id: UUID):
-    return services.get_entry(request.bank, entry_id)
+    return services.get_entry(request.bank, entry_id, own_member=_own(request))
 
 
 # ------------------------------------------------------------------ staff (instructor/admin)

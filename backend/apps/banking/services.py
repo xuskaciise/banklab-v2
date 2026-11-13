@@ -18,6 +18,7 @@ from apps.audit import services as audit
 from apps.core import platform
 from apps.exams.guard import check_write_allowed
 from apps.lab import services as lab
+from apps.lab.locking import lock_session_shared
 from apps.lab.models import Bank, RoleAssignment, Session, SessionMember, SessionStatus
 from apps.ledger import services as ledger
 from apps.ledger.models import GLAccount
@@ -227,12 +228,13 @@ def holder_label(holder_type: str, holder_id) -> str:
     return holder_type.replace("_", " ").capitalize()
 
 
-def list_transfers(bank: Bank):
-    return (
-        CashTransfer.objects.filter(bank=bank)
-        .select_related("requested_by__user", "approved_by_1__user", "approved_by_2__user")
-        .order_by("-created_at")
-    )
+def list_transfers(bank: Bank, own_member: SessionMember | None = None):
+    qs = CashTransfer.objects.filter(bank=bank)
+    if own_member is not None:  # own-work-only viewers see only the transfers they requested
+        qs = qs.filter(requested_by=own_member)
+    return qs.select_related(
+        "requested_by__user", "approved_by_1__user", "approved_by_2__user"
+    ).order_by("-created_at")
 
 
 # --------------------------------------------------------------------------- writes
@@ -242,11 +244,7 @@ def _lock_session(member: SessionMember) -> Session:
     """Lock the session of the member (archive guard); the member must be placed in a bank."""
     if member.bank_id is None:
         raise rbac.PermissionDenied("Not allowed")
-    session = (
-        Session.objects.select_for_update(no_key=True, of=("self",))
-        .select_related("lab_class")
-        .get(pk=member.session_id)
-    )
+    session = lock_session_shared(member.session_id, select_related=("lab_class",))
     if session.status == SessionStatus.ARCHIVED:
         raise _conflict("session_archived", "Session is archived (read-only)")
     if session.status != SessionStatus.ACTIVE:

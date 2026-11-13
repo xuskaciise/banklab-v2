@@ -17,7 +17,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **opts):
         username = opts["username"]
-        if User.objects.filter(username=username).exists():
+        if User.objects.filter(username__iexact=username).exists():
             raise CommandError("Username already exists")
         password = os.environ.get("ADMIN_PASSWORD") or getpass("Password: ")
         if len(password) < services.MIN_PASSWORD_LENGTH:

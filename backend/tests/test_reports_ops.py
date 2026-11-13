@@ -111,7 +111,9 @@ class TestBranchDaily:
         env, *_ = ready
         body = get(env, "teller2", "branch-daily").json()
         assert not any(s["title"].startswith("Vault") for s in body["sections"])
-        total = next(r for r in rows_of(body, "Transactions by type") if r["item"] == "Total posted")
+        total = next(
+            r for r in rows_of(body, "Transactions by type") if r["item"] == "Total posted"
+        )
         assert total["count"] == 1 and total["amount"] == "10.00"
         assert [r["till"] for r in rows_of(body, "Teller positions")] == ["T2", "T2"]
 
@@ -144,9 +146,10 @@ class TestJournal:
         assert rows_of(body, "Transactions") == []
         assert get(env, "manager", "transaction-journal", type="bogus").status_code == 400
         assert get(env, "manager", "transaction-journal", status="bogus").status_code == 400
-        assert get(env, "manager", "transaction-journal", currency="SOS").json()["summary"][0][
-            "value"
-        ] == "0"
+        assert (
+            get(env, "manager", "transaction-journal", currency="SOS").json()["summary"][0]["value"]
+            == "0"
+        )
         # a teller cannot read another teller's rows by filtering on their id
         own = get(env, "teller", "transaction-journal", teller_id=str(t2.pk)).json()
         assert rows_of(own, "Transactions") == []
@@ -193,7 +196,10 @@ class TestJournal:
 def test_pdf_repeats_header_over_many_pages():
     rows = [{"a": f"row {i}", "n": D(i)} for i in range(300)]
     report = Report(
-        slug="x", title="Long", bank_name="Test Bank", period="p",
+        slug="x",
+        title="Long",
+        bank_name="Test Bank",
+        period="p",
         sections=[Section("T", [Column("a", "A"), Column("n", "N", "money")], rows)],
     )
     data = report_pdf.render_report(report)

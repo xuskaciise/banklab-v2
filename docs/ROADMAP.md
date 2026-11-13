@@ -44,7 +44,7 @@ Domain details for every item live in [CONCEPT.md](CONCEPT.md).
 | 1.13 | Dashboards (instructor, manager, teller) + Dr/Cr learning panel toggle | 1.12d | [x] |
 | 1.14 | Exam sessions: timer, tasks, per-student seed data, auto-check, scores, results export | 1.13 | [x] |
 | 1.14b | Admin-only rename of a student's Student ID (login username): format + case-insensitive uniqueness, atomic, audited with old/new ID; student keeps sessions, enrollments and history; instructors stay read-only for the ID | 1.14 | [x] |
-| 1.15 | Hardening: load test (100–200 students), security review, deploy to VPS | 1.14 | [ ] |
+| 1.15 | Hardening: load test (100–200 students), security review, deploy to VPS | 1.14 | [x] |
 
 ## Later phases (do not start before Phase 1 is done)
 

@@ -152,7 +152,9 @@ class TestRejectionsWhenOff:
         )
         set_sos(False)
         floats = [{"currency": "SOS", "amount": D("1000")}]
-        err(lambda: tellers.request_open(env.member("teller"), till.pk, floats), "currency_disabled")
+        err(
+            lambda: tellers.request_open(env.member("teller"), till.pk, floats), "currency_disabled"
+        )
         assert not TellerSession.objects.filter(bank=env.bank).exists()
         set_sos(True)
         ts = tellers.request_open(env.member("teller"), till.pk, floats)
