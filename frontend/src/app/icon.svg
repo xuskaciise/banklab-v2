@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- BankLab favicon: bank building on SIU navy (docs/design/theme.md bank-navy / bank-accent). -->
+  <rect width="64" height="64" rx="14" fill="#0f2942"/>
+  <path d="M32 11 10 23v4h44v-4L32 11Z" fill="#ffffff"/>
+  <circle cx="32" cy="20.5" r="2.6" fill="#0284c7"/>
+  <g fill="#ffffff">
+    <rect x="14" y="30" width="6" height="17" rx="1"/>
+    <rect x="24.67" y="30" width="6" height="17" rx="1"/>
+    <rect x="35.33" y="30" width="6" height="17" rx="1"/>
+    <rect x="46" y="30" width="6" height="17" rx="1"/>
+    <rect x="10" y="49" width="44" height="5" rx="1.5"/>
+  </g>
+</svg>

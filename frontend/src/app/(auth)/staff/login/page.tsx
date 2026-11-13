@@ -1,21 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { loginErrorMessage, useStaffLogin } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FormError } from "@/components/auth/field";
+import { LoginRoleSwitch } from "@/components/auth/login-role-switch";
 
 export default function StaffLoginPage() {
   const router = useRouter();
   const login = useStaffLogin();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ username?: string; password?: string }>(
-    {},
-  );
+  const [errors, setErrors] = useState<{
+    username?: string;
+    password?: string;
+  }>({});
 
   function onSubmit(ev: React.FormEvent) {
     ev.preventDefault();
@@ -37,44 +38,46 @@ export default function StaffLoginPage() {
   }
 
   return (
-    <Card className="shadow-md [--card-spacing:--spacing(6)]">
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold tracking-tight text-text-strong">Staff sign in</CardTitle>
-        <p className="text-sm text-text-muted">Instructors and administrators.</p>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit} noValidate className="space-y-4">
-          <Field
-            id="username"
-            label="Username"
-            autoComplete="username"
-            autoFocus
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            error={errors.username}
-          />
-          <Field
-            id="password"
-            label="Password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={errors.password}
-          />
-          <FormError
-            message={login.isError ? loginErrorMessage(login.error) : null}
-          />
-          <Button type="submit" className="w-full" disabled={login.isPending}>
-            {login.isPending ? "Signing in…" : "Sign in"}
-          </Button>
-        </form>
-        <p className="mt-4 text-center text-xs text-text-muted">
-          <Link href="/login" className="underline hover:text-text-strong">
-            Student login
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+    <>
+      <LoginRoleSwitch />
+      <Card className="shadow-md [--card-spacing:--spacing(6)]">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold tracking-tight text-text-strong">
+            Staff sign in
+          </CardTitle>
+          <p className="text-sm text-text-muted">
+            Instructors and administrators.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onSubmit} noValidate className="space-y-4">
+            <Field
+              id="username"
+              label="Username"
+              autoComplete="username"
+              autoFocus
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              error={errors.username}
+            />
+            <Field
+              id="password"
+              label="Password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              error={errors.password}
+            />
+            <FormError
+              message={login.isError ? loginErrorMessage(login.error) : null}
+            />
+            <Button type="submit" className="w-full" disabled={login.isPending}>
+              {login.isPending ? "Signing in…" : "Sign in"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </>
   );
 }
