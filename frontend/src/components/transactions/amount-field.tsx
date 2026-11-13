@@ -1,5 +1,6 @@
 "use client";
 
+import { AmountWords } from "@/components/shared/amount-words";
 import { cn } from "@/lib/utils";
 import { FieldLabel } from "./field-label";
 
@@ -45,6 +46,7 @@ export function AmountField({
           className="h-full min-w-0 flex-1 bg-transparent text-right text-2xl font-semibold text-text-strong tabular-nums outline-none placeholder:text-text-muted/60 disabled:cursor-not-allowed"
         />
       </div>
+      <AmountWords value={value} currency={currency} />
       {error ? (
         <p role="alert" className="text-xs text-fin-danger">
           {error}

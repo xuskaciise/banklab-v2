@@ -1,7 +1,7 @@
 """Text helpers for receipts: amount in words, masking and readable formatting."""
 
 import re
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 _ONES = (
     "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen "
@@ -30,7 +30,8 @@ def number_to_words(n: int) -> str:
     parts = []
     for size, name in _SCALES:
         if n >= size:
-            parts.append(f"{_below_1000(n // size)} {name}")
+            # number_to_words, not _below_1000: n // 10**12 can exceed 999 (16-digit amounts).
+            parts.append(f"{number_to_words(n // size)} {name}")
             n %= size
     if n:
         parts.append(_below_1000(n))
@@ -38,7 +39,7 @@ def number_to_words(n: int) -> str:
 
 
 def amount_in_words(amount: Decimal, currency: str) -> str:
-    whole, cents = divmod(int((abs(amount) * 100).to_integral_value()), 100)
+    whole, cents = divmod(int((abs(amount) * 100).to_integral_value(rounding=ROUND_HALF_UP)), 100)
     words = number_to_words(whole).capitalize()
     return f"{words} {CURRENCY_NAME.get(currency, currency)} and {cents:02d}/100"
 

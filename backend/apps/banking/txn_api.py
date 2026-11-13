@@ -18,6 +18,7 @@ from apps.rbac.context import require_bank_permission
 
 from . import approvals, receipts, transactions
 from .models import Approval
+from .receipt_text import amount_in_words
 
 txn_router = Router(tags=["transactions-student"])
 
@@ -105,6 +106,11 @@ class TransactionOut(Schema):
     approval_status: str | None = None
     approval_note: str | None = None
     created_at: datetime
+    amount_in_words: str
+
+    @staticmethod
+    def resolve_amount_in_words(obj):
+        return amount_in_words(obj.amount, obj.currency)
 
     @staticmethod
     def resolve_account_no(obj):
@@ -180,6 +186,11 @@ class ApprovalTxnOut(Schema):
     narration: str
     business_date: date
     cheque_no: int | None = None
+    amount_in_words: str
+
+    @staticmethod
+    def resolve_amount_in_words(obj):
+        return amount_in_words(obj.amount, obj.currency)
 
     @staticmethod
     def resolve_account_no(obj):
