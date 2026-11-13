@@ -269,6 +269,7 @@ Exam-ku waa session sida kuwa kale (data cusub, ka go'an xiisadaha kale), laakii
 ### Qaybta 3 — Macmiil (CIF) & KYC (go'aan)
 - Noocyada macaamiisha: **Shakhsi, Shirkad/Ganacsi, Joint, Hay'ad/NGO** (shirkad/hay'ad → signatories + mandate).
 - Furitaanka akoonka: **isla markiiba** (CSO) — ansixin KYC ma jirto MVP-ga.
+- **KYC buuxa ka hor akoon (go'aan 2026-11-08):** akoon lama furi karo ilaa macmiilku leeyahay: address; qof kasta oo saxiixa — sawir (profile), saxiix sawir ah, iyo ugu yaraan hal ID document oo scan/sawir leh; individual/joint — owner kasta next of kin. Server-ka ayaa xisaabiya (`kyc_complete`, `kyc_missing`); 1.7 ayaa dhaqangelinaya.
 - Dokumentiyada: **National ID, Passport, Warqad xaafadeed**.
 - Risk rating: **mustaqbalka** (AML phase).
 
@@ -308,8 +309,8 @@ Exam-ku waa session sida kuwa kale (data cusub, ka go'an xiisadaha kale), laakii
 ### Qaybta 9 — Users, Doorar & Audit (go'aan)
 - Doorarka MVP: **Teller, CSO, Supervisor/Manager, Vault Custodian, Accountant** (+ Instructor, Admin).
 - Permissions: **default door kasta + macallinku wuu beddeli karaa** (permission matrix).
-- Login ardayga: **username = student ID**, password-ka koowaad = **4-ta lambar ee ugu dambeeya telefoonkiisa**;
-  login-ka koowaad wuxuu ku qasbaa inuu beddelo. Password policy **fudud** (ha adkaan). Macallinku wuu reset gareyn karaa.
+- Login ardayga: **username = student ID**, password-ka koowaad = **4-ta lambar ee ugu dambeeya telefoonkiisa**; login-ka koowaad wuxuu ku qasbaa inuu beddelo. Password policy **fudud**. (Go'aan 2026-11-07 wuxuu hoos ku sixay: macallinku ardayda wuu reset gareyn karaa.)
+- **Go'aan 2026-11-07 (sixitaan) — Ardaygu password buu leeyahay:** ardaygu wuxuu galaa **Student ID + password**; password-ka koowaad = 4-ta lambar ee ugu dambeeya telefoonkiisa, `must_change_password=True`, waana qasbanaa inuu beddelo (sida staff; server-ka ayaa fuliya). Staff (instructor/admin) waxay isticmaalaan `/staff/login` (username + password), isla xeerka password-ka koowaad. Reset: **Admin** wuu reset gareyn karaa qof kasta (arday iyo instructor) isla machadka; **Instructor** wuxuu reset gareyn karaa **ardayga** oo keliya (1.3 ayaa ku xadidi doonta ardayda fasalladiisa), ma reset gareyn karo staff. Reset = password-ka koowaad + `must_change_password=True`, audit. Endpoints: `POST /api/auth/student-login` {student_id, password}, `POST /api/auth/staff-login` (`/api/auth/login` waa laga saaray); isticmaal-isku-darka (student door / staff door) wuxuu soo celiyaa isla 401 "Invalid credentials". Throttle iyo audit (`auth.login` / `auth.login_failed`) waa isku mid.
 - Audit log: **macallinka (wax walba) + Manager (Lab-kiisa)**.
 
 ### Qaybta 10 — Warbixinnada (go'aan)
@@ -325,7 +326,7 @@ Exam-ku waa session sida kuwa kale (data cusub, ka go'an xiisadaha kale), laakii
 | Phase | Waxa ku jira |
 |-------|--------------|
 | **0. Design** | ERD, Chart of Accounts, transaction catalog (Dr/Cr), permission matrix, liiska shaashadaha |
-| **1. MVP** | Lab (fasal/koox, arday gacan + Excel, doorar, reset, business date, activity log, visibility: "kaliya waxaan sameeyay" / "bangiga oo dhan") · Auth (student ID + 4-digit phone) · Branch/Vault (dual control)/Teller session (supervisor open, denomination close, xad + ansixin) · CIF (4 nooc) + KYC docs · Products (Savings, Current) · Accounts (Active/Closed) · Deposit/Withdraw/Transfer (isla currency) · Reversal · PDF receipt · Chequebook (Paid, Stop) · GL + Dr/Cr panel · EOD · Warbixinnada (TB, BS, IS, GL ledger, statement, teller, branch, journal; PDF+Excel) · Dashboards · Audit |
+| **1. MVP** | Lab (fasal/koox, arday gacan + Excel, doorar, reset, business date, activity log, visibility: "kaliya waxaan sameeyay" / "bangiga oo dhan") · Auth (student ID + password, first = last 4 phone digits; staff username + password) · Branch/Vault (dual control)/Teller session (supervisor open, denomination close, xad + ansixin) · CIF (4 nooc) + KYC docs · Products (Savings, Current) · Accounts (Active/Closed) · Deposit/Withdraw/Transfer (isla currency) · Reversal · PDF receipt · Chequebook (Paid, Stop) · GL + Dr/Cr panel · EOD · Warbixinnada (TB, BS, IS, GL ledger, statement, teller, branch, journal; PDF+Excel) · Dashboards · Audit |
 | **1 (sii)** | **Sessions (xiisad kasta data cusub, templates, archive)** + **Exam Session** (wakhti, hawlo, xog gaar ah, hubin toos ah, dhibco, natiijooyin) — MVP-ga ayuu ku jiraa (go'aan 2026-11-06) |
 | **2** | Layli/scenarios (guided practice) + inject events |
 | **3** | Loans + Murabaha, Musharakah, Qard Hasan |

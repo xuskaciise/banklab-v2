@@ -1,0 +1,28 @@
+FROM node:22-alpine AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+
+FROM node:22-alpine AS build
+WORKDIR /app
+# Empty = same origin: nginx routes /api/ to Django, so the browser calls /api/... directly.
+ARG NEXT_PUBLIC_API_URL=""
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_TELEMETRY_DISABLED=1
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+FROM node:22-alpine AS run
+WORKDIR /app
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    HOSTNAME=0.0.0.0 \
+    PORT=3000
+RUN addgroup -S banklab && adduser -S banklab -G banklab
+COPY --from=build --chown=banklab:banklab /app/.next/standalone ./
+COPY --from=build --chown=banklab:banklab /app/.next/static ./.next/static
+COPY --from=build --chown=banklab:banklab /app/public ./public
+USER banklab
+EXPOSE 3000
+CMD ["node", "server.js"]

@@ -1,0 +1,166 @@
+"use client";
+
+import { useState } from "react";
+import { ImageIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useBlobUrl } from "@/lib/customers";
+import type { PartyLink } from "@/lib/api/types";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+export const MANDATE_LABEL: Record<string, string> = {
+  any_one: "Any one may sign",
+  all_jointly: "All must sign jointly",
+};
+
+export function useIdentityImage(
+  sid: string,
+  customerId: string,
+  party: PartyLink,
+  kind: "photo" | "signature",
+) {
+  const has = kind === "photo" ? party.has_photo : party.has_signature;
+  const path = `/api/s/${sid}/customers/${customerId}/parties/${party.party_id}/${kind}`;
+  return { has, img: useBlobUrl(path, has, 0) };
+}
+
+/** Photo or signature tile; fixed size so a missing image never shifts layout. */
+export function IdentityImage({
+  sid,
+  customerId,
+  party,
+  kind,
+  compact,
+}: {
+  sid: string;
+  customerId: string;
+  party: PartyLink;
+  kind: "photo" | "signature";
+  compact?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const { has, img } = useIdentityImage(sid, customerId, party, kind);
+  const title = kind === "photo" ? "Photo" : "Signature";
+  const alt = `${title} of ${party.full_name}`;
+  const box = compact
+    ? kind === "photo"
+      ? "block h-20 w-16"
+      : "block h-20 w-full"
+    : kind === "photo"
+      ? "block h-48 w-36 sm:h-52 sm:w-40"
+      : "block h-48 w-full sm:h-52";
+  const fit = kind === "photo" ? "object-cover object-top" : "object-contain p-3";
+  return (
+    <figure className="min-w-0 space-y-1.5">
+      {img.data ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label={`Enlarge ${alt}`}
+          className={cn(
+            box,
+            "overflow-hidden rounded-lg border border-border bg-card outline-none transition-colors hover:border-bank-accent focus-visible:ring-2 focus-visible:ring-bank-accent",
+          )}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={img.data} alt={alt} className={cn("size-full", fit)} />
+        </button>
+      ) : (
+        <div
+          className={cn(
+            box,
+            "flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-surface px-2 text-center text-sm text-text-muted",
+          )}
+        >
+          <ImageIcon className="size-4" aria-hidden />
+          {!has
+            ? `${title} not available`
+            : img.isError
+              ? `${title} unavailable`
+              : "Loading…"}
+        </div>
+      )}
+      <figcaption className={compact ? "text-xs text-text-muted" : "text-sm text-text-muted"}>
+        {title}
+      </figcaption>
+      {img.data && (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{alt}</DialogTitle>
+            </DialogHeader>
+            <DialogBody>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={img.data}
+                alt={alt}
+                className="mx-auto max-h-[70vh] max-w-full rounded-lg border border-border object-contain"
+              />
+            </DialogBody>
+          </DialogContent>
+        </Dialog>
+      )}
+    </figure>
+  );
+}
+
+/** One row per signer (name + mandate label for joint accounts). */
+export function IdentityVerification({
+  sid,
+  customerId,
+  parties,
+  mandate,
+  compact,
+}: {
+  sid: string;
+  customerId: string;
+  parties: PartyLink[];
+  mandate?: string;
+  compact?: boolean;
+}) {
+  const signers = parties.filter((p) => p.can_sign);
+  const shown = signers.length ? signers : parties;
+  if (!shown.length) return null;
+  return (
+    <section className={compact ? "space-y-2" : "space-y-3 border-t border-border pt-4"}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h4 className="text-base font-semibold text-text-strong">
+          Identity Verification
+        </h4>
+        {shown.length > 1 && mandate && (
+          <p className="text-sm text-text-body">
+            {MANDATE_LABEL[mandate] ?? mandate}
+          </p>
+        )}
+      </div>
+      {shown.map((p) => (
+        <div key={p.party_id} className="space-y-2">
+          {shown.length > 1 && (
+            <p className="text-base font-medium text-text-strong">{p.full_name}</p>
+          )}
+          <div
+            className={
+              compact
+                ? "grid grid-cols-[auto_minmax(0,1fr)] gap-3"
+                : "grid grid-cols-1 gap-4 sm:grid-cols-[auto_minmax(0,1fr)]"
+            }
+          >
+            <IdentityImage sid={sid} customerId={customerId} party={p} kind="photo" compact={compact} />
+            <IdentityImage
+              sid={sid}
+              customerId={customerId}
+              party={p}
+              kind="signature"
+              compact={compact}
+            />
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}

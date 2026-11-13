@@ -14,6 +14,8 @@ Rules:
 - Next.js App Router + TypeScript + Tailwind + shadcn/ui + TanStack Query.
   Reuse existing components and layout; follow the frontend-design skill for
   any new visual pattern, and keep the look consistent with existing screens.
+- Use only the tokens and banking UI rules in `docs/design/theme.md`
+  (colours, status badges, amount format, Dr/Cr colours).
 - Never compute money totals or balances in the browser for saving — show
   what the API returns. Format amounts with their currency.
 - Hide actions the user's role cannot do, but rely on the API for enforcement.

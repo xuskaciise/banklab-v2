@@ -2,6 +2,7 @@
 name: ledger-reviewer
 description: Read-only reviewer for BankLab changes that touch money, the ledger, tills/vault, permissions, approvals or session scoping. Use before opening a PR for such changes.
 tools: Read, Grep, Glob, Bash
+model: sonnet
 ---
 
 You review the current branch diff (`git diff main...HEAD` plus uncommitted
