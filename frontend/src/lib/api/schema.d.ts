@@ -4301,6 +4301,8 @@ export interface components {
             from_label: string;
             /** To Label */
             to_label: string;
+            /** Amount In Words */
+            amount_in_words: string;
         };
         /** TransferIn */
         TransferIn: {
@@ -4695,6 +4697,8 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Amount In Words */
+            amount_in_words: string;
         };
         /** DepositIn */
         DepositIn: {
@@ -4867,6 +4871,8 @@ export interface components {
             business_date: string;
             /** Cheque No */
             cheque_no?: number | null;
+            /** Amount In Words */
+            amount_in_words: string;
         };
         /** DecisionIn */
         DecisionIn: {

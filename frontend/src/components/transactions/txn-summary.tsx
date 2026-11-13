@@ -1,5 +1,6 @@
 "use client";
 
+import { AmountWords } from "@/components/shared/amount-words";
 import { ArrowRight, Info, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatAccountNo } from "@/lib/accounts";
@@ -98,6 +99,15 @@ export function TxnSummary({
                   {amountValid ? formatMoney(amount.trim(), from.currency) : "--"}
                 </span>
               </Row>
+              {amountValid && (
+                <Row label="In words">
+                  <AmountWords
+                    value={amount.replace(/,/g, "").trim()}
+                    currency={from.currency}
+                    className="text-sm not-italic"
+                  />
+                </Row>
+              )}
               <Row label="Date">{dateLabel}</Row>
             </dl>
           )}

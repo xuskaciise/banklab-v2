@@ -1,5 +1,6 @@
 "use client";
 
+import { AmountWords } from "@/components/shared/amount-words";
 import { useState } from "react";
 import Link from "next/link";
 import { Loader2, Lock } from "lucide-react";
@@ -399,6 +400,7 @@ export function SessionForm({
                   disabled={isLocked("capUsd")}
                   onChange={(e) => set("capUsd", e.target.value)}
                 />
+                <AmountWords value={v.capUsd} currency="USD" />
               </Labeled>
               {note("capUsd")}
             </div>
@@ -411,6 +413,7 @@ export function SessionForm({
                     disabled={isLocked("capSos")}
                     onChange={(e) => set("capSos", e.target.value)}
                   />
+                  <AmountWords value={v.capSos} currency="SOS" />
                 </Labeled>
                 {note("capSos")}
               </div>

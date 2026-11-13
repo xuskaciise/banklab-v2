@@ -1,5 +1,6 @@
 "use client";
 
+import { AmountWords } from "@/components/shared/amount-words";
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { Check, Clock, Download, Loader2, Printer } from "lucide-react";
@@ -129,6 +130,7 @@ export function TxnResult({
           <p className="text-3xl font-bold tracking-tight text-text-strong tabular-nums">
             {formatMoney(txn.amount, txn.currency)}
           </p>
+          <AmountWords text={txn.amount_in_words} className="mt-1" />
         </div>
 
         <dl className="mx-6 mt-4 divide-y divide-border border-t border-border">

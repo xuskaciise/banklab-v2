@@ -1,5 +1,6 @@
 "use client";
 
+import { AmountWords } from "@/components/shared/amount-words";
 import { useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -46,6 +47,7 @@ function DecideDialog({
             {t ? `${t.ref_no} · ${formatMoney(t.amount, t.currency)}` : "Pending request"}
             {approve ? " will be posted to the ledger." : " will not be posted."}
           </DialogDescription>
+          {t && <AmountWords text={t.amount_in_words} />}
         </DialogHeader>
         <Textarea
           aria-label="Note"
