@@ -5,89 +5,89 @@ BankLab V2's own compose project (`banklab2`), its own directory, and its own
 nginx server block. Never run `docker compose down -v`, `docker system prune`,
 or restart the shared nginx without the owner's OK.
 
-## Topology
+## Topology (checked on the VPS, 2026-11-13)
 
 ```
-Browser ──HTTPS──> Cloudflare (proxied, DNS for siulabs.so)
-                      │  HTTP (SSL mode "Flexible") or HTTPS ("Full (strict)")
+Browser ──HTTPS──> Cloudflare (proxied; SSL mode "Full (strict)")
+                      │ HTTPS
                       ▼
-               shared nginx on the VPS (port 80/443)
-                 ├─ /api/, /admin/, /static/ ─> banklab2-api:8000  (gunicorn + Django + WhiteNoise)
-                 └─ everything else          ─> banklab2-web:3000  (Next.js standalone)
-                                                  banklab2 db (Postgres 16, private network only)
+          host nginx 1.24 on the VPS (:80/:443, conf.d/*.conf, certbot certs)
+             ├─ bank2.siulabs.so /api/ /admin/ /static/ ─> 127.0.0.1:8100  banklab2 backend (gunicorn + Django + WhiteNoise)
+             └─ bank2.siulabs.so everything else        ─> 127.0.0.1:3100  banklab2 frontend (Next.js standalone)
+                                                           banklab2 db (Postgres 16, compose-internal network only)
 ```
 
-We use Cloudflare because some networks block the VPS IP directly, so visitors
-only ever talk to Cloudflare. Because of that:
+The VPS is a 4 vCPU / 16 GB box. Other sites run on the same nginx,
+each in its own `conf.d/<site>.conf` with a Let's Encrypt cert:
+`bank.siulabs.so` (V1, compose project `banklab`, port 8085; `siulabs.so` redirects there), `estate.`,
+`hotel.`, `sams.`, `warehouse.`, `s3.`. Ports already used on 127.0.0.1:
+3000, 3009, 3010, 3011, 5433, 8085, 9000–9001. V2 uses **8100** and **3100**.
 
-- **Visitor IP:** nginx restores it from `CF-Connecting-IP` (only trusted from
-  Cloudflare ranges) and sends it as `X-Real-IP`. Django reads it through
-  `CLIENT_IP_HEADER=HTTP_X_REAL_IP`. This is used by the login throttle and
-  the audit log. Without it, a whole class would look like one Cloudflare IP.
-- **Scheme:** nginx forwards `X-Forwarded-Proto: https` when Cloudflare's
-  `CF-Visitor` says https, so Django marks cookies `Secure` correctly.
-  Keep `DJANGO_SSL_REDIRECT=false` and let Cloudflare redirect HTTP to HTTPS
-  ("Always Use HTTPS"). Otherwise Flexible mode loops.
+Cloudflare sits in front because some networks block the VPS IP directly.
+Because of that:
+
+- **Visitor IP:** `conf.d/00-cloudflare-realip.conf` already restores it
+  from `CF-Connecting-IP` for all sites. Our block sends it as `X-Real-IP`
+  plus the `X-BankLab-Proxy` shared secret. Django trusts it only with that
+  secret (`CLIENT_IP_HEADER=HTTP_X_REAL_IP`, `PROXY_SHARED_SECRET`). The login
+  throttle and audit log rely on it.
+- **TLS:** nginx terminates TLS (certbot) and forwards
+  `X-Forwarded-Proto: $scheme`, so Django sets `Secure` cookies.
+  `DJANGO_SSL_REDIRECT=false`, because nginx/Cloudflare do the redirect.
 - **Limits:** Cloudflare drops requests after 100 s and bodies over 100 MB.
-  Gunicorn times out at 60 s. Uploads are capped at 5 MB by the API.
-- **Recommended upgrade:** switch Cloudflare SSL mode to **Full (strict)**
-  with a Cloudflare Origin Certificate on nginx (listen 443). Do this only
-  after checking it with every other site on the same zone, because SSL mode
-  is per zone unless you use a Configuration Rule for this host only.
+  Gunicorn times out at 60 s, and the API caps uploads at 5 MB.
 
-## First deploy
+## First deploy (run as root on the VPS)
 
-1. **DNS.** In Cloudflare, add a proxied (orange) record for the V2 host,
-   e.g. a subdomain such as `bank.siulabs.so` → VPS IP. Do not move V1's
-   `siulabs.so` record until V2 is accepted.
-2. **Code.** On the VPS, run these in a new directory next to the other projects:
+1. **DNS:** done. `bank2.siulabs.so` is an `A` record to the VPS IP, proxied.
+2. **Code:** the repo is public, so clone it over HTTPS:
    ```bash
-   git clone <repo-url> ~/banklab-v2 && cd ~/banklab-v2 && git checkout main
+   git clone https://github.com/xuskaciise/banklab-v2.git ~/banklab-v2 && cd ~/banklab-v2
    ```
-3. **Secrets.** Run `cp .env.prod.example .env.prod && chmod 600 .env.prod`,
-   then fill it in. Generate a new `DJANGO_SECRET_KEY` and `POSTGRES_PASSWORD`
-   on the server, and never copy them from dev.
-4. **Proxy network.** Find the shared nginx container's network:
+3. **Secrets:**
    ```bash
-   docker inspect <nginx-container> --format '{{json .NetworkSettings.Networks}}'
+   cp .env.prod.example .env.prod && chmod 600 .env.prod
    ```
-   Put that network's name in `PROXY_NETWORK`. If nginx runs on the host
-   instead, use any dummy network (`docker network create banklab2-proxy`) and
-   point nginx at `127.0.0.1:8100` / `127.0.0.1:3100`.
-5. **Build and start:**
+   Fill in `.env.prod` on the server. Generate `POSTGRES_PASSWORD`,
+   `DJANGO_SECRET_KEY` and `PROXY_SHARED_SECRET` with
+   `openssl rand -hex 32`. Never copy them from dev, and never paste them in chat.
+4. **Build and start:**
    ```bash
-   docker compose -p banklab2 -f docker-compose.prod.yml --env-file .env.prod up -d --build
-   docker compose -p banklab2 -f docker-compose.prod.yml ps
+   ./deploy/deploy.sh
    ```
-   The backend runs `migrate` on start. Check that it shows `healthy`.
-6. **Admin user.** Create the first platform admin interactively, so no
-   password ever appears in shell history or logs:
+   This builds the images, starts db/backend/frontend, runs `migrate`, and
+   waits for the backend to report healthy.
+5. **nginx site.** These commands add only our file, then test before reloading.
+   Use reload, not restart:
    ```bash
-   docker compose -p banklab2 -f docker-compose.prod.yml exec backend python manage.py createsuperuser
+   cp deploy/nginx-banklab2.conf /etc/nginx/conf.d/banklab2.conf
+   sed -i "s/PROXY_SHARED_SECRET/$(grep ^PROXY_SHARED_SECRET= .env.prod | cut -d= -f2)/" /etc/nginx/conf.d/banklab2.conf
+   chmod 600 /etc/nginx/conf.d/banklab2.conf
+   nginx -t && systemctl reload nginx
    ```
-7. **nginx.** Copy `deploy/nginx-banklab2.conf` into the shared nginx's conf
-   directory, replace `BANKLAB_DOMAIN` and `PROXY_SHARED_SECRET` (same value as in `.env.prod`; `chmod 600` the file), then run `nginx -t` and **reload**
-   (not restart):
+6. **TLS certificate.** Certbot adds the 443 block to our file only:
    ```bash
-   docker exec <nginx-container> nginx -t && docker exec <nginx-container> nginx -s reload
+   certbot --nginx -d bank2.siulabs.so
    ```
-   If `set_real_ip_from` / `real_ip_header` already exist in the shared
-   `http {}` block, remove them from our file first.
+7. **Admin user.** The password is typed at the prompt, so it never lands in shell history:
+   ```bash
+   docker compose -p banklab2 -f docker-compose.prod.yml --env-file .env.prod exec backend \
+     python manage.py create_admin --username admin --full-name "..." --phone "..."
+   ```
 8. **Smoke test:**
-   - Open `https://<host>/api/health`. It should return 200.
+   - Open `https://bank2.siulabs.so/api/health`. It should return 200.
    - Log in as the admin.
-   - Check that the audit log shows your real IP, not a Cloudflare IP.
-   - Check that the response has a `Set-Cookie ... Secure` flag.
+   - Check that the audit log shows your real IP.
+   - Check that the cookies are `Secure`.
+   - Check that V1 (`https://bank.siulabs.so`) still works.
 
 ## Update
 
 ```bash
-cd ~/banklab-v2 && git pull
-docker compose -p banklab2 -f docker-compose.prod.yml --env-file .env.prod up -d --build
-docker image prune -f --filter "label=com.docker.compose.project=banklab2"
+cd ~/banklab-v2 && git pull && ./deploy/deploy.sh
 ```
 
-**Rollback:** run `git checkout <previous-tag>`, then the same `up -d --build`.
+**Rollback:** run `git checkout <previous-tag> && ./deploy/deploy.sh`. deploy.sh takes a DB backup first.
 Migrations are forward-only, so take a backup (below) before each update that
 adds migrations.
 
@@ -124,13 +124,7 @@ production database. Use a throwaway stack or DB.
 
 One-time setup (the repo owner does this; never paste keys into chat):
 
-1. **Deploy key on the VPS.** On your own machine, run:
-   ```bash
-   ssh-keygen -t ed25519 -f banklab2_deploy -C banklab2-deploy -N ""
-   ```
-   Then append `banklab2_deploy.pub` to `~/.ssh/authorized_keys` of the
-   deploy user on the VPS. Prefer a user that can run docker and owns
-   `~/banklab-v2`.
+1. **Deploy key on the VPS:** done (`banklab2_deploy`, for root).
 2. **Pinned host key.** Run this and copy the output:
    ```bash
    ssh-keyscan -t ed25519 <VPS IP>
