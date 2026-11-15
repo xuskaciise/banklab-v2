@@ -1,5 +1,6 @@
 "use client";
 
+import { AmountWords } from "@/components/shared/amount-words";
 import { formatMoney } from "@/lib/banking";
 import type { CashTransferOut } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ export function ApproveDialog({
             <span className="block text-2xl font-semibold text-text-strong tabular-nums">
               {formatMoney(t.amount, t.currency)}
             </span>
+            <AmountWords text={t.amount_in_words} className="block" />
             <span className="block">{route(t)}</span>
             <span className="block text-xs">Requested by {t.requested_by_name}</span>
           </span>
@@ -81,6 +83,7 @@ export function RejectDialog({
           <span className="block">
             {t && `${formatMoney(t.amount, t.currency)} requested by ${t.requested_by_name}.`}
           </span>
+          {t && <AmountWords text={t.amount_in_words} className="block" />}
           <Textarea
             aria-label="Reason"
             placeholder="Reason for rejection"
@@ -114,6 +117,7 @@ export function DetailsDialog({
         ["Direction", <DirectionBadge key="d" t={t} />],
         ["Transfer", route(t)],
         ["Amount", <span key="a" className="font-semibold tabular-nums">{formatMoney(t.amount, t.currency)}</span>],
+        ["In words", <AmountWords key="w" text={t.amount_in_words} className="text-sm not-italic" />],
         ["Status", STATUS_LABEL[t.status] ?? t.status],
         ["Requested by", `${t.requested_by_name} · ${fmtWhen(t.created_at)}`],
         ["Custodian", t.approved_by_1_name ?? "—"],

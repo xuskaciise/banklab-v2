@@ -1,5 +1,6 @@
 "use client";
 
+import { AmountWords } from "@/components/shared/amount-words";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -151,10 +152,12 @@ function TemplateForm({
             <FormGrid>
               <Labeled label="Opening capital (USD)" required error={errors.capUsd}>
                 <TextInput inputMode="decimal" value={capUsd} onChange={(e) => setCapUsd(e.target.value)} />
+                <AmountWords value={capUsd} currency="USD" />
               </Labeled>
               {sosOn && (
                 <Labeled label="Opening capital (SOS)" required error={errors.capSos}>
                   <TextInput inputMode="decimal" value={capSos} onChange={(e) => setCapSos(e.target.value)} />
+                  <AmountWords value={capSos} currency="SOS" />
                 </Labeled>
               )}
             </FormGrid>

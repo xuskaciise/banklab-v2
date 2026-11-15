@@ -16,6 +16,7 @@ from apps.rbac import context as rbac_context
 from apps.rbac.context import require_bank_permission
 
 from . import eod, services, tellers
+from .receipt_text import amount_in_words
 
 router = Router(tags=["banking"])
 student_router = Router(tags=["banking-student"])
@@ -128,6 +129,11 @@ class TransferOut(Schema):
     updated_at: datetime
     from_label: str
     to_label: str
+    amount_in_words: str
+
+    @staticmethod
+    def resolve_amount_in_words(obj):
+        return amount_in_words(obj.amount, obj.currency)
 
     @staticmethod
     def resolve_from_label(obj):

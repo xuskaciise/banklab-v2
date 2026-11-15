@@ -673,6 +673,7 @@ class TestCashApi:
         assert r.status_code == 200, r.content
         t = r.json()
         assert t["status"] == "pending" and t["amount"] == "75.50"
+        assert t["amount_in_words"] == "Seventy-five US Dollars and 50/100"
         tid = t["id"]
         # manager before custodian
         r = j(

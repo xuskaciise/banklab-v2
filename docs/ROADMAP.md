@@ -46,6 +46,7 @@ Domain details for every item live in [CONCEPT.md](CONCEPT.md).
 | 1.14b | Admin-only rename of a student's Student ID (login username): format + case-insensitive uniqueness, atomic, audited with old/new ID; student keeps sessions, enrollments and history; instructors stay read-only for the ID | 1.14 | [x] |
 | 1.15 | Hardening: load test (100–200 students), security review, deploy to VPS | 1.14 | [x] |
 | 1.15f | Edit a session after creating it (draft: all settings; active: name, roles, visibility, learning panel; archived: read-only) + editable template prefill on New session that shows what the template set | 1.15 | [x] |
+| 1.15g | Amount in words, generated automatically: live under every money input and on transaction confirm/result/approval views; one server helper shared with the PDF receipt | 1.15f | [x] |
 
 ## Later phases (do not start before Phase 1 is done)
 

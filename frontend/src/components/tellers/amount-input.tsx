@@ -1,5 +1,6 @@
 "use client";
 
+import { AmountWords } from "@/components/shared/amount-words";
 import { useLayoutEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { FieldLabel } from "@/components/transactions/field-label";
@@ -99,6 +100,7 @@ export function AmountInput({
           className="h-full min-w-0 flex-1 bg-transparent text-right text-xl font-semibold text-text-strong tabular-nums outline-none placeholder:text-text-muted/60"
         />
       </div>
+      {!invalid && <AmountWords value={stripAmount(value)} currency={currency} />}
       <p id={msg} className={cn("text-xs", invalid ? "text-fin-danger" : "text-text-muted")}>
         {invalid
           ? decimals

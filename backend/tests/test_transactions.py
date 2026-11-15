@@ -534,11 +534,13 @@ class TestReceiptAndApi:
         body = {"account_id": str(a.pk), "amount": "6000.00", "currency": "USD", **PARTY}
         r = j(teller, "post", f"{base}/transactions/withdrawal", body)
         assert r.status_code == 200 and r.json()["status"] == "pending_approval"
+        assert r.json()["amount_in_words"] == "Six thousand US Dollars and 00/100"
         tid, aid = r.json()["id"], r.json()["approval_id"]
         assert j(cso, "post", f"{base}/transactions/withdrawal", body).status_code == 403
         assert j(teller, "post", f"{base}/approvals/{aid}/approve").status_code == 403
         q = manager.get(f"{base}/approvals").json()
         assert [x["id"] for x in q] == [aid] and q[0]["transaction"]["ref_no"]
+        assert q[0]["transaction"]["amount_in_words"] == "Six thousand US Dollars and 00/100"
         r = j(manager, "post", f"{base}/approvals/{aid}/approve", {"note": "ok"})
         assert r.status_code == 200 and r.json()["status"] == "approved"
         assert teller.get(f"{base}/transactions/{tid}").json()["status"] == "posted"
