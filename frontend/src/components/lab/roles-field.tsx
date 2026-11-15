@@ -20,10 +20,12 @@ export function RolesField({
   roles,
   onToggle,
   error,
+  disabled,
 }: {
   roles: string[];
   onToggle: (r: string) => void;
   error?: string;
+  disabled?: boolean;
 }) {
   return (
     <fieldset className="space-y-3">
@@ -48,9 +50,10 @@ export function RolesField({
               type="button"
               role="checkbox"
               aria-checked={on}
+              disabled={disabled}
               onClick={() => onToggle(r)}
               className={cn(
-                "flex items-start gap-3 rounded-lg border p-3 text-left transition-colors",
+                "flex items-start gap-3 rounded-lg border p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60",
                 FOCUS,
                 on
                   ? "border-bank-primary bg-bank-sky-light"

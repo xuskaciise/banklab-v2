@@ -128,6 +128,22 @@ class SessionIn(Schema):
     opening_capital_sos: Decimal | None = None
 
 
+class SessionUpdateIn(Schema):
+    """Partial edit; omitted/null = unchanged. `clear_template` unlinks the template."""
+
+    name: str | None = None
+    kind: str | None = None
+    structure: str | None = None
+    allowed_roles: list[str] | None = None
+    default_visibility: str | None = None
+    learning_panel: bool | None = None
+    seed_profile: str | None = None
+    opening_capital_usd: Decimal | None = None
+    opening_capital_sos: Decimal | None = None
+    template_id: UUID | None = None
+    clear_template: bool = False
+
+
 class SessionOut(Schema):
     id: UUID
     class_id: UUID
@@ -145,6 +161,7 @@ class SessionOut(Schema):
     opening_capital_sos: Decimal
     opened_at: datetime | None = None
     archived_at: datetime | None = None
+    locked_fields: dict[str, str]  # field -> why it cannot be edited right now
 
     @staticmethod
     def resolve_class_id(obj):
@@ -153,6 +170,10 @@ class SessionOut(Schema):
     @staticmethod
     def resolve_class_name(obj):
         return obj.lab_class.name
+
+    @staticmethod
+    def resolve_locked_fields(obj):
+        return services.locked_fields(obj)
 
 
 class LearningPanelIn(Schema):
@@ -415,6 +436,11 @@ def sessions_create(request, payload: SessionIn):
 @router.get("/sessions/{session_id}", response=SessionOut, operation_id="lab_sessions_get")
 def sessions_get(request, session_id: UUID):
     return services.get_session(request.user, session_id)
+
+
+@router.patch("/sessions/{session_id}", response=SessionOut, operation_id="lab_sessions_update")
+def sessions_update(request, session_id: UUID, payload: SessionUpdateIn):
+    return services.update_session(request.user, session_id, **payload.dict())
 
 
 @router.get("/dashboard", response=StaffDashboardOut, operation_id="lab_dashboard")

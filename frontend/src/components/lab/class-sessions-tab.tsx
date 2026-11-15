@@ -33,6 +33,13 @@ function SessionActions({ s }: { s: SessionOut }) {
           {s.status === "draft" ? "Set up / open" : "Control"}
         </Button>
       </Link>
+      {s.status !== "archived" && (
+        <Link href={`/instructor/sessions/${s.id}/edit`}>
+          <Button size="sm" variant="outline">
+            Edit
+          </Button>
+        </Link>
+      )}
       {s.status === "active" && (
         <ConfirmButton
           label="Archive"

@@ -627,7 +627,8 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Sessions Update */
+        patch: operations["lab_sessions_update"];
         trace?: never;
     };
     "/api/dashboard": {
@@ -3593,6 +3594,10 @@ export interface components {
             opened_at?: string | null;
             /** Archived At */
             archived_at?: string | null;
+            /** Locked Fields */
+            locked_fields: {
+                [key: string]: string;
+            };
         };
         /** SessionIn */
         SessionIn: {
@@ -3621,6 +3626,37 @@ export interface components {
             opening_capital_usd?: number | string | null;
             /** Opening Capital Sos */
             opening_capital_sos?: number | string | null;
+        };
+        /**
+         * SessionUpdateIn
+         * @description Partial edit; omitted/null = unchanged. `clear_template` unlinks the template.
+         */
+        SessionUpdateIn: {
+            /** Name */
+            name?: string | null;
+            /** Kind */
+            kind?: string | null;
+            /** Structure */
+            structure?: string | null;
+            /** Allowed Roles */
+            allowed_roles?: string[] | null;
+            /** Default Visibility */
+            default_visibility?: string | null;
+            /** Learning Panel */
+            learning_panel?: boolean | null;
+            /** Seed Profile */
+            seed_profile?: string | null;
+            /** Opening Capital Usd */
+            opening_capital_usd?: number | string | null;
+            /** Opening Capital Sos */
+            opening_capital_sos?: number | string | null;
+            /** Template Id */
+            template_id?: string | null;
+            /**
+             * Clear Template
+             * @default false
+             */
+            clear_template: boolean;
         };
         /** DashboardCountsOut */
         DashboardCountsOut: {
@@ -7042,6 +7078,32 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionOut"];
+                };
+            };
+        };
+    };
+    lab_sessions_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SessionUpdateIn"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

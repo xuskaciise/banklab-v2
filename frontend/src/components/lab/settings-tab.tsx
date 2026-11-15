@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
-import { Check, Loader2, Play } from "lucide-react";
+import { Check, Loader2, Pencil, Play } from "lucide-react";
 import type { BusinessDayOut, SessionOut } from "@/lib/api/types";
 import {
   formatDateTime,
@@ -152,7 +153,17 @@ export function SettingsTab({ session }: { session: SessionOut }) {
               : "The session is archived and read-only."
         }
       >
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-3">
+          {!archived && (
+            <Button
+              size="sm"
+              variant="outline"
+              nativeButton={false}
+              render={<Link href={`/instructor/sessions/${session.id}/edit`} />}
+            >
+              <Pencil aria-hidden /> Edit settings
+            </Button>
+          )}
           <StatusBadge status={session.status} className="h-6 px-2.5 text-sm" />
         </div>
         <Stepper session={session} />

@@ -21,6 +21,7 @@ import type {
   PagedAudit,
   PermissionCell,
   SessionIn,
+  SessionUpdateIn,
   SessionMe,
   SessionOut,
   StudentOut,
@@ -159,6 +160,18 @@ export const useCreateSession = () =>
   useApiMutation(
     (b: SessionIn) => apiFetch<SessionOut>("/api/sessions", j("POST", b)),
     (_, s) => [["class-sessions", s.class_id]],
+  );
+
+export const useUpdateSession = (sessionId: string) =>
+  useApiMutation(
+    (b: SessionUpdateIn) =>
+      apiFetch<SessionOut>(`/api/sessions/${sessionId}`, j("PATCH", b)),
+    (_, s) => [
+      ["session", sessionId],
+      ["class-sessions", s.class_id],
+      ["sessions"],
+      ["my-sessions"],
+    ],
   );
 
 type Transition = "open" | "archive" | "reopen";

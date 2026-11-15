@@ -24,6 +24,7 @@ export type TemplateOut = Schemas["TemplateOut"];
 export type TemplateIn = Schemas["TemplateIn"];
 export type SessionOut = Schemas["SessionOut"];
 export type SessionIn = Schemas["SessionIn"];
+export type SessionUpdateIn = Schemas["SessionUpdateIn"];
 export type BankOut = Schemas["BankOut"];
 export type BusinessDayOut = Schemas["BusinessDayOut"];
 export type MemberOut = Schemas["MemberOut"];
